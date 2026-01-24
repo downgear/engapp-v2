@@ -38,10 +38,10 @@ export class LearningHistory {
   @Column({ name: 'activity_type', type: 'text' })
   activityType: ActivityType;
 
-  @Column({ name: 'start_time', type: 'datetime' })
+  @Column({ name: 'start_time', type: 'timestamp' })
   startTime: Date;
 
-  @Column({ name: 'end_time', type: 'datetime', nullable: true })
+  @Column({ name: 'end_time', type: 'timestamp', nullable: true })
   endTime: Date;
 
   @Column({ name: 'booking_id', nullable: true })

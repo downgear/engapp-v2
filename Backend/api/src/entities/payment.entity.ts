@@ -48,7 +48,7 @@ export class Payment {
   @Column({ name: 'transaction_id', nullable: true })
   transactionId: string;
 
-  @Column({ name: 'paid_at', type: 'datetime', nullable: true })
+  @Column({ name: 'paid_at', type: 'timestamp', nullable: true })
   paidAt: Date;
 
   @CreateDateColumn({ name: 'created_at' })

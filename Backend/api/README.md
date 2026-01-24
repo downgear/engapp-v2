@@ -5,7 +5,8 @@ Backend API cho hệ thống Lingriser - Nền tảng học tiếng Anh giao ti�
 ## Tech Stack
 
 - **Framework**: NestJS
-- **Database**: SQLite3 với TypeORM
+- **Database**: PostgreSQL (Neon) với TypeORM
+- **Deployment**: Vercel Serverless
 - **Testing**: Jest (Unit tests + E2E tests)
 
 ## Cài đặt
@@ -13,6 +14,16 @@ Backend API cho hệ thống Lingriser - Nền tảng học tiếng Anh giao ti�
 ```bash
 cd Backend/api
 npm install
+```
+
+## Environment Variables
+
+Tạo file `.env` trong thư mục `Backend/api/`:
+
+```env
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+JWT_SECRET=your-jwt-secret
+OPENAI_API_KEY=sk-your-openai-key  # Optional: cho AI Practice
 ```
 
 ## Chạy API

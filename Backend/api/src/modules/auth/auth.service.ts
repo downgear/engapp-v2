@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User, Student, Parent, Teacher, UserRole, TeacherType } from '../../entities';
+import { Repository, In } from 'typeorm';
+import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus } from '../../entities';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -36,6 +36,10 @@ export class AuthService {
     private parentRepo: Repository<Parent>,
     @InjectRepository(Teacher)
     private teacherRepo: Repository<Teacher>,
+    @InjectRepository(Course)
+    private courseRepo: Repository<Course>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepo: Repository<Enrollment>,
     private jwtService: JwtService,
   ) {}
 
@@ -76,6 +80,9 @@ export class AuthService {
         });
         await this.studentRepo.save(student);
         profileId = student.id;
+        
+        // Auto-enroll student in current course
+        await this.autoEnrollStudent(student.id);
         break;
 
       case UserRole.PARENT:
@@ -197,6 +204,52 @@ export class AuthService {
         avatarUrl: user.avatarUrl,
       },
     };
+  }
+
+  /**
+   * Auto-enroll a new student in the current/latest active course
+   */
+  private async autoEnrollStudent(studentId: number): Promise<void> {
+    try {
+      // Find the current in_progress course, or the latest upcoming/registration_open course
+      const course = await this.courseRepo.findOne({
+        where: [
+          { status: CourseStatus.IN_PROGRESS },
+          { status: CourseStatus.REGISTRATION_OPEN },
+          { status: CourseStatus.UPCOMING },
+        ],
+        order: { startDate: 'DESC' },
+      });
+
+      if (!course) {
+        console.log(`No active course found for auto-enrollment of student ${studentId}`);
+        return;
+      }
+
+      // Check if already enrolled
+      const existingEnrollment = await this.enrollmentRepo.findOne({
+        where: { studentId, courseId: course.id },
+      });
+
+      if (existingEnrollment) {
+        console.log(`Student ${studentId} already enrolled in course ${course.id}`);
+        return;
+      }
+
+      // Create enrollment
+      const enrollment = this.enrollmentRepo.create({
+        studentId,
+        courseId: course.id,
+        status: EnrollmentStatus.ACTIVE,
+        currentModuleNumber: 1,
+      });
+      await this.enrollmentRepo.save(enrollment);
+
+      console.log(`Auto-enrolled student ${studentId} in course "${course.name}" (ID: ${course.id})`);
+    } catch (error) {
+      console.error(`Failed to auto-enroll student ${studentId}:`, error);
+      // Don't throw - registration should still succeed even if auto-enrollment fails
+    }
   }
 }
 

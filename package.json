@@ -1,0 +1,21 @@
+{
+  "name": "lingriser-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "cd Backend/api && npm install && cd ../../Frontend && npm install && cd ../api && npm install",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cd Frontend && npm run build && mkdir -p ../dist && cp -r dist/* ../dist/",
+    "build:backend": "cd Backend/api && npm run build",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd Frontend && npm run dev",
+    "dev:backend": "cd Backend/api && npm run start:dev",
+    "vercel-build": "npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
