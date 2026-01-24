@@ -8,6 +8,8 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { ParentsModule } from './modules/parents/parents.module';
 import { AIPracticeModule } from './modules/ai-practice/ai-practice.module';
+import { ConnectionsModule } from './modules/connections/connections.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -24,6 +26,8 @@ import { AppService } from './app.service';
     BookingsModule,
     ParentsModule,
     AIPracticeModule,
+    ConnectionsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

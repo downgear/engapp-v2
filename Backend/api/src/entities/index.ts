@@ -12,4 +12,5 @@ export * from './teacher-feedback.entity';
 export * from './student-video.entity';
 export * from './payment.entity';
 export * from './account-link.entity';
+export * from './notification.entity';
 

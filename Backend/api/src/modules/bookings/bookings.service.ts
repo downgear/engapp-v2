@@ -101,7 +101,44 @@ export class BookingsService {
       throw new NotFoundException(`Booking with ID ${id} not found`);
     }
 
-    return this.formatBooking(booking);
+    // Return detailed booking for single booking view
+    return {
+      id: booking.id,
+      bookingDate: booking.bookingDate,
+      slotStartTime: booking.slotStartTime,
+      slotEndTime: booking.slotEndTime,
+      status: booking.status,
+      createdAt: booking.createdAt,
+      student: booking.student
+        ? {
+            id: booking.student.id,
+            name: booking.student.user?.fullName,
+            email: booking.student.user?.email,
+            phone: booking.student.user?.phone,
+            grade: booking.student.grade,
+            cefrLevel: booking.student.cefrLevel,
+          }
+        : undefined,
+      teacher: booking.teacher
+        ? {
+            id: booking.teacher.id,
+            name: booking.teacher.user?.fullName,
+            email: booking.teacher.user?.email,
+            phone: booking.teacher.user?.phone,
+            bio: booking.teacher.bio,
+            specialties: booking.teacher.specialties,
+            teacherType: booking.teacher.teacherType,
+          }
+        : undefined,
+      module: booking.module
+        ? {
+            id: booking.module.id,
+            moduleNumber: booking.module.moduleNumber,
+            title: booking.module.title,
+            topic: booking.module.topic,
+          }
+        : undefined,
+    };
   }
 
   async complete(id: number) {
