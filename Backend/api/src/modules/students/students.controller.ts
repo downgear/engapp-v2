@@ -52,5 +52,10 @@ export class StudentsController {
   findByParent(@Param('parentId', ParseIntPipe) parentId: number) {
     return this.studentsService.findByParentId(parentId);
   }
+
+  @Get(':id/connections')
+  getConnections(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.getConnections(id);
+  }
 }
 

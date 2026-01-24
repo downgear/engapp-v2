@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Student, User, Parent, Enrollment, LearningHistory, StudentVideo, Module as CourseModule, AiFeedback, ActivityType, LearningStatus } from '../../entities';
+import { Student, User, Parent, Enrollment, LearningHistory, StudentVideo, Module as CourseModule, AiFeedback, ActivityType, LearningStatus, Teacher, AccountLink } from '../../entities';
 import { CreateLearningHistoryDto } from './dto/create-learning-history.dto';
 
 @Injectable()
@@ -23,6 +23,10 @@ export class StudentsService {
     private moduleRepo: Repository<CourseModule>,
     @InjectRepository(AiFeedback)
     private aiFeedbackRepo: Repository<AiFeedback>,
+    @InjectRepository(Teacher)
+    private teacherRepo: Repository<Teacher>,
+    @InjectRepository(AccountLink)
+    private accountLinkRepo: Repository<AccountLink>,
   ) {}
 
   async findAll() {
@@ -237,6 +241,69 @@ export class StudentsService {
           }
         : null,
     };
+  }
+
+  async getConnections(studentId: number) {
+    const links = await this.accountLinkRepo.find({
+      where: { studentId },
+      relations: ['linkedUser'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const result: Array<{
+      id: number;
+      linkedUserId: number;
+      linkType: string;
+      createdAt: Date;
+      user: {
+        id: number;
+        fullName: string;
+        email: string;
+        phone: string | null;
+        avatarUrl: string | null;
+      };
+      teacher?: {
+        id: number;
+        teacherType: string;
+        bio: string | null;
+        specialties: string[];
+      };
+    }> = [];
+
+    for (const link of links) {
+      const connection: typeof result[number] = {
+        id: link.id,
+        linkedUserId: link.linkedUserId,
+        linkType: link.linkType,
+        createdAt: link.createdAt,
+        user: {
+          id: link.linkedUser.id,
+          fullName: link.linkedUser.fullName,
+          email: link.linkedUser.email,
+          phone: link.linkedUser.phone,
+          avatarUrl: link.linkedUser.avatarUrl,
+        },
+      };
+
+      // If it's a teacher link, get teacher details
+      if (link.linkType === 'teacher') {
+        const teacher = await this.teacherRepo.findOne({
+          where: { userId: link.linkedUserId },
+        });
+        if (teacher) {
+          connection.teacher = {
+            id: teacher.id,
+            teacherType: teacher.teacherType,
+            bio: teacher.bio,
+            specialties: teacher.specialties ? JSON.parse(teacher.specialties) : [],
+          };
+        }
+      }
+
+      result.push(connection);
+    }
+
+    return result;
   }
 
   private formatStudent(student: Student) {
