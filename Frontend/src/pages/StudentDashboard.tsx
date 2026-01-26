@@ -50,6 +50,44 @@ const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | n
   }
 };
 
+// Collapsible feedback section component
+interface FeedbackSectionProps {
+  icon: React.ReactNode;
+  title: string;
+  items: string[];
+  colorClass: string;
+  bulletColor: string;
+}
+
+const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: FeedbackSectionProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  if (!items?.length) return null;
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="w-full">
+        <div className={`text-xs font-medium ${colorClass} flex items-center gap-1 hover:opacity-80 transition-opacity`}>
+          {icon}
+          <span>{title}</span>
+          <span className="text-muted-foreground font-normal">({items.length})</span>
+          {isOpen ? <ChevronDown className="h-3 w-3 ml-auto" /> : <ChevronRight className="h-3 w-3 ml-auto" />}
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ul className="text-xs text-muted-foreground space-y-0.5 mt-1 ml-4">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-1">
+              <span className={`${bulletColor} mt-0.5`}>•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
@@ -414,107 +452,59 @@ const StudentDashboard = () => {
                                   </div>
                                 </div>
 
-                                {/* Pronunciation Issues - Detailed */}
-                                {parsedFeedback.pronunciationIssues?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1">
-                                      <Mic className="h-3 w-3" /> Lỗi phát âm
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.pronunciationIssues.map((issue, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-blue-500 mt-0.5">•</span>
-                                          <span>{issue}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Pronunciation Issues - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Mic className="h-3 w-3" />}
+                                  title="Lỗi phát âm"
+                                  items={parsedFeedback.pronunciationIssues || []}
+                                  colorClass="text-blue-700 dark:text-blue-400"
+                                  bulletColor="text-blue-500"
+                                />
 
-                                {/* Grammar Issues - Detailed */}
-                                {parsedFeedback.grammarIssues?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1 flex items-center gap-1">
-                                      <BookText className="h-3 w-3" /> Lỗi ngữ pháp
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.grammarIssues.map((issue, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-purple-500 mt-0.5">•</span>
-                                          <span>{issue}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Grammar Issues - Collapsible */}
+                                <FeedbackSection
+                                  icon={<BookText className="h-3 w-3" />}
+                                  title="Lỗi ngữ pháp"
+                                  items={parsedFeedback.grammarIssues || []}
+                                  colorClass="text-purple-700 dark:text-purple-400"
+                                  bulletColor="text-purple-500"
+                                />
 
-                                {/* Vocabulary Notes - Detailed */}
-                                {parsedFeedback.vocabularyNotes?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1">
-                                      <Brain className="h-3 w-3" /> Ghi chú từ vựng
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.vocabularyNotes.map((note, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-orange-500 mt-0.5">•</span>
-                                          <span>{note}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Vocabulary Notes - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Brain className="h-3 w-3" />}
+                                  title="Ghi chú từ vựng"
+                                  items={parsedFeedback.vocabularyNotes || []}
+                                  colorClass="text-orange-700 dark:text-orange-400"
+                                  bulletColor="text-orange-500"
+                                />
 
-                                {/* Fluency Notes - Detailed */}
-                                {parsedFeedback.fluencyNotes?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400 mb-1 flex items-center gap-1">
-                                      <Zap className="h-3 w-3" /> Ghi chú lưu loát
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.fluencyNotes.map((note, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-yellow-500 mt-0.5">•</span>
-                                          <span>{note}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Fluency Notes - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Zap className="h-3 w-3" />}
+                                  title="Ghi chú lưu loát"
+                                  items={parsedFeedback.fluencyNotes || []}
+                                  colorClass="text-yellow-700 dark:text-yellow-400"
+                                  bulletColor="text-yellow-500"
+                                />
                                 
-                                {/* Highlights */}
-                                {parsedFeedback.highlights?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-1 flex items-center gap-1">
-                                      <Star className="h-3 w-3" /> Điểm nổi bật
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.highlights.map((h, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-green-500 mt-0.5">•</span>
-                                          <span>{h}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Highlights - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Star className="h-3 w-3" />}
+                                  title="Điểm nổi bật"
+                                  items={parsedFeedback.highlights || []}
+                                  colorClass="text-green-700 dark:text-green-400"
+                                  bulletColor="text-green-500"
+                                />
                                 
-                                {/* Suggestions */}
-                                {parsedFeedback.suggestions?.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                                      <Lightbulb className="h-3 w-3" /> Gợi ý cải thiện
-                                    </p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {parsedFeedback.suggestions.map((s, i) => (
-                                        <li key={i} className="flex items-start gap-1">
-                                          <span className="text-amber-500 mt-0.5">•</span>
-                                          <span>{s}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
+                                {/* Suggestions - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Lightbulb className="h-3 w-3" />}
+                                  title="Gợi ý cải thiện"
+                                  items={parsedFeedback.suggestions || []}
+                                  colorClass="text-amber-700 dark:text-amber-400"
+                                  bulletColor="text-amber-500"
+                                />
                               </div>
                             </CollapsibleContent>
                           )}
