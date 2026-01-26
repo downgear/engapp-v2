@@ -101,6 +101,7 @@ Keep the suggestions appropriate for the student's level.`;
         coherence: 0,
         cohesion: 0,
         insufficientData: true,
+        pronunciationErrors: [], // No errors gathered - insufficient data
         pronunciationIssues: ['Bạn cần luyện tập thêm (tối thiểu 3 lượt hội thoại) để có đủ dữ liệu đánh giá chính xác.'],
         grammarIssues: ['Chưa đủ dữ liệu để đánh giá ngữ pháp. Hãy nói nhiều hơn!'],
         vocabularyNotes: ['Cần nhiều hội thoại hơn để đánh giá vốn từ vựng của bạn.'],
@@ -138,13 +139,18 @@ STEP 1: ANALYZE ERRORS FIRST (Before giving scores)
 CRITICAL: For EACH criterion below, you MUST provide AT LEAST 3 specific observations/comments. If there aren't enough errors, also note what was done well.
 
 1.1 PRONUNCIATION ANALYSIS (Minimum 3 observations):
-- Identify specific mispronounced words with IPA notation and quote them
+CRITICAL: The transcription is VERBATIM - mispronounced words are transcribed exactly as spoken WITHOUT corrections.
+- Look for MISSING ENDING SOUNDS: words like "goin" (should be "going"), "tha" (should be "that"), "wor" (should be "work")
+- Look for SOUND SUBSTITUTIONS: "wok" instead of "work", "tree" instead of "three", "berry" instead of "very"
+- Look for VOWEL ERRORS: "bed" instead of "bad", "ship" instead of "sheep"
+- Look for CONSONANT CLUSTER ERRORS: "streen" instead of "street", "fren" instead of "friend"
+- Identify specific mispronounced words with IPA notation and quote them EXACTLY from transcription
 - Note word stress errors with examples (e.g., "comfortable" stressed on wrong syllable)
 - Point out intonation issues (rising/falling patterns)
 ${hasHesitation ? '- Note unclear speech/hesitation moments: "In turn X, no clear speech was detected - this suggests pronunciation difficulties or hesitation"' : ''}
-- Comment on consonant/vowel accuracy
+- Comment on consonant/vowel accuracy based on the verbatim transcription
 - Note rhythm and connected speech
-- Be VERY SPECIFIC with quoted words from conversation
+- Be VERY SPECIFIC - quote the EXACT words from transcription that show pronunciation errors
 
 1.2 GRAMMAR ANALYSIS (Minimum 3 observations):
 - Quote exact sentences with errors and explain what's wrong
@@ -206,7 +212,7 @@ CRITICAL RULES:
 5. Analysis MUST come before scores in your thinking
 6. If there aren't enough errors, also include positive observations
 
-Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
+Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY, except for English words in pronunciationErrors):
 {
   "overall": <score 1-10>,
   "pronunciation": <score 1-10>,
@@ -215,6 +221,20 @@ Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
   "fluency": <score 1-10>,
   "coherence": <score 1-10>,
   "cohesion": <score 1-10>,
+  "pronunciationErrors": [
+    {
+      "spoken": "goin",
+      "expected": "going",
+      "errorType": "missing_ending",
+      "explanation": "Thiếu âm cuối '-ing', chỉ nói 'goin'"
+    },
+    {
+      "spoken": "wok",
+      "expected": "work", 
+      "errorType": "sound_substitution",
+      "explanation": "Thay thế âm /ɜː/ bằng /ɒ/"
+    }
+  ],
   "pronunciationIssues": ["Chi tiết 1 với từ được trích dẫn", "Chi tiết 2 với ví dụ cụ thể", "Chi tiết 3 về một khía cạnh khác"],
   "grammarIssues": ["Trích dẫn câu cụ thể + giải thích + sửa", "Lỗi thứ 2 với ví dụ", "Lỗi thứ 3 hoặc điểm tốt"],
   "vocabularyNotes": ["Phân tích 1 về từ vựng cụ thể", "Phân tích 2 về range/appropriateness", "Phân tích 3 về collocation/idioms"],
@@ -223,7 +243,14 @@ Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
   "cohesionNotes": ["Đánh giá 1: từ nối?", "Đánh giá 2: đại từ?", "Đánh giá 3: discourse markers/sentence connections?"],
   "suggestions": ["Gợi ý CỤ THỂ 1 bằng tiếng Việt với ví dụ", "Gợi ý 2", "Gợi ý 3"],
   "highlights": ["Điểm mạnh CỤ THỂ 1 bằng tiếng Việt", "Điểm mạnh 2", "Điểm mạnh 3"]
-}`;
+}
+
+IMPORTANT for pronunciationErrors array:
+- errorType can be: "missing_ending", "sound_substitution", "vowel_error", "consonant_error", "word_stress", "other"
+- Include ALL pronunciation errors found in the conversation
+- "spoken" is the EXACT word from transcription
+- "expected" is what the word should be
+- This array gathers ALL pronunciation errors for detailed feedback`;
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -287,6 +314,7 @@ Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
 
       return {
         ...cleanFeedback,
+        pronunciationErrors: parsedFeedback.pronunciationErrors || [], // Gathered pronunciation errors with details
         pronunciationIssues: ensureMinItems(parsedFeedback.pronunciationIssues || [], defaultPronunciation),
         grammarIssues: ensureMinItems(parsedFeedback.grammarIssues || [], defaultGrammar),
         vocabularyNotes: ensureMinItems(parsedFeedback.vocabularyNotes || [], defaultVocabulary),
@@ -305,6 +333,7 @@ Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
         fluency: 6,
         coherence: 6,
         cohesion: 6,
+        pronunciationErrors: [], // No errors gathered due to parsing failure
         pronunciationIssues: [
           'Cần luyện tập thêm để đánh giá chi tiết về phát âm',
           'Hãy chú ý đến trọng âm và ngữ điệu',
@@ -341,17 +370,39 @@ Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY):
     }
   }
 
-  async transcribeAudio(buffer: Buffer, filename: string, mimetype?: string): Promise<{ text: string }> {
+  async transcribeAudio(buffer: Buffer, filename: string, mimetype?: string): Promise<{ 
+    text: string; 
+    words?: Array<{ word: string; start: number; end: number }>;
+    rawTranscription?: string;
+  }> {
     const file = await toFile(buffer, filename, mimetype ? { type: mimetype } : undefined);
 
+    // Use verbose_json to get word-level timestamps for pronunciation analysis
     const response = await this.openai.audio.transcriptions.create({
       model: 'whisper-1',
       file,
-      response_format: 'json',
+      response_format: 'verbose_json',
+      language: 'en',
+      // Prompt Whisper to transcribe verbatim without corrections
+      // This helps preserve mispronunciations, missed endings, and pronunciation errors
+      prompt: `Transcribe exactly what you hear, word by word. Do NOT correct pronunciation errors. Do NOT fix grammar. Do NOT auto-complete words. If the speaker says "tha" instead of "that", transcribe "tha". If they say "wok" instead of "work", transcribe "wok". If they miss the ending sound of a word like saying "goin" instead of "going", transcribe "goin". Preserve all pronunciation mistakes, incomplete words, and mispronounced words exactly as spoken. This is for pronunciation assessment purposes.`,
+      timestamp_granularities: ['word'],
     });
 
     const text = response.text?.trim() || '';
-    return { text };
+    
+    // Extract word-level data for pronunciation analysis
+    const words = response.words?.map(w => ({
+      word: w.word,
+      start: w.start,
+      end: w.end,
+    })) || [];
+
+    return { 
+      text,
+      words,
+      rawTranscription: text, // Store original for error tracking
+    };
   }
 
   async textToSpeech(text: string): Promise<Buffer> {

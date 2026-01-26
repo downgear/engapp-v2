@@ -63,10 +63,94 @@ interface FeedbackSectionProps {
   bulletColor: string;
 }
 
+// Type for structured feedback items (grammar, pronunciation errors, etc.)
+interface StructuredFeedbackItem {
+  quote?: string;
+  explanation?: string;
+  correction?: string;
+  spoken?: string;
+  expected?: string;
+  errorType?: string;
+}
+
+// Helper to check if a string is JSON
+const tryParseJSON = (str: string): StructuredFeedbackItem | null => {
+  if (!str.startsWith('{')) return null;
+  try {
+    return JSON.parse(str);
+  } catch {
+    return null;
+  }
+};
+
+// Render a structured feedback item nicely
+const StructuredItem = ({ item, bulletColor }: { item: StructuredFeedbackItem; bulletColor: string }) => (
+  <li className="flex items-start gap-1 pb-1.5 border-b border-border/30 last:border-0">
+    <span className={`${bulletColor} mt-0.5`}>•</span>
+    <div className="flex-1 space-y-0.5">
+      {item.quote && (
+        <div>
+          <span className="text-muted-foreground/70">Câu gốc: </span>
+          <span className="italic text-red-600 dark:text-red-400">"{item.quote}"</span>
+        </div>
+      )}
+      {item.spoken && (
+        <div>
+          <span className="text-muted-foreground/70">Phát âm: </span>
+          <span className="italic text-red-600 dark:text-red-400">"{item.spoken}"</span>
+          {item.expected && (
+            <>
+              <span className="text-muted-foreground/70"> → </span>
+              <span className="italic text-green-600 dark:text-green-400">"{item.expected}"</span>
+            </>
+          )}
+        </div>
+      )}
+      {item.explanation && (
+        <div>
+          <span className="text-muted-foreground/70">Giải thích: </span>
+          <span>{item.explanation}</span>
+        </div>
+      )}
+      {item.correction && (
+        <div>
+          <span className="text-muted-foreground/70">Sửa lại: </span>
+          <span className="text-green-600 dark:text-green-400">"{item.correction}"</span>
+        </div>
+      )}
+      {item.errorType && (
+        <div>
+          <span className="text-muted-foreground/70">Loại lỗi: </span>
+          <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{item.errorType}</span>
+        </div>
+      )}
+    </div>
+  </li>
+);
+
 const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: FeedbackSectionProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  if (!items?.length) return null;
+  // Process items - handle both plain strings and JSON objects
+  const processedItems = (items || [])
+    .map(item => {
+      if (item == null) return null;
+      if (typeof item === 'string') {
+        const trimmed = item.trim();
+        if (!trimmed) return null;
+        // Try to parse as JSON
+        const parsed = tryParseJSON(trimmed);
+        if (parsed) return { type: 'structured' as const, data: parsed };
+        return { type: 'text' as const, data: trimmed };
+      }
+      if (typeof item === 'object') {
+        return { type: 'structured' as const, data: item as StructuredFeedbackItem };
+      }
+      return { type: 'text' as const, data: String(item) };
+    })
+    .filter((item): item is { type: 'structured'; data: StructuredFeedbackItem } | { type: 'text'; data: string } => item != null);
+  
+  if (processedItems.length === 0) return null;
   
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -74,17 +158,21 @@ const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: Feedba
         <div className={`text-xs font-medium ${colorClass} flex items-center gap-1 hover:opacity-80 transition-opacity`}>
           {icon}
           <span>{title}</span>
-          <span className="text-muted-foreground font-normal">({items.length})</span>
+          <span className="text-muted-foreground font-normal">({processedItems.length})</span>
           {isOpen ? <ChevronDown className="h-3 w-3 ml-auto" /> : <ChevronRight className="h-3 w-3 ml-auto" />}
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="text-xs text-muted-foreground space-y-0.5 mt-1 ml-4">
-          {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-1">
-              <span className={`${bulletColor} mt-0.5`}>•</span>
-              <span>{item}</span>
-            </li>
+        <ul className="text-xs text-muted-foreground space-y-1 mt-1 ml-4">
+          {processedItems.map((item, i) => (
+            item.type === 'structured' ? (
+              <StructuredItem key={i} item={item.data} bulletColor={bulletColor} />
+            ) : (
+              <li key={i} className="flex items-start gap-1">
+                <span className={`${bulletColor} mt-0.5`}>•</span>
+                <span className="break-words">{item.data.length > 500 ? item.data.substring(0, 500) + '...' : item.data}</span>
+              </li>
+            )
           ))}
         </ul>
       </CollapsibleContent>
