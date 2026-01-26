@@ -15,7 +15,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { api, Notification } from "@/services/api";
+import { api } from "@/services/api";
+import type { Notification } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 

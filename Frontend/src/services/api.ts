@@ -2,135 +2,22 @@
  * API Service - Connects to Lingriser Backend
  */
 
+import type {
+  Child,
+  ProgressVideos,
+  LearningHistoryItem,
+  Enrollment,
+  Course,
+  Module,
+  Teacher,
+  TimeSlot,
+  Booking,
+  Connection,
+  Notification,
+} from '@/types';
+
 // Use VITE_API_URL from environment, fallback to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-
-// ============ Types ============
-
-export interface Child {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  grade: string;
-  cefrLevel: string;
-  avatarUrl: string | null;
-  assignedTeacher: {
-    id: number;
-    name: string;
-  } | null;
-}
-
-export interface ProgressVideos {
-  beforeVideo: {
-    fileUrl: string;
-    fileName: string | null;
-    uploadedAt: string;
-    duration: number | null;
-  } | null;
-  afterVideo: {
-    fileUrl: string;
-    fileName: string | null;
-    uploadedAt: string;
-    duration: number | null;
-  } | null;
-}
-
-export interface Module {
-  id: number;
-  moduleNumber: number;
-  title: string;
-  topic: string;
-  weekStartDate: string;
-  weekEndDate: string;
-}
-
-export interface Enrollment {
-  id: number;
-  status: string;
-  enrolledAt: string;
-  currentModuleNumber: number;
-  course: {
-    id: number;
-    name: string;
-    startDate: string;
-    endDate: string;
-    status: string;
-    modules: Module[];
-  };
-}
-
-export interface LearningHistoryItem {
-  id: number;
-  activityType: 'in_person_class' | 'ai_practice' | 'video_call';
-  startTime: string;
-  endTime: string | null;
-  status: string;
-  module: {
-    id: number;
-    moduleNumber: number;
-    title: string;
-  };
-  aiFeedback: {
-    feedbackText: string;
-    pronunciationNotes: string | null;
-    grammarNotes: string | null;
-    fluencyNotes: string | null;
-    vocabularyNotes: string | null;
-    overallScore: number | null;
-  } | null;
-  teacherFeedback: {
-    feedbackText: string;
-    confidenceNotes: string | null;
-    improvementSuggestions: string | null;
-    teacherName: string;
-  } | null;
-}
-
-export interface Teacher {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  avatarUrl: string | null;
-  teacherType: 'in_person' | 'video_call' | 'both';
-  bio: string;
-  specialties: string[];
-}
-
-export interface TimeSlot {
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-}
-
-export interface Booking {
-  id: number;
-  bookingDate: string;
-  slotStartTime: string;
-  slotEndTime: string;
-  status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
-  createdAt: string;
-  student?: { id: number; name: string };
-  teacher?: { id: number; name: string };
-  module?: { id: number; moduleNumber: number; title: string };
-}
-
-export interface Course {
-  id: number;
-  name: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  registrationOpenDate: string;
-  registrationCloseDate: string;
-  price: number;
-  status: string;
-  classDay: string;
-  classStartTime: string;
-  classEndTime: string;
-  modules?: Module[];
-}
 
 // ============ API Functions ============
 
@@ -352,35 +239,3 @@ export const api = {
     });
   },
 };
-
-// Notification type
-export interface Notification {
-  id: number;
-  type: 'connection_request' | 'connection_accepted' | 'booking_reminder' | 'general';
-  title: string;
-  message: string;
-  data?: Record<string, unknown>;
-  isRead: boolean;
-  createdAt: string;
-}
-
-// Connection type
-export interface Connection {
-  id: number;
-  linkedUserId: number;
-  linkType: 'parent' | 'teacher';
-  createdAt: string;
-  user: {
-    id: number;
-    fullName: string;
-    email: string;
-    phone?: string;
-    avatarUrl?: string;
-  };
-  teacher?: {
-    id: number;
-    teacherType: 'in_person' | 'video_call' | 'both';
-    bio?: string;
-    specialties?: string[];
-  };
-}

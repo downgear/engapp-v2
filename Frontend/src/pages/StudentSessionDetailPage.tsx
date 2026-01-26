@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
-import { api, LearningHistoryItem } from "@/services/api";
+import { api } from "@/services/api";
+import type { LearningHistoryItem } from "@/types";
 
 interface BookingDetail {
   id: number;

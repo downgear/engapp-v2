@@ -8,7 +8,7 @@ import { ProgressVideos } from "@/components/parent-dashboard/ProgressVideos";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChildren, useProgressVideos, useLearningHistory, useEnrollment } from "@/hooks/useParentDashboard";
-import { LearningHistoryItem } from "@/services/api";
+import type { LearningHistoryItem } from "@/types";
 import { History, AlertCircle, BookOpen, MessageSquare, Video, Calendar, Star, ChevronRight, ChevronDown, Mic, BookText, Brain, Zap, Lightbulb } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";

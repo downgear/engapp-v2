@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { api, Child, ProgressVideos, LearningHistoryItem, Enrollment } from "@/services/api";
+import { api } from "@/services/api";
+import type { Child, ProgressVideos, LearningHistoryItem, Enrollment } from "@/types";
 
 // Default parent ID for demo
 const DEMO_PARENT_ID = 1;

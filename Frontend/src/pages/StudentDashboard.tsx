@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, Enrollment, LearningHistoryItem, Booking } from "@/services/api";
+import { api } from "@/services/api";
+import type { Enrollment, LearningHistoryItem, Booking } from "@/types";
 import { 
   BookOpen, Calendar, Video, MessageSquare, Star, 
   ChevronRight, ChevronDown, Clock, User, LogOut,

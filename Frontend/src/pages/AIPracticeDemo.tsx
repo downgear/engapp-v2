@@ -33,19 +33,17 @@ export interface FeedbackData {
   vocabulary: number;
   fluency: number;
   coherence: number;
+  cohesion: number;
   suggestions: string[];
-  suggestionsEn: string[];
   highlights: string[];
-  highlightsEn: string[];
-  // New detailed feedback fields
+  insufficientData?: boolean;
+  // Detailed feedback fields
   pronunciationIssues?: string[];
-  pronunciationIssuesEn?: string[];
   grammarIssues?: string[];
-  grammarIssuesEn?: string[];
   vocabularyNotes?: string[];
-  vocabularyNotesEn?: string[];
   fluencyNotes?: string[];
-  fluencyNotesEn?: string[];
+  coherenceNotes?: string[];
+  cohesionNotes?: string[];
 }
 
 interface TranscriptEntry {
@@ -256,25 +254,16 @@ const AIPracticeDemo = () => {
     vocabulary: 6.0,
     fluency: 6.0,
     coherence: 6.0,
+    cohesion: 6.0,
     suggestions: [
       "Thử luyện tập thêm để có nhiều dữ liệu đánh giá hơn",
       "Cố gắng nói nhiều hơn trong các buổi thực hành",
       "Mở rộng câu trả lời với nhiều chi tiết hơn",
     ],
-    suggestionsEn: [
-      "Try practicing more for a better assessment",
-      "Try to speak more during practice sessions",
-      "Expand your answers with more details",
-    ],
     highlights: [
       "Bạn đã hoàn thành buổi luyện tập",
       "Bạn có sự dũng cảm để thực hành tiếng Anh",
       "Tiếp tục cố gắng để tiến bộ hơn",
-    ],
-    highlightsEn: [
-      "You completed the practice session",
-      "You showed courage in practicing English",
-      "Keep trying to improve further",
     ],
   });
 
