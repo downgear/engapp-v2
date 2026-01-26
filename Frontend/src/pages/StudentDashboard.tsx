@@ -11,7 +11,8 @@ import type { Enrollment, LearningHistoryItem, Booking } from "@/types";
 import { 
   BookOpen, Calendar, Video, MessageSquare, Star, 
   ChevronRight, ChevronDown, Clock, User, LogOut,
-  Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users
+  Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users,
+  Target, Link2
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, parseISO } from "date-fns";
@@ -30,13 +31,16 @@ interface ParsedFeedback {
   vocabulary: number;
   fluency: number;
   coherence: number;
+  cohesion: number;
   suggestions: string[];
   highlights: string[];
-  // New detailed fields
+  // Detailed fields
   pronunciationIssues?: string[];
   grammarIssues?: string[];
   vocabularyNotes?: string[];
   fluencyNotes?: string[];
+  coherenceNotes?: string[];
+  cohesionNotes?: string[];
 }
 
 const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | null => {
@@ -429,7 +433,7 @@ const StudentDashboard = () => {
                             <CollapsibleContent>
                               <div className="ml-8 mt-1 mb-2 p-3 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-100/50 dark:border-green-900/30 space-y-3">
                                 {/* Score breakdown */}
-                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div className="grid grid-cols-3 gap-2 text-xs">
                                   <div className="flex items-center gap-1.5">
                                     <Mic className="h-3 w-3 text-blue-500" />
                                     <span className="text-muted-foreground">Phát âm:</span>
@@ -449,6 +453,16 @@ const StudentDashboard = () => {
                                     <Zap className="h-3 w-3 text-yellow-500" />
                                     <span className="text-muted-foreground">Lưu loát:</span>
                                     <span className="font-medium">{parsedFeedback.fluency}/10</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Target className="h-3 w-3 text-cyan-500" />
+                                    <span className="text-muted-foreground">Mạch lạc:</span>
+                                    <span className="font-medium">{parsedFeedback.coherence}/10</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    <Link2 className="h-3 w-3 text-pink-500" />
+                                    <span className="text-muted-foreground">Liên kết:</span>
+                                    <span className="font-medium">{parsedFeedback.cohesion}/10</span>
                                   </div>
                                 </div>
 
@@ -486,6 +500,24 @@ const StudentDashboard = () => {
                                   items={parsedFeedback.fluencyNotes || []}
                                   colorClass="text-yellow-700 dark:text-yellow-400"
                                   bulletColor="text-yellow-500"
+                                />
+
+                                {/* Coherence Notes - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Target className="h-3 w-3" />}
+                                  title="Tính mạch lạc"
+                                  items={parsedFeedback.coherenceNotes || []}
+                                  colorClass="text-cyan-700 dark:text-cyan-400"
+                                  bulletColor="text-cyan-500"
+                                />
+
+                                {/* Cohesion Notes - Collapsible */}
+                                <FeedbackSection
+                                  icon={<Link2 className="h-3 w-3" />}
+                                  title="Tính liên kết"
+                                  items={parsedFeedback.cohesionNotes || []}
+                                  colorClass="text-pink-700 dark:text-pink-400"
+                                  bulletColor="text-pink-500"
                                 />
                                 
                                 {/* Highlights - Collapsible */}
