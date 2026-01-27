@@ -90,6 +90,8 @@ export class StudentsService {
       status: enrollment.status,
       enrolledAt: enrollment.enrolledAt,
       currentModuleNumber: enrollment.currentModuleNumber,
+      paid: enrollment.paid,
+      paidAt: enrollment.paidAt,
       course: {
         id: enrollment.course.id,
         name: enrollment.course.name,

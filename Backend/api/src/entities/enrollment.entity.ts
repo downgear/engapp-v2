@@ -35,5 +35,11 @@ export class Enrollment {
 
   @Column({ name: 'current_module_number', default: 1 })
   currentModuleNumber: number;
+
+  @Column({ name: 'paid', default: false })
+  paid: boolean;
+
+  @Column({ name: 'paid_at', type: 'timestamp', nullable: true })
+  paidAt: Date | null;
 }
 

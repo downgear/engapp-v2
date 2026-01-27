@@ -9,6 +9,8 @@ export interface Enrollment {
   status: string;
   enrolledAt: string;
   currentModuleNumber: number;
+  paid: boolean;
+  paidAt: string | null;
   course: {
     id: number;
     name: string;

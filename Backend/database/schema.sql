@@ -108,6 +108,8 @@ CREATE TABLE enrollments (
     enrolled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'dropped')),
     current_module_number INTEGER DEFAULT 1,
+    paid BOOLEAN NOT NULL DEFAULT 0,
+    paid_at DATETIME NULL,
     UNIQUE(student_id, course_id),
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE

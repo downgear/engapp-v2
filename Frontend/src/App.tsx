@@ -23,6 +23,7 @@ import ModuleDetailPage from "./pages/ModuleDetailPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import StudentSessionDetailPage from "./pages/StudentSessionDetailPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
+import PaymentPage from "./pages/PaymentPage";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,14 @@ const App = () => (
                 element={
                   <ProtectedRoute allowedRoles={["student"]}>
                     <BookingDetailPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/payment/:moduleId"
+                element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <PaymentPage />
                   </ProtectedRoute>
                 }
               />

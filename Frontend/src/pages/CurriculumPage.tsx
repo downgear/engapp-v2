@@ -23,6 +23,8 @@ interface Module {
 
 interface Enrollment {
   currentModuleNumber: number;
+  paid: boolean;
+  paidAt: string | null;
   course: {
     id: number;
     name: string;
@@ -76,8 +78,7 @@ const CurriculumPage = () => {
   const modules = enrollment?.course?.modules || [];
   const currentModule = enrollment?.currentModuleNumber || 1;
 
-  // Determine module status based on week dates
-  // For demo: if course hasn't started yet, first module is "current" (accessible)
+  // Determine module status based on payment and week dates
   const getModuleStatus = (module: Module) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -86,20 +87,17 @@ const CurriculumPage = () => {
     const weekEnd = new Date(module.weekEndDate);
     weekEnd.setHours(23, 59, 59, 999);
 
-    // Check if course has started
-    const courseStarted = modules.length > 0 && today >= new Date(modules[0].weekStartDate);
-
-    // If course hasn't started yet, make first module "current" for demo
-    if (!courseStarted) {
+    // If NOT PAID: First module is "current", rest are "locked" (shows "Chưa thanh toán")
+    if (!enrollment?.paid) {
       return module.moduleNumber === 1 ? "current" : "locked";
     }
 
+    // If PAID: All modules are unlocked
+    // Use week-based logic to determine which is "current" vs "completed"
     // If today is after the week ended, it's completed
     if (today > weekEnd) return "completed";
-    // If today is within the week, it's current/unlocked
-    if (today >= weekStart && today <= weekEnd) return "current";
-    // If today is before the week starts, it's locked
-    return "locked";
+    // If today is within the week OR before the week starts, it's current (unlocked)
+    return "current";
   };
 
   // Find the current active module based on dates
@@ -134,7 +132,18 @@ const CurriculumPage = () => {
       case "current":
         return <Badge className="bg-primary hover:bg-primary/90"><Clock className="h-3 w-3 mr-1" />Đang học</Badge>;
       default:
-        return <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" />Chưa mở</Badge>;
+        return <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" />Chưa thanh toán</Badge>;
+    }
+  };
+
+  // Handle module click - if locked (not paid), redirect to payment page
+  const handleModuleClick = (module: Module, status: string) => {
+    if (status === "locked" && !enrollment?.paid) {
+      // Redirect to payment page for locked modules (not paid yet)
+      navigate(`/payment/${module.id}`);
+    } else {
+      // Navigate to module detail for unlocked modules
+      navigate(`/curriculum/${module.id}`);
     }
   };
 
@@ -241,17 +250,14 @@ const CurriculumPage = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {modules.map((module) => {
             const status = getModuleStatus(module);
-            const isClickable = status !== "locked";
             
             return (
               <Card 
                 key={module.id}
-                className={`relative overflow-hidden transition-all ${
-                  isClickable 
-                    ? "cursor-pointer hover:shadow-lg hover:border-primary/50 hover:-translate-y-1" 
-                    : "opacity-60"
+                className={`relative overflow-hidden transition-all cursor-pointer hover:shadow-lg hover:border-primary/50 hover:-translate-y-1 ${
+                  status === "locked" ? "opacity-60" : ""
                 } ${status === "current" ? "border-primary ring-2 ring-primary/20" : ""}`}
-                onClick={() => isClickable && navigate(`/curriculum/${module.id}`)}
+                onClick={() => handleModuleClick(module, status)}
               >
                 <CardContent className="p-5">
                   {/* Module Number Badge */}
@@ -277,12 +283,10 @@ const CurriculumPage = () => {
                     Tuần {module.moduleNumber}: Chủ đề Work
                   </p>
                   
-                  {isClickable && (
-                    <div className="flex items-center text-sm text-primary font-medium">
-                      Xem chi tiết
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </div>
-                  )}
+                  <div className="flex items-center text-sm text-primary font-medium">
+                    {status === "locked" ? "Thanh toán để mở khóa" : "Xem chi tiết"}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </div>
                 </CardContent>
               </Card>
             );

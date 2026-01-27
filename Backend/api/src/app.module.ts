@@ -11,6 +11,7 @@ import { AIPracticeModule } from './modules/ai-practice/ai-practice.module';
 import { ConnectionsModule } from './modules/connections/connections.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { InauguralRegistrationsModule } from './modules/inaugural-registrations/inaugural-registrations.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -30,6 +31,7 @@ import { AppService } from './app.service';
     ConnectionsModule,
     NotificationsModule,
     InauguralRegistrationsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -238,4 +238,13 @@ export const api = {
       }),
     });
   },
+
+  // ============ Payments ============
+
+  async processPayment(studentId: number, moduleId: number): Promise<{ success: boolean; message: string }> {
+    return fetchApi<{ success: boolean; message: string }>('/payments/process', {
+      method: 'POST',
+      body: JSON.stringify({ studentId, moduleId }),
+    });
+  },
 };
