@@ -201,14 +201,39 @@ Hướng dẫn và đánh giá học sinh.
 ## 💰 Thanh Toán
 
 ### Thông tin gói học
-- **Giá:** 2.000.000 VNĐ / khóa học (8 modules)
-- **Người thanh toán:** Phụ huynh
+- **Giá:** 2.990.000 VNĐ / khóa học (8 modules)
+- **Giá gốc:** 3.990.000 VNĐ (khuyến mãi khai trương)
+- **Người thanh toán:** Học sinh hoặc Phụ huynh
 
-### Trạng thái thanh toán
-- Chờ thanh toán (Pending)
-- Đã thanh toán (Paid)
-- Thất bại (Failed)
-- Hoàn tiền (Refunded)
+### Phương thức thanh toán hiện tại (Demo)
+
+> ⚠️ **Lưu ý:** Hệ thống thanh toán hiện tại chỉ hỗ trợ **quét mã QR demo** để chuyển khoản trực tiếp. Chưa tích hợp với các cổng thanh toán tự động như VNPay, Momo, ZaloPay hoặc các dịch vụ theo dõi biến động số dư như Casso/SePay.
+
+**Thông tin chuyển khoản:**
+
+| Thông tin | Giá trị |
+|-----------|---------|
+| Ngân hàng | xxx |
+| Số tài khoản | xxx |
+| Chủ tài khoản | xxx |
+| Nội dung CK | Thanh toan Lingriser |
+
+### Quy trình thanh toán
+
+1. **Học sinh truy cập trang Chương trình học** (`/curriculum`)
+2. **Click vào module có trạng thái "Chưa thanh toán"** → Chuyển đến trang thanh toán
+3. **Quét mã QR** bằng app ngân hàng để chuyển khoản
+4. **Xác nhận đã thanh toán** trong vòng 60 giây
+   - Nếu xác nhận trong 60s → Mở khóa toàn bộ khóa học
+   - Nếu hết 60s mà chưa xác nhận → Quay lại trang Chương trình với trạng thái "Chưa thanh toán"
+5. **Sau khi thanh toán thành công** → Tất cả 8 modules được mở khóa
+
+### Trạng thái thanh toán trong hệ thống
+
+| Trạng thái | Mô tả | Hiển thị |
+|------------|-------|----------|
+| Chưa thanh toán | Học sinh chưa thanh toán học phí | Module 2-8 hiển thị "Chưa thanh toán" |
+| Đã thanh toán | Học sinh đã xác nhận thanh toán | Tất cả modules hiển thị "Đang học" hoặc "Hoàn thành" |
 
 ---
 
@@ -321,4 +346,4 @@ Hướng dẫn và đánh giá học sinh.
 
 ---
 
-*Tài liệu này được cập nhật lần cuối: Tháng 01/2026*
+*Tài liệu này được cập nhật lần cuối: 27/01/2026*
