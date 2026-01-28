@@ -241,6 +241,39 @@ export const api = {
 
   // ============ Payments ============
 
+  /**
+   * Create a pending payment session
+   * Returns transaction code to include in bank transfer
+   */
+  async createPendingPayment(studentId: number): Promise<{ 
+    transactionCode: string; 
+    amount: number;
+    expiresIn: number;
+  }> {
+    return fetchApi('/payments/create-pending', {
+      method: 'POST',
+      body: JSON.stringify({ studentId }),
+    });
+  },
+
+  /**
+   * Check payment status (poll this to detect when payment is confirmed)
+   */
+  async checkPaymentStatus(studentId: number): Promise<{ 
+    paid: boolean; 
+    paidAt: string | null;
+    pendingPayment?: {
+      transactionCode: string;
+      amount: number;
+      expiresAt: string;
+    };
+  }> {
+    return fetchApi(`/payments/status/${studentId}`);
+  },
+
+  /**
+   * Manual payment confirmation (for demo/admin)
+   */
   async processPayment(studentId: number, moduleId: number): Promise<{ success: boolean; message: string }> {
     return fetchApi<{ success: boolean; message: string }>('/payments/process', {
       method: 'POST',

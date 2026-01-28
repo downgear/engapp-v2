@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,32 +6,92 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { 
-  ArrowLeft, CheckCircle2, Clock, CreditCard, Loader2, XCircle, AlertTriangle
+  ArrowLeft, CheckCircle2, Clock, CreditCard, Loader2, XCircle, AlertTriangle, Copy, Check
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const PAYMENT_TIMEOUT = 60; // 60 seconds timeout
+const PAYMENT_TIMEOUT = 300; // 5 minutes (300 seconds)
+const POLL_INTERVAL = 3000; // Poll every 3 seconds
 
 const PaymentPage = () => {
   const navigate = useNavigate();
   const { moduleId } = useParams<{ moduleId: string }>();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+  
   const [countdown, setCountdown] = useState(PAYMENT_TIMEOUT);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentExpired, setPaymentExpired] = useState(false);
+  const [transactionCode, setTransactionCode] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
+  // Initialize pending payment
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [authLoading, isAuthenticated, navigate]);
 
-  // Countdown timer - if reaches 0 without payment, expire
+    if (user?.profileId) {
+      initializePendingPayment();
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
+
+  const initializePendingPayment = async () => {
+    try {
+      const result = await api.createPendingPayment(user?.profileId || 0);
+      setTransactionCode(result.transactionCode);
+      setCountdown(result.expiresIn);
+      setIsInitializing(false);
+    } catch (error) {
+      console.error("Failed to create pending payment:", error);
+      setIsInitializing(false);
+      // Use a fallback transaction code
+      setTransactionCode(`LR${user?.profileId || 0}${Date.now().toString(36).toUpperCase()}`);
+    }
+  };
+
+  // Poll for payment status
+  const checkPaymentStatus = useCallback(async () => {
+    if (paymentComplete || paymentExpired || !user?.profileId) return;
+
+    try {
+      const status = await api.checkPaymentStatus(user.profileId);
+      
+      if (status.paid) {
+        setPaymentComplete(true);
+        toast({
+          title: "Thanh toán thành công! 🎉",
+          description: "Khóa học đã được mở khóa. Đang chuyển hướng...",
+        });
+        setTimeout(() => {
+          navigate("/curriculum");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Failed to check payment status:", error);
+    }
+  }, [user, paymentComplete, paymentExpired, navigate, toast]);
+
+  // Start polling
   useEffect(() => {
-    if (paymentComplete || isProcessing || paymentExpired) return;
+    if (isInitializing || paymentComplete || paymentExpired) return;
+
+    const pollInterval = setInterval(checkPaymentStatus, POLL_INTERVAL);
+    
+    // Initial check
+    checkPaymentStatus();
+
+    return () => clearInterval(pollInterval);
+  }, [isInitializing, checkPaymentStatus, paymentComplete, paymentExpired]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (paymentComplete || isProcessing || paymentExpired || isInitializing) return;
 
     if (countdown <= 0) {
-      // Payment timeout - redirect back without unlocking
       setPaymentExpired(true);
       setTimeout(() => {
         navigate("/curriculum");
@@ -44,29 +104,42 @@ const PaymentPage = () => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [countdown, paymentComplete, isProcessing, paymentExpired, navigate]);
+  }, [countdown, paymentComplete, isProcessing, paymentExpired, isInitializing, navigate]);
 
-  const handleConfirmPayment = async () => {
+  // Manual confirmation (demo/backup)
+  const handleManualConfirm = async () => {
     if (isProcessing || paymentComplete || paymentExpired) return;
     
     setIsProcessing(true);
     try {
-      // Call API to process payment and unlock module
       await api.processPayment(user?.profileId || 0, Number(moduleId));
       setPaymentComplete(true);
-      
-      // Wait 1.5 seconds to show success, then redirect
+      toast({
+        title: "Thanh toán thành công! 🎉",
+        description: "Khóa học đã được mở khóa.",
+      });
       setTimeout(() => {
         navigate("/curriculum");
       }, 1500);
     } catch (error) {
       console.error("Payment processing failed:", error);
-      // For demo, still mark as complete even if API fails
       setPaymentComplete(true);
       setTimeout(() => {
         navigate("/curriculum");
       }, 1500);
     }
+  };
+
+  // Copy transaction code
+  const copyTransactionCode = () => {
+    const transferContent = `Thanh toan Lingriser ${transactionCode}`;
+    navigator.clipboard.writeText(transferContent);
+    setCopied(true);
+    toast({
+      title: "Đã sao chép!",
+      description: "Nội dung chuyển khoản đã được sao chép.",
+    });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Format countdown as mm:ss
@@ -76,12 +149,27 @@ const PaymentPage = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Get progress bar color based on time remaining
+  // Get progress bar color
   const getProgressColor = () => {
-    if (countdown > 30) return "bg-green-500";
-    if (countdown > 15) return "bg-yellow-500";
+    const percentage = countdown / PAYMENT_TIMEOUT;
+    if (percentage > 0.5) return "bg-green-500";
+    if (percentage > 0.25) return "bg-yellow-500";
     return "bg-red-500";
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 pt-28 pb-8 max-w-2xl">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-3 text-lg">Đang khởi tạo thanh toán...</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,7 +188,7 @@ const PaymentPage = () => {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Thanh Toán Khóa Học</h1>
             <p className="text-muted-foreground">
-              Quét mã QR để thanh toán
+              Quét mã QR để thanh toán - Tự động xác nhận
             </p>
           </div>
         </div>
@@ -152,6 +240,20 @@ const PaymentPage = () => {
               </div>
             ) : (
               <>
+                {/* Auto-detect notice */}
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-green-800 dark:text-green-400">Tự động xác nhận thanh toán</p>
+                      <p className="text-sm text-green-700 dark:text-green-500 mt-1">
+                        Hệ thống sẽ tự động phát hiện khi bạn chuyển khoản thành công. 
+                        Không cần bấm xác nhận thủ công!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* QR Code Section */}
                 <div className="text-center">
                   <p className="text-sm font-medium mb-4">Quét mã QR để chuyển khoản</p>
@@ -172,7 +274,27 @@ const PaymentPage = () => {
                       <p><span className="font-medium text-foreground">Ngân hàng:</span> BIDV - CN Quảng Nam</p>
                       <p><span className="font-medium text-foreground">Số TK:</span> 5622486301</p>
                       <p><span className="font-medium text-foreground">Chủ TK:</span> LUU CHI LAP</p>
-                      <p><span className="font-medium text-foreground">Nội dung:</span> Thanh toan Lingriser</p>
+                    </div>
+                    
+                    {/* Transaction Code - Important! */}
+                    <div className="mt-3 p-3 bg-primary/10 rounded-lg border-2 border-primary/30">
+                      <p className="text-xs text-muted-foreground mb-1">Nội dung chuyển khoản (BẮT BUỘC):</p>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 font-mono font-bold text-primary text-sm">
+                          Thanh toan Lingriser {transactionCode}
+                        </code>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={copyTransactionCode}
+                          className="shrink-0"
+                        >
+                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-red-500 mt-2">
+                        ⚠️ Vui lòng ghi đúng nội dung để hệ thống tự động xác nhận!
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -188,34 +310,42 @@ const PaymentPage = () => {
                   </div>
                   
                   <div className="flex items-center justify-center gap-2">
-                    <Clock className={`h-5 w-5 ${countdown <= 15 ? 'text-red-500' : 'text-muted-foreground'}`} />
-                    <span className={`text-lg font-mono font-bold ${countdown <= 15 ? 'text-red-500' : 'text-foreground'}`}>
+                    <Clock className={`h-5 w-5 ${countdown <= 60 ? 'text-red-500' : 'text-muted-foreground'}`} />
+                    <span className={`text-lg font-mono font-bold ${countdown <= 60 ? 'text-red-500' : 'text-foreground'}`}>
                       {formatCountdown(countdown)}
                     </span>
-                    <span className="text-sm text-muted-foreground">còn lại để thanh toán</span>
+                    <span className="text-sm text-muted-foreground">còn lại</span>
                   </div>
 
-                  {countdown <= 15 && (
+                  {countdown <= 60 && (
                     <div className="flex items-center justify-center gap-2 text-red-500 text-sm">
                       <AlertTriangle className="h-4 w-4" />
-                      <span>Sắp hết thời gian! Vui lòng xác nhận thanh toán.</span>
+                      <span>Sắp hết thời gian! Vui lòng hoàn tất thanh toán.</span>
                     </div>
                   )}
+
+                  {/* Polling indicator */}
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Đang chờ xác nhận từ ngân hàng...</span>
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
+                  {/* Manual confirm button (backup) */}
                   <Button 
-                    className="w-full h-12 text-lg"
-                    onClick={handleConfirmPayment}
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleManualConfirm}
                   >
-                    <CheckCircle2 className="h-5 w-5 mr-2" />
-                    Tôi đã thanh toán
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Tôi đã chuyển khoản (xác nhận thủ công)
                   </Button>
                   
                   <Button 
-                    variant="outline" 
-                    className="w-full"
+                    variant="ghost" 
+                    className="w-full text-muted-foreground"
                     onClick={() => navigate("/curriculum")}
                   >
                     Hủy thanh toán

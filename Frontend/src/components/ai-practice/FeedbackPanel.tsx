@@ -10,6 +10,86 @@ interface FeedbackPanelProps {
   onNewTopic: () => void;
 }
 
+// Type for structured feedback items (grammar, pronunciation errors, etc.)
+interface StructuredFeedbackItem {
+  quote?: string;
+  explanation?: string;
+  correction?: string;
+  spoken?: string;
+  expected?: string;
+  errorType?: string;
+}
+
+// Helper to safely render feedback items (handles both strings and JSON objects)
+const renderFeedbackItem = (item: unknown): React.ReactNode => {
+  if (item == null) return null;
+  
+  // If it's a string, check if it's JSON
+  if (typeof item === 'string') {
+    const trimmed = item.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed) as StructuredFeedbackItem;
+        return renderStructuredItem(parsed);
+      } catch {
+        // Not valid JSON, render as string
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  
+  // If it's an object, render as structured item
+  if (typeof item === 'object') {
+    return renderStructuredItem(item as StructuredFeedbackItem);
+  }
+  
+  return String(item);
+};
+
+// Render a structured feedback item nicely
+const renderStructuredItem = (item: StructuredFeedbackItem): React.ReactNode => {
+  return (
+    <div className="space-y-1">
+      {item.quote && (
+        <div>
+          <span className="text-muted-foreground/70 text-xs">Câu gốc: </span>
+          <span className="italic text-red-600 dark:text-red-400">"{item.quote}"</span>
+        </div>
+      )}
+      {item.spoken && (
+        <div>
+          <span className="text-muted-foreground/70 text-xs">Phát âm: </span>
+          <span className="italic text-red-600 dark:text-red-400">"{item.spoken}"</span>
+          {item.expected && (
+            <>
+              <span className="text-muted-foreground/70 text-xs"> → </span>
+              <span className="italic text-green-600 dark:text-green-400">"{item.expected}"</span>
+            </>
+          )}
+        </div>
+      )}
+      {item.explanation && (
+        <div>
+          <span className="text-muted-foreground/70 text-xs">Giải thích: </span>
+          <span>{item.explanation}</span>
+        </div>
+      )}
+      {item.correction && (
+        <div>
+          <span className="text-muted-foreground/70 text-xs">Sửa lại: </span>
+          <span className="text-green-600 dark:text-green-400">"{item.correction}"</span>
+        </div>
+      )}
+      {item.errorType && (
+        <div>
+          <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{item.errorType}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: FeedbackPanelProps) => {
   const { t, language } = useLanguage();
   
@@ -151,7 +231,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.pronunciationIssues?.map((issue, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{issue}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(issue)}</div>
               </li>
             ))}
           </ul>
@@ -169,7 +249,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.grammarIssues?.map((issue, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{issue}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(issue)}</div>
               </li>
             ))}
           </ul>
@@ -187,7 +267,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.vocabularyNotes?.map((note, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{note}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
               </li>
             ))}
           </ul>
@@ -205,7 +285,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.fluencyNotes?.map((note, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{note}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
               </li>
             ))}
           </ul>
@@ -223,7 +303,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.coherenceNotes?.map((note, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{note}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
               </li>
             ))}
           </ul>
@@ -241,7 +321,7 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
             {feedback.cohesionNotes?.map((note, index) => (
               <li key={index} className="flex items-start gap-3 text-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-2 flex-shrink-0" />
-                <span className="text-muted-foreground">{note}</span>
+                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
               </li>
             ))}
           </ul>
@@ -255,10 +335,10 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
           {t("aiPractice.strengths")}
         </h3>
         <ul className="space-y-3">
-          {feedback.highlights.map((highlight, index) => (
+          {feedback.highlights?.map((highlight, index) => (
             <li key={index} className="flex items-start gap-3 text-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
-              <span className="text-muted-foreground">{highlight}</span>
+              <div className="text-muted-foreground flex-1">{renderFeedbackItem(highlight)}</div>
             </li>
           ))}
         </ul>
@@ -271,12 +351,12 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
           {t("aiPractice.suggestions")}
         </h3>
         <ul className="space-y-3">
-          {feedback.suggestions.map((suggestion, index) => (
+          {feedback.suggestions?.map((suggestion, index) => (
             <li key={index} className="flex items-start gap-3 text-sm">
               <span className="w-5 h-5 rounded-full bg-secondary/10 text-secondary flex items-center justify-center flex-shrink-0 text-xs font-bold">
                 {index + 1}
               </span>
-              <span className="text-muted-foreground">{suggestion}</span>
+              <div className="text-muted-foreground flex-1">{renderFeedbackItem(suggestion)}</div>
             </li>
           ))}
         </ul>

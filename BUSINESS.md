@@ -205,28 +205,53 @@ Hướng dẫn và đánh giá học sinh.
 - **Giá gốc:** 3.990.000 VNĐ (khuyến mãi khai trương)
 - **Người thanh toán:** Học sinh hoặc Phụ huynh
 
-### Phương thức thanh toán hiện tại (Demo)
+### Phương thức thanh toán (SePay Integration)
 
-> ⚠️ **Lưu ý:** Hệ thống thanh toán hiện tại chỉ hỗ trợ **quét mã QR demo** để chuyển khoản trực tiếp. Chưa tích hợp với các cổng thanh toán tự động như VNPay, Momo, ZaloPay hoặc các dịch vụ theo dõi biến động số dư như Casso/SePay.
+> ✅ **Đã tích hợp SePay** để tự động xác nhận thanh toán khi nhận được tiền chuyển khoản.
 
 **Thông tin chuyển khoản:**
 
 | Thông tin | Giá trị |
 |-----------|---------|
-| Ngân hàng | xxx |
-| Số tài khoản | xxx |
-| Chủ tài khoản | xxx |
-| Nội dung CK | Thanh toan Lingriser |
+| Ngân hàng | BIDV - CN Quảng Nam |
+| Số tài khoản | 5622486301 |
+| Chủ tài khoản | LUU CHI LAP |
+| Nội dung CK | Thanh toan Lingriser + Mã giao dịch |
 
-### Quy trình thanh toán
+### Quy trình thanh toán (Auto-detect với SePay)
 
 1. **Học sinh truy cập trang Chương trình học** (`/curriculum`)
 2. **Click vào module có trạng thái "Chưa thanh toán"** → Chuyển đến trang thanh toán
-3. **Quét mã QR** bằng app ngân hàng để chuyển khoản
-4. **Xác nhận đã thanh toán** trong vòng 60 giây
-   - Nếu xác nhận trong 60s → Mở khóa toàn bộ khóa học
-   - Nếu hết 60s mà chưa xác nhận → Quay lại trang Chương trình với trạng thái "Chưa thanh toán"
-5. **Sau khi thanh toán thành công** → Tất cả 8 modules được mở khóa
+3. **Hệ thống tạo mã giao dịch duy nhất** (format: `LR{studentId}{timestamp}`)
+4. **Học sinh quét mã QR** bằng app ngân hàng để chuyển khoản
+   - **QUAN TRỌNG:** Nội dung chuyển khoản phải chứa mã giao dịch: `Thanh toan Lingriser LR...`
+5. **SePay phát hiện giao dịch** → Gửi webhook đến Backend
+6. **Backend xác nhận thanh toán** → Cập nhật trạng thái enrollment
+7. **Frontend poll và phát hiện** → Tự động redirect về `/curriculum` với tất cả modules đã mở khóa
+
+**Thời gian chờ:** 5 phút (300 giây)
+- Nếu hết thời gian mà chưa nhận được thanh toán → Quay lại trang Chương trình
+- Có nút "Xác nhận thủ công" để backup nếu webhook bị delay
+
+### Tích hợp SePay
+
+**Cấu hình webhook trong SePay Dashboard:**
+```
+URL: https://your-domain.com/api/payments/sepay-webhook
+Method: POST
+```
+
+**Biến môi trường (.env):**
+```
+SEPAY_API_KEY=your-sepay-api-key-here
+```
+
+**Cách SePay hoạt động:**
+```
+User chuyển khoản → Tiền vào TK BIDV → SePay phát hiện (< 5 giây) 
+→ Gửi webhook đến Backend → Match mã giao dịch → Xác nhận thanh toán
+→ Frontend poll và phát hiện → Redirect về /curriculum
+```
 
 ### Trạng thái thanh toán trong hệ thống
 
@@ -234,6 +259,19 @@ Hướng dẫn và đánh giá học sinh.
 |------------|-------|----------|
 | Chưa thanh toán | Học sinh chưa thanh toán học phí | Module 2-8 hiển thị "Chưa thanh toán" |
 | Đã thanh toán | Học sinh đã xác nhận thanh toán | Tất cả modules hiển thị "Đang học" hoặc "Hoàn thành" |
+
+### Kế hoạch tương lai (Roadmap thanh toán)
+
+**Đã hoàn thành:**
+- [x] Tự động xác nhận thanh toán qua webhook (SePay)
+- [x] Mã giao dịch duy nhất cho mỗi thanh toán
+- [x] Frontend polling để phát hiện thanh toán
+
+**Trong các phiên bản tiếp theo:**
+- [ ] Cổng thanh toán VNPay/Momo/ZaloPay
+- [ ] Thanh toán trả góp
+- [ ] Mã giảm giá (Voucher/Coupon)
+- [ ] Hóa đơn điện tử
 
 ---
 
