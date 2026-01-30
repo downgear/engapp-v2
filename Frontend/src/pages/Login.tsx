@@ -118,6 +118,7 @@ const Login = () => {
             <p><strong>Học sinh:</strong> luuchilap@gmail.com</p>
             <p><strong>Phụ huynh:</strong> phuhuynhlap@gmail.com</p>
             <p><strong>Giáo viên:</strong> thaycualap@gmail.com</p>
+            <p><strong>Admin:</strong> admin@lingriser.com</p>
             <p className="text-xs opacity-70 mt-2">Mật khẩu mặc định: 123456</p>
           </CardContent>
         </Card>

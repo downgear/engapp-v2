@@ -32,6 +32,20 @@ interface UserStatistics {
   }>;
 }
 
+interface VisitStats {
+  total: number;
+  hourlyData: Array<{ hour: string; count: number }>;
+}
+
+interface PracticeStats {
+  aiPractice: { total: number };
+  videoCall: { total: number };
+}
+
+interface ChatUnreadCount {
+  count: number;
+}
+
 const COLORS = {
   student: "#3b82f6", // blue
   parent: "#10b981", // green
@@ -53,8 +67,12 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 const AdminDashboard = () => {
   const { user, accessToken, logout } = useAuth();
   const [userStats, setUserStats] = useState<UserStatistics | null>(null);
+  const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
+  const [practiceStats, setPracticeStats] = useState<PracticeStats | null>(null);
+  const [chatUnread, setChatUnread] = useState<ChatUnreadCount | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,8 +80,16 @@ const AdminDashboard = () => {
 
       try {
         setLoading(true);
-        const stats = await api.getAdminUserStatistics(accessToken);
+        const [stats, visits, practice, unread] = await Promise.all([
+          api.getAdminUserStatistics(accessToken),
+          api.getAdminVisitStatistics(accessToken).catch(() => null),
+          api.getAdminPracticeStatistics(accessToken).catch(() => null),
+          api.getAdminUnreadCount(accessToken).catch(() => null),
+        ]);
         setUserStats(stats);
+        setVisitStats(visits);
+        setPracticeStats(practice);
+        setChatUnread(unread);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
       } finally {
@@ -115,7 +141,7 @@ const AdminDashboard = () => {
         )}
 
         {/* Tabs for different sections */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -254,33 +280,74 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Quick stats placeholders */}
+            {/* Quick stats summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="opacity-60">
+              <Card 
+                className="cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
+                onClick={() => setActiveTab("visits")}
+              >
                 <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <Settings className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-medium">Thống kê truy cập</p>
-                    <p className="text-sm">Sắp ra mắt</p>
-                  </div>
+                  {loading ? (
+                    <div className="text-center">
+                      <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Settings className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+                      <div className="text-3xl font-bold text-blue-500">
+                        {visitStats?.total ?? 0}
+                      </div>
+                      <p className="font-medium">Lượt truy cập</p>
+                      <p className="text-sm text-muted-foreground">trong 24h qua</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-              <Card className="opacity-60">
+              <Card 
+                className="cursor-pointer hover:border-green-500 hover:shadow-md transition-all"
+                onClick={() => setActiveTab("practice")}
+              >
                 <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <BookOpen className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-medium">Thống kê luyện tập</p>
-                    <p className="text-sm">Sắp ra mắt</p>
-                  </div>
+                  {loading ? (
+                    <div className="text-center">
+                      <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <BookOpen className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      <div className="text-3xl font-bold text-green-500">
+                        {(practiceStats?.aiPractice?.total ?? 0) + (practiceStats?.videoCall?.total ?? 0)}
+                      </div>
+                      <p className="font-medium">Lượt luyện tập</p>
+                      <p className="text-sm text-muted-foreground">
+                        AI: {practiceStats?.aiPractice?.total ?? 0} | Video: {practiceStats?.videoCall?.total ?? 0}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-              <Card className="opacity-60">
+              <Card 
+                className="cursor-pointer hover:border-orange-500 hover:shadow-md transition-all"
+                onClick={() => setActiveTab("chat")}
+              >
                 <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <MessageSquare className="h-8 w-8 mx-auto mb-2" />
-                    <p className="font-medium">Chat hỗ trợ</p>
-                    <p className="text-sm">Sắp ra mắt</p>
-                  </div>
+                  {loading ? (
+                    <div className="text-center">
+                      <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                      <Skeleton className="h-4 w-24 mx-auto" />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-2 text-orange-500" />
+                      <div className="text-3xl font-bold text-orange-500">
+                        {chatUnread?.count ?? 0}
+                      </div>
+                      <p className="font-medium">Tin nhắn chờ</p>
+                      <p className="text-sm text-muted-foreground">cần phản hồi</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
