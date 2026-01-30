@@ -4,6 +4,7 @@ import { api } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   MessageCircle,
   X,
@@ -34,12 +35,26 @@ export const ChatWidget = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const unreadPollRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  // Fetch unread count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!accessToken) return;
+    
+    try {
+      const result = await api.getUserUnreadCount(accessToken);
+      setUnreadCount(result.count);
+    } catch (err) {
+      console.error("Failed to fetch unread count:", err);
+    }
+  }, [accessToken]);
 
   const initConversation = useCallback(async () => {
     if (!accessToken) return;
@@ -75,6 +90,35 @@ export const ChatWidget = () => {
       initConversation();
     }
   }, [isOpen, accessToken, conversationId, initConversation]);
+
+  // Poll for unread count when chat is CLOSED
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || user?.role === "admin") return;
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Poll every 10 seconds when chat is closed
+    if (!isOpen) {
+      unreadPollRef.current = setInterval(() => {
+        fetchUnreadCount();
+      }, 10000);
+    }
+
+    return () => {
+      if (unreadPollRef.current) {
+        clearInterval(unreadPollRef.current);
+      }
+    };
+  }, [isOpen, isAuthenticated, accessToken, user?.role, fetchUnreadCount]);
+
+  // Reset unread count when opening chat (messages will be marked as read)
+  useEffect(() => {
+    if (isOpen) {
+      // Clear unread count when chat opens (messages get marked as read on fetch)
+      setUnreadCount(0);
+    }
+  }, [isOpen]);
 
   // Poll for new messages when open
   useEffect(() => {
@@ -139,15 +183,22 @@ export const ChatWidget = () => {
   return (
     <>
       {/* Floating Button */}
-      <Button
-        className={cn(
-          "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50",
-          isOpen && "hidden"
+      <div className={cn("fixed bottom-6 right-6 z-50", isOpen && "hidden")}>
+        <Button
+          className="h-14 w-14 rounded-full shadow-lg relative"
+          onClick={() => setIsOpen(true)}
+        >
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+        {/* Unread Badge */}
+        {unreadCount > 0 && (
+          <Badge 
+            className="absolute -top-1 -right-1 h-6 min-w-6 flex items-center justify-center px-1.5 bg-red-500 text-white border-2 border-background animate-pulse"
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
         )}
-        onClick={() => setIsOpen(true)}
-      >
-        <MessageCircle className="h-6 w-6" />
-      </Button>
+      </div>
 
       {/* Chat Window */}
       {isOpen && (

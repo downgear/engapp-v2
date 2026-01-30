@@ -446,6 +446,12 @@ export const api = {
     });
   },
 
+  async getUserUnreadCount(token: string): Promise<{ count: number }> {
+    return fetchApi('/chat/user/unread-count', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
   // ============ Chat (Admin) ============
 
   async getAdminConversations(token: string, options: { status?: string; page?: number; limit?: number } = {}): Promise<{

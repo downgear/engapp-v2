@@ -40,6 +40,14 @@ export class ChatController {
   }
 
   /**
+   * Get unread count for current user
+   */
+  @Get('user/unread-count')
+  getUserUnreadCount(@CurrentUser('userId') userId: number) {
+    return this.chatService.getUserUnreadCount(userId);
+  }
+
+  /**
    * Get messages for a conversation (for user)
    */
   @Get('conversations/:id/messages')

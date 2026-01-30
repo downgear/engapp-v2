@@ -69,6 +69,23 @@ export class ChatService {
   }
 
   /**
+   * Get unread message count for a user
+   */
+  async getUserUnreadCount(userId: number) {
+    // Count all unread messages from others (admin) in user's conversations
+    const count = await this.messageRepo
+      .createQueryBuilder('msg')
+      .innerJoin('msg.conversation', 'conv')
+      .where('conv.user_id = :userId', { userId })
+      .andWhere('msg.sender_id != :userId', { userId })
+      .andWhere('msg.is_read = false')
+      .andWhere('conv.status = :status', { status: ConversationStatus.OPEN })
+      .getCount();
+
+    return { count };
+  }
+
+  /**
    * Get messages for a conversation (for user)
    */
   async getConversationMessages(conversationId: number, userId: number) {
