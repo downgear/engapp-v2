@@ -14,8 +14,9 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     phone TEXT UNIQUE,
     full_name TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('student', 'parent', 'teacher')),
+    role TEXT NOT NULL CHECK (role IN ('student', 'parent', 'teacher', 'admin')),
     avatar_url TEXT,
+    is_locked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

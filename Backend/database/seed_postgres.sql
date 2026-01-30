@@ -10,6 +10,10 @@
 -- Password stored as plaintext for demo simplicity
 -- Default password: 123456
 
+-- Admin user (seed first to ensure id = 1 is not taken if run fresh)
+INSERT INTO users (email, password_hash, phone, full_name, role, avatar_url, is_locked) VALUES
+('admin@lingriser.com', '123456', NULL, 'System Admin', 'admin', NULL, FALSE);
+
 -- Teachers (5 teachers)
 INSERT INTO users (email, password_hash, phone, full_name, role, avatar_url) VALUES
 ('teacher.sarah@lingriser.com', '123456', '0901000001', 'Sarah Johnson', 'teacher', NULL),

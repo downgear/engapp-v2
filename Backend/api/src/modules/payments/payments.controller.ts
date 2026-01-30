@@ -42,6 +42,10 @@ export class PaymentsController {
    * 
    * Configure this URL in SePay dashboard:
    * https://your-domain.com/api/payments/sepay-webhook
+   * 
+   * SePay sends: "Authorization": "Apikey YOUR_API_KEY"
+   * Response must be: { "success": true } with HTTP 200/201
+   * Documentation: https://docs.sepay.vn/tich-hop-webhooks.html
    */
   @Post('sepay-webhook')
   async handleSepayWebhook(
@@ -50,15 +54,24 @@ export class PaymentsController {
     @Headers('x-sepay-signature') signature?: string,
   ) {
     this.logger.log('Received SePay webhook');
+    this.logger.log(`Authorization header: ${authorization ? 'present' : 'not present'}`);
     
     // Verify API key if provided
+    // SePay sends header as "Authorization":"Apikey API_KEY_CUA_BAN"
     const sepayApiKey = process.env.SEPAY_API_KEY;
     if (sepayApiKey && authorization) {
-      const providedKey = authorization.replace('Bearer ', '').replace('Apikey ', '');
+      // Handle both "Apikey " and "Bearer " prefixes (case-insensitive)
+      const providedKey = authorization
+        .replace(/^Apikey\s+/i, '')
+        .replace(/^Bearer\s+/i, '')
+        .trim();
+      
       if (providedKey !== sepayApiKey) {
         this.logger.warn('Invalid SePay API key');
+        // Return success: false but with HTTP 200 to prevent unnecessary retries
         return { success: false, message: 'Invalid API key' };
       }
+      this.logger.log('SePay API key verified successfully');
     }
 
     // Process the webhook

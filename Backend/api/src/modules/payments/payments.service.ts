@@ -19,6 +19,8 @@ interface PendingPayment {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
   private pendingPayments: Map<string, PendingPayment> = new Map();
+  // Track processed transactions to prevent duplicates (SePay recommendation)
+  private processedTransactions: Set<string> = new Set();
 
   constructor(
     @InjectRepository(Enrollment)
@@ -65,9 +67,20 @@ export class PaymentsService {
 
   /**
    * Handle SePay webhook - called when bank receives money
+   * Documentation: https://docs.sepay.vn/tich-hop-webhooks.html
    */
   async handleSepayWebhook(dto: SepayWebhookDto, signature?: string): Promise<{ success: boolean; message: string }> {
     this.logger.log(`Received SePay webhook: ${JSON.stringify(dto)}`);
+
+    // Check for duplicate transaction (SePay recommendation)
+    // Use combination of id + referenceCode + transferType + transferAmount for uniqueness
+    const transactionKey = `${dto.id}_${dto.referenceCode || ''}_${dto.transferType}_${dto.transferAmount}`;
+    
+    if (this.processedTransactions.has(transactionKey)) {
+      this.logger.warn(`Duplicate transaction detected: ${transactionKey}`);
+      // Return success to prevent SePay retry for duplicate
+      return { success: true, message: 'Transaction already processed' };
+    }
 
     // Only process incoming transfers
     if (dto.transferType !== 'in') {
@@ -91,7 +104,7 @@ export class PaymentsService {
           this.logger.warn(`Payment expired: ${transactionCode}`);
           this.pendingPayments.delete(transactionCode);
           this.pendingPayments.delete(`student_${pendingPayment.studentId}`);
-          return { success: false, message: 'Payment session expired' };
+          return { success: true, message: 'Payment session expired' };
         }
 
         // Verify amount (allow small tolerance for bank fees)
@@ -103,6 +116,9 @@ export class PaymentsService {
 
         // Process the payment
         await this.confirmPayment(pendingPayment.studentId);
+        
+        // Mark transaction as processed (prevent duplicates)
+        this.processedTransactions.add(transactionKey);
         
         // Clean up pending payment
         this.pendingPayments.delete(transactionCode);
@@ -214,6 +230,23 @@ export class PaymentsService {
         this.pendingPayments.delete(key);
         this.logger.log(`Cleaned up expired payment: ${key}`);
       }
+    }
+  }
+
+  /**
+   * Clean up old processed transaction records (prevent memory leak)
+   * Keep transactions for 24 hours for duplicate detection
+   */
+  cleanupOldTransactions(): void {
+    // In a production app, you'd want to store these in database with timestamps
+    // For now, we'll limit the size of the Set
+    const MAX_PROCESSED_TRANSACTIONS = 10000;
+    if (this.processedTransactions.size > MAX_PROCESSED_TRANSACTIONS) {
+      // Clear oldest entries (since Set maintains insertion order)
+      const entries = Array.from(this.processedTransactions);
+      const toRemove = entries.slice(0, entries.length - MAX_PROCESSED_TRANSACTIONS / 2);
+      toRemove.forEach(key => this.processedTransactions.delete(key));
+      this.logger.log(`Cleaned up ${toRemove.length} old transaction records`);
     }
   }
 }

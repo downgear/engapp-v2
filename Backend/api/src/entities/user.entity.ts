@@ -4,6 +4,7 @@ export enum UserRole {
   STUDENT = 'student',
   PARENT = 'parent',
   TEACHER = 'teacher',
+  ADMIN = 'admin',
 }
 
 @Entity('users')
@@ -28,6 +29,9 @@ export class User {
 
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
+
+  @Column({ name: 'is_locked', default: false })
+  isLocked: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

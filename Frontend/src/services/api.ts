@@ -22,12 +22,14 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 // ============ API Functions ============
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const { headers: optionHeaders, ...restOptions } = options || {};
+  
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...(optionHeaders as Record<string, string>),
     },
-    ...options,
   });
 
   if (!response.ok) {
@@ -278,6 +280,206 @@ export const api = {
     return fetchApi<{ success: boolean; message: string }>('/payments/process', {
       method: 'POST',
       body: JSON.stringify({ studentId, moduleId }),
+    });
+  },
+
+  // ============ Admin ============
+
+  async getAdminUserStatistics(token: string): Promise<{
+    total: number;
+    breakdown: Array<{ role: string; count: number; percentage: number }>;
+  }> {
+    return fetchApi('/admin/statistics/users', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getAdminVisitStatistics(token: string, hours: number = 24): Promise<{
+    total: number;
+    hourlyData: Array<{ hour: string; count: number }>;
+  }> {
+    return fetchApi(`/admin/statistics/visits?hours=${hours}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getAdminPracticeStatistics(token: string, hours: number = 24): Promise<{
+    aiPractice: { total: number; hourlyData: Array<{ hour: string; count: number }> };
+    videoCall: { total: number; hourlyData: Array<{ hour: string; count: number }> };
+  }> {
+    return fetchApi(`/admin/statistics/practice?hours=${hours}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getAdminUsers(
+    token: string,
+    options: { page?: number; limit?: number; role?: string; search?: string } = {}
+  ): Promise<{
+    users: Array<{
+      id: number;
+      email: string;
+      fullName: string;
+      phone: string | null;
+      role: string;
+      avatarUrl: string | null;
+      isLocked: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const params = new URLSearchParams();
+    if (options.page) params.append('page', options.page.toString());
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.role) params.append('role', options.role);
+    if (options.search) params.append('search', options.search);
+    return fetchApi(`/admin/users?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getAdminUserById(token: string, id: number): Promise<{
+    id: number;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    role: string;
+    avatarUrl: string | null;
+    isLocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    return fetchApi(`/admin/users/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async updateAdminUser(
+    token: string,
+    id: number,
+    data: { fullName?: string; email?: string; phone?: string }
+  ): Promise<{
+    id: number;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    role: string;
+    avatarUrl: string | null;
+    isLocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    return fetchApi(`/admin/users/${id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async toggleAdminUserLock(token: string, id: number): Promise<{
+    id: number;
+    isLocked: boolean;
+    message: string;
+  }> {
+    return fetchApi(`/admin/users/${id}/lock`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // ============ Chat (User) ============
+
+  async getOrCreateConversation(token: string): Promise<{
+    id: number;
+    userId: number;
+    user: { id: number; fullName: string; email: string; role: string } | null;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    return fetchApi('/chat/conversations', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getUserConversations(token: string): Promise<Array<{
+    id: number;
+    userId: number;
+    status: string;
+    unreadCount: number;
+    createdAt: string;
+    updatedAt: string;
+  }>> {
+    return fetchApi('/chat/conversations/my', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getConversationMessages(token: string, conversationId: number): Promise<Array<{
+    id: number;
+    conversationId: number;
+    senderId: number;
+    sender: { id: number; fullName: string; role: string } | null;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }>> {
+    return fetchApi(`/chat/conversations/${conversationId}/messages`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async sendChatMessage(token: string, conversationId: number, message: string): Promise<{
+    id: number;
+    conversationId: number;
+    senderId: number;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+  }> {
+    return fetchApi(`/chat/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ message }),
+    });
+  },
+
+  // ============ Chat (Admin) ============
+
+  async getAdminConversations(token: string, options: { status?: string; page?: number; limit?: number } = {}): Promise<{
+    conversations: Array<{
+      id: number;
+      userId: number;
+      user: { id: number; fullName: string; email: string; role: string } | null;
+      status: string;
+      unreadCount: number;
+      lastMessage: { message: string; createdAt: string } | null;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const params = new URLSearchParams();
+    if (options.status) params.append('status', options.status);
+    if (options.page) params.append('page', options.page.toString());
+    if (options.limit) params.append('limit', options.limit.toString());
+    return fetchApi(`/chat/admin/conversations?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getAdminUnreadCount(token: string): Promise<{ count: number }> {
+    return fetchApi('/chat/admin/unread-count', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async closeConversation(token: string, conversationId: number): Promise<{ id: number; status: string }> {
+    return fetchApi(`/chat/admin/conversations/${conversationId}/close`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
     });
   },
 };

@@ -12,6 +12,8 @@ import { ConnectionsModule } from './modules/connections/connections.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { InauguralRegistrationsModule } from './modules/inaugural-registrations/inaugural-registrations.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { ChatModule } from './modules/chat/chat.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -32,6 +34,8 @@ import { AppService } from './app.service';
     NotificationsModule,
     InauguralRegistrationsModule,
     PaymentsModule,
+    AdminModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

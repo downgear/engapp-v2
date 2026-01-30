@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, ConflictException, BadRequestExcepti
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus } from '../../entities';
+import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus, LoginSession } from '../../entities';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -40,6 +40,8 @@ export class AuthService {
     private courseRepo: Repository<Course>,
     @InjectRepository(Enrollment)
     private enrollmentRepo: Repository<Enrollment>,
+    @InjectRepository(LoginSession)
+    private loginSessionRepo: Repository<LoginSession>,
     private jwtService: JwtService,
   ) {}
 
@@ -111,16 +113,34 @@ export class AuthService {
     return this.generateAuthResponse(user, profileId);
   }
 
-  async login(dto: LoginDto): Promise<AuthResponse> {
+  async login(dto: LoginDto, sessionInfo?: { ipAddress?: string; userAgent?: string }): Promise<AuthResponse> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     
     if (!user) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
+    // Check if user is locked
+    if (user.isLocked) {
+      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.');
+    }
+
     // Simple plaintext comparison
     if (dto.password !== user.passwordHash) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    }
+
+    // Log login session
+    try {
+      const session = this.loginSessionRepo.create({
+        userId: user.id,
+        ipAddress: sessionInfo?.ipAddress || null,
+        userAgent: sessionInfo?.userAgent || null,
+      });
+      await this.loginSessionRepo.save(session);
+    } catch (err) {
+      console.error('Failed to log login session:', err);
+      // Don't fail login if session logging fails
     }
 
     // Get profile ID based on role
@@ -180,6 +200,9 @@ export class AuthService {
       case UserRole.TEACHER:
         const teacher = await this.teacherRepo.findOne({ where: { userId: user.id } });
         return teacher?.id || 0;
+      case UserRole.ADMIN:
+        // Admin doesn't have a profile table, use user id
+        return user.id;
       default:
         return 0;
     }

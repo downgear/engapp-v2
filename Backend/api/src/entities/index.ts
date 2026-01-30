@@ -14,4 +14,7 @@ export * from './payment.entity';
 export * from './account-link.entity';
 export * from './notification.entity';
 export * from './inaugural-registration.entity';
+export * from './login-session.entity';
+export * from './chat-conversation.entity';
+export * from './chat-message.entity';
 

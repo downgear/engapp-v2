@@ -30,6 +30,9 @@ const Dashboard = () => {
       case "teacher":
         navigate("/teacher-dashboard");
         break;
+      case "admin":
+        navigate("/admin-dashboard");
+        break;
       default:
         navigate("/");
     }

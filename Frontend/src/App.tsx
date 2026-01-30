@@ -24,6 +24,8 @@ import ConnectionsPage from "./pages/ConnectionsPage";
 import StudentSessionDetailPage from "./pages/StudentSessionDetailPage";
 import BookingDetailPage from "./pages/BookingDetailPage";
 import PaymentPage from "./pages/PaymentPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import { ChatWidget } from "./components/chat/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -141,9 +143,21 @@ const App = () => (
                 }
               />
               
+              {/* ========== ADMIN ONLY ROUTES ========== */}
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
               {/* ========== CATCH-ALL ========== */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            {/* Chat Widget for all authenticated users (except admin) */}
+            <ChatWidget />
           </BrowserRouter>
         </TooltipProvider>
       </LanguageProvider>
