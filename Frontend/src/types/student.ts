@@ -37,6 +37,7 @@ export interface LearningHistoryItem {
   startTime: string;
   endTime: string | null;
   status: string;
+  bookingId: number | null;
   module: {
     id: number;
     moduleNumber: number;

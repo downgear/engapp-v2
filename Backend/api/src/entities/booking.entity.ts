@@ -10,6 +10,12 @@ export enum BookingStatus {
   NO_SHOW = 'no_show',
 }
 
+export enum MeetingStatus {
+  PENDING = 'pending',       // Chưa diễn ra
+  IN_PROGRESS = 'in_progress', // Đang diễn ra
+  ENDED = 'ended',           // Đã kết thúc
+}
+
 @Entity('bookings')
 export class Booking {
   @PrimaryGeneratedColumn()
@@ -48,11 +54,26 @@ export class Booking {
   @Column({ type: 'text', default: BookingStatus.CONFIRMED })
   status: BookingStatus;
 
+  @Column({ name: 'meeting_status', type: 'text', default: MeetingStatus.PENDING })
+  meetingStatus: MeetingStatus;
+
   @Column({ name: 'meeting_link', nullable: true })
   meetingLink: string;
 
   @Column({ name: 'google_event_id', nullable: true })
   googleEventId: string;
+
+  @Column({ name: 'ended_at', nullable: true })
+  endedAt: Date;
+
+  @Column({ name: 'teacher_feedback', type: 'text', nullable: true })
+  teacherFeedback: string;
+
+  @Column({ name: 'student_rating', nullable: true })
+  studentRating: number;
+
+  @Column({ name: 'student_comment', type: 'text', nullable: true })
+  studentComment: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

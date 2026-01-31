@@ -12,7 +12,7 @@ import {
   BookOpen, Calendar, Video, MessageSquare, Star, 
   ChevronRight, ChevronDown, Clock, User, LogOut,
   Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users,
-  Target, Link2
+  Target, Link2, Play, Square
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, parseISO } from "date-fns";
@@ -453,11 +453,25 @@ const StudentDashboard = () => {
                             {format(parseISO(booking.bookingDate), "EEEE, dd/MM/yyyy", { locale: vi })}
                           </p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right space-y-1">
                           <p className="font-medium">{booking.slotStartTime}</p>
-                          <Badge variant="secondary" className="text-xs">
-                            {booking.module?.title}
-                          </Badge>
+                          <div className="flex items-center gap-1 justify-end">
+                            {booking.meetingStatus === 'pending' && (
+                              <Badge variant="outline" className="text-xs gap-1 border-yellow-500 text-yellow-600">
+                                <Clock className="h-2.5 w-2.5" /> Chưa diễn ra
+                              </Badge>
+                            )}
+                            {booking.meetingStatus === 'in_progress' && (
+                              <Badge className="text-xs gap-1 bg-green-500">
+                                <Play className="h-2.5 w-2.5" /> Đang diễn ra
+                              </Badge>
+                            )}
+                            {booking.meetingStatus === 'ended' && (
+                              <Badge className="text-xs gap-1 bg-gray-500">
+                                <Square className="h-2.5 w-2.5" /> Đã kết thúc
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
@@ -492,7 +506,9 @@ const StudentDashboard = () => {
                       const Icon = config.icon;
                       const isExpanded = expandedItems.has(item.id);
                       const parsedFeedback = parseFeedbackText(item.aiFeedback?.feedbackText);
-                      const hasFeedback = !!parsedFeedback || !!item.aiFeedback?.overallScore;
+                      const hasAiFeedback = !!parsedFeedback || !!item.aiFeedback?.overallScore;
+                      const hasTeacherFeedback = !!item.teacherFeedback?.feedbackText;
+                      const hasFeedback = hasAiFeedback || hasTeacherFeedback;
                       
                       return (
                         <Collapsible 
@@ -515,6 +531,12 @@ const StudentDashboard = () => {
                                 <Badge variant="secondary" className="text-xs shrink-0">
                                   <Star className="h-3 w-3 mr-0.5" />
                                   {item.aiFeedback.overallScore}
+                                </Badge>
+                              )}
+                              {hasTeacherFeedback && (
+                                <Badge variant="outline" className="text-xs shrink-0 border-purple-300 text-purple-600">
+                                  <MessageSquare className="h-3 w-3 mr-0.5" />
+                                  Nhận xét
                                 </Badge>
                               )}
                               {hasFeedback && (
@@ -633,6 +655,43 @@ const StudentDashboard = () => {
                                   colorClass="text-amber-700 dark:text-amber-400"
                                   bulletColor="text-amber-500"
                                 />
+                              </div>
+                            </CollapsibleContent>
+                          )}
+
+                          {/* Teacher Feedback for Video Call */}
+                          {hasTeacherFeedback && (
+                            <CollapsibleContent>
+                              <div 
+                                className="ml-8 mt-1 mb-2 p-3 bg-gradient-to-br from-purple-50/50 to-indigo-50/50 dark:from-purple-950/20 dark:to-indigo-950/20 rounded-lg border border-purple-100/50 dark:border-purple-900/30 space-y-2 cursor-pointer hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                                onClick={() => item.bookingId && navigate(`/booking/${item.bookingId}`)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-400">
+                                    <User className="h-4 w-4" />
+                                    <span>Nhận xét từ giáo viên {item.teacherFeedback?.teacherName && `(${item.teacherFeedback.teacherName})`}</span>
+                                  </div>
+                                  {item.bookingId && (
+                                    <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900">
+                                      <Video className="h-3 w-3 mr-1" />
+                                      Xem chi tiết & Đánh giá
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-foreground/80 whitespace-pre-wrap">
+                                  {item.teacherFeedback?.feedbackText}
+                                </p>
+                                {item.teacherFeedback?.improvementSuggestions && (
+                                  <div className="mt-2 pt-2 border-t border-purple-100/50 dark:border-purple-900/30">
+                                    <p className="text-xs font-medium text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                                      <Lightbulb className="h-3 w-3" />
+                                      Gợi ý cải thiện
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {item.teacherFeedback.improvementSuggestions}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </CollapsibleContent>
                           )}

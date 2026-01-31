@@ -177,6 +177,40 @@ export const api = {
     return fetchApi<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' });
   },
 
+  // ============ Meeting Status ============
+
+  async startMeeting(token: string, bookingId: number, teacherId: number): Promise<Booking> {
+    return fetchApi(`/bookings/${bookingId}/start-meeting`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teacherId }),
+    });
+  },
+
+  async endMeeting(token: string, bookingId: number, teacherId: number): Promise<Booking> {
+    return fetchApi(`/bookings/${bookingId}/end-meeting`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teacherId }),
+    });
+  },
+
+  async addTeacherFeedback(token: string, bookingId: number, teacherId: number, feedback: string): Promise<Booking> {
+    return fetchApi(`/bookings/${bookingId}/teacher-feedback`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ teacherId, feedback }),
+    });
+  },
+
+  async addStudentRating(token: string, bookingId: number, studentId: number, rating: number, comment?: string): Promise<Booking> {
+    return fetchApi(`/bookings/${bookingId}/student-rating`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ studentId, rating, comment }),
+    });
+  },
+
   // ============ Connections ============
 
   async getStudentConnections(studentId: number): Promise<Connection[]> {

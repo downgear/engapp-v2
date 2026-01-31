@@ -133,6 +133,7 @@ export class StudentsService {
       startTime: h.startTime,
       endTime: h.endTime,
       status: h.status,
+      bookingId: h.bookingId || null,
       module: {
         id: h.module.id,
         moduleNumber: h.module.moduleNumber,

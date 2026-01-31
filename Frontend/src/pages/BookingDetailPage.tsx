@@ -20,7 +20,14 @@ import {
   MapPin,
   GraduationCap,
   AlertCircle,
+  Play,
+  Square,
+  MessageSquare,
+  Loader2,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/services/api";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -30,9 +37,18 @@ interface BookingDetail {
   slotStartTime: string;
   slotEndTime: string;
   status: string;
+  meetingStatus: 'pending' | 'in_progress' | 'ended';
   meetingLink?: string | null;
   googleEventId?: string | null;
+  endedAt?: string | null;
+  teacherFeedback?: string | null;
+  studentRating?: number | null;
+  studentComment?: string | null;
   createdAt: string;
+  student?: {
+    id: number;
+    name: string;
+  };
   teacher: {
     id: number;
     name: string;
@@ -54,9 +70,18 @@ const BookingDetailPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  
+  // Feedback states
+  const [teacherFeedback, setTeacherFeedback] = useState("");
+  const [studentRating, setStudentRating] = useState(0);
+  const [studentComment, setStudentComment] = useState("");
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [showRatingForm, setShowRatingForm] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!bookingId || !accessToken) return;
@@ -81,7 +106,8 @@ const BookingDetailPage = () => {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!isAuthenticated || user?.role !== "student") {
+    // Allow both students and teachers to view booking details
+    if (!isAuthenticated || (user?.role !== "student" && user?.role !== "teacher")) {
       navigate("/login");
       return;
     }
@@ -99,6 +125,68 @@ const BookingDetailPage = () => {
         return <Badge variant="destructive">Đã hủy</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getMeetingStatusBadge = (meetingStatus: string) => {
+    switch (meetingStatus) {
+      case "pending":
+        return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600"><Clock className="h-3 w-3" /> Chưa diễn ra</Badge>;
+      case "in_progress":
+        return <Badge className="bg-green-500 gap-1"><Play className="h-3 w-3" /> Đang diễn ra</Badge>;
+      case "ended":
+        return <Badge className="bg-gray-500 gap-1"><Square className="h-3 w-3" /> Đã kết thúc</Badge>;
+      default:
+        return <Badge variant="secondary">{meetingStatus}</Badge>;
+    }
+  };
+
+  // Meeting actions
+  const handleEndMeeting = async () => {
+    if (!accessToken || !booking || user?.role !== 'teacher') return;
+    setIsActionLoading(true);
+    try {
+      const updated = await api.endMeeting(accessToken, booking.id, user.profileId);
+      setBooking({ ...booking, ...updated });
+      setShowFeedbackForm(true);
+      toast({ title: "Thành công", description: "Đã kết thúc buổi học" });
+    } catch (error) {
+      console.error("Failed to end meeting:", error);
+      toast({ title: "Lỗi", description: "Không thể kết thúc buổi học", variant: "destructive" });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!accessToken || !booking || !teacherFeedback.trim()) return;
+    setIsActionLoading(true);
+    try {
+      const updated = await api.addTeacherFeedback(accessToken, booking.id, user?.profileId || 0, teacherFeedback);
+      setBooking({ ...booking, ...updated });
+      setShowFeedbackForm(false);
+      toast({ title: "Thành công", description: "Đã gửi nhận xét cho học sinh" });
+    } catch (error) {
+      console.error("Failed to submit feedback:", error);
+      toast({ title: "Lỗi", description: "Không thể gửi nhận xét", variant: "destructive" });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleSubmitRating = async () => {
+    if (!accessToken || !booking || studentRating === 0) return;
+    setIsActionLoading(true);
+    try {
+      const updated = await api.addStudentRating(accessToken, booking.id, user?.profileId || 0, studentRating, studentComment);
+      setBooking({ ...booking, ...updated });
+      setShowRatingForm(false);
+      toast({ title: "Thành công", description: "Đã gửi đánh giá cho giáo viên" });
+    } catch (error) {
+      console.error("Failed to submit rating:", error);
+      toast({ title: "Lỗi", description: "Không thể gửi đánh giá", variant: "destructive" });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -138,7 +226,7 @@ const BookingDetailPage = () => {
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Không tìm thấy lịch hẹn</h2>
-            <Button onClick={() => navigate("/student-dashboard")}>
+            <Button onClick={() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : "/student-dashboard")}>
               Quay lại Dashboard
             </Button>
           </div>
@@ -157,7 +245,7 @@ const BookingDetailPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/student-dashboard")}
+            onClick={() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : "/student-dashboard")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -245,13 +333,20 @@ const BookingDetailPage = () => {
                 )}
               </div>
 
-              <div className="pt-4 border-t flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Trạng thái</span>
-                {getStatusBadge(booking.status)}
+              <div className="pt-4 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Trạng thái đặt lịch</span>
+                  {getStatusBadge(booking.status)}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Trạng thái buổi học</span>
+                  {getMeetingStatusBadge(booking.meetingStatus || 'pending')}
+                </div>
               </div>
 
+              {/* Action buttons */}
               {booking.status === "confirmed" && (
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
                   {booking.meetingLink ? (
                     <>
                       <Button 
@@ -262,9 +357,19 @@ const BookingDetailPage = () => {
                         <Video className="h-4 w-4" />
                         Tham gia Google Meet
                       </Button>
-                      <p className="text-xs text-muted-foreground text-center mt-2">
-                        Nhấn để mở Google Meet trong tab mới
-                      </p>
+                      
+                      {/* Teacher: End Meeting Button */}
+                      {user?.role === 'teacher' && booking.meetingStatus !== 'ended' && (
+                        <Button 
+                          className="w-full gap-2" 
+                          variant="destructive"
+                          onClick={handleEndMeeting}
+                          disabled={isActionLoading}
+                        >
+                          {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+                          Kết thúc buổi học
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <>
@@ -279,83 +384,198 @@ const BookingDetailPage = () => {
                   )}
                 </div>
               )}
+
+              {/* Teacher Feedback Section */}
+              {booking.meetingStatus === 'ended' && user?.role === 'teacher' && !booking.teacherFeedback && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="h-5 w-5 text-blue-500" />
+                    <h4 className="font-medium">Nhận xét cho học sinh</h4>
+                  </div>
+                  <Textarea 
+                    placeholder="Nhập nhận xét về buổi học..."
+                    value={teacherFeedback}
+                    onChange={(e) => setTeacherFeedback(e.target.value)}
+                    className="mb-2"
+                  />
+                  <Button 
+                    className="w-full" 
+                    onClick={handleSubmitFeedback}
+                    disabled={!teacherFeedback.trim() || isActionLoading}
+                  >
+                    {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Gửi nhận xét
+                  </Button>
+                </div>
+              )}
+
+              {/* Display Teacher Feedback */}
+              {booking.teacherFeedback && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm font-medium">Nhận xét từ giáo viên</span>
+                  </div>
+                  <p className="text-sm bg-muted/30 p-3 rounded-lg">{booking.teacherFeedback}</p>
+                </div>
+              )}
+
+              {/* Student Rating Section */}
+              {booking.meetingStatus === 'ended' && user?.role === 'student' && !booking.studentRating && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                    <h4 className="font-medium">Đánh giá giáo viên</h4>
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setStudentRating(star)}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star 
+                          className={`h-8 w-8 ${star <= studentRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <Textarea 
+                    placeholder="Nhập nhận xét (không bắt buộc)..."
+                    value={studentComment}
+                    onChange={(e) => setStudentComment(e.target.value)}
+                    className="mb-2"
+                  />
+                  <Button 
+                    className="w-full" 
+                    onClick={handleSubmitRating}
+                    disabled={studentRating === 0 || isActionLoading}
+                  >
+                    {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Gửi đánh giá
+                  </Button>
+                </div>
+              )}
+
+              {/* Display Student Rating */}
+              {booking.studentRating && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm font-medium">Đánh giá từ học sinh</span>
+                  </div>
+                  <div className="flex gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star 
+                        key={star}
+                        className={`h-5 w-5 ${star <= (booking.studentRating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} 
+                      />
+                    ))}
+                  </div>
+                  {booking.studentComment && (
+                    <p className="text-sm bg-muted/30 p-3 rounded-lg">{booking.studentComment}</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Teacher Profile */}
+          {/* Profile Card - Show Student for Teacher, Teacher for Student */}
           <Card className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-500" />
-                Giảng viên
+                {user?.role === 'teacher' ? 'Học sinh' : 'Giảng viên'}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl">
-                <Avatar className="h-20 w-20">
-                  <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                    {booking.teacher?.name?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-xl">{booking.teacher?.name}</p>
-                  {getTeacherTypeBadge(booking.teacher?.teacherType)}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {booking.teacher?.email && (
-                  <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                    <Mail className="h-5 w-5 text-blue-500" />
+              {user?.role === 'teacher' ? (
+                /* Student Profile for Teacher View */
+                <>
+                  <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl">
+                    <Avatar className="h-20 w-20">
+                      <AvatarFallback className="text-2xl bg-blue-500/20 text-blue-600">
+                        {booking.student?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">{booking.teacher.email}</p>
+                      <p className="font-semibold text-xl">{booking.student?.name || "Học sinh"}</p>
+                      <Badge variant="outline" className="gap-1">
+                        <GraduationCap className="h-3 w-3" /> Học sinh
+                      </Badge>
                     </div>
                   </div>
-                )}
-
-                {booking.teacher?.phone && (
-                  <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
-                    <Phone className="h-5 w-5 text-green-500" />
+                </>
+              ) : (
+                /* Teacher Profile for Student View */
+                <>
+                  <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl">
+                    <Avatar className="h-20 w-20">
+                      <AvatarFallback className="text-2xl bg-primary/20 text-primary">
+                        {booking.teacher?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="text-sm text-muted-foreground">Điện thoại</p>
-                      <p className="font-medium">{booking.teacher.phone}</p>
+                      <p className="font-semibold text-xl">{booking.teacher?.name}</p>
+                      {getTeacherTypeBadge(booking.teacher?.teacherType)}
                     </div>
                   </div>
-                )}
-              </div>
 
-              {booking.teacher?.bio && (
-                <div className="p-4 bg-muted/30 rounded-xl">
-                  <p className="text-sm font-medium mb-2">Giới thiệu</p>
-                  <p className="text-sm text-muted-foreground">{booking.teacher.bio}</p>
-                </div>
-              )}
+                  <div className="space-y-3">
+                    {booking.teacher?.email && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
+                        <Mail className="h-5 w-5 text-blue-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Email</p>
+                          <p className="font-medium">{booking.teacher.email}</p>
+                        </div>
+                      </div>
+                    )}
 
-              {booking.teacher?.specialties && (
-                <div>
-                  <p className="text-sm font-medium mb-2">Chuyên môn</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(() => {
-                      // Parse specialties if it's a JSON string
-                      let specialtiesArray: string[] = [];
-                      try {
-                        if (typeof booking.teacher.specialties === 'string') {
-                          specialtiesArray = JSON.parse(booking.teacher.specialties);
-                        } else if (Array.isArray(booking.teacher.specialties)) {
-                          specialtiesArray = booking.teacher.specialties;
-                        }
-                      } catch {
-                        specialtiesArray = [];
-                      }
-                      return specialtiesArray.map((specialty, index) => (
-                        <Badge key={index} variant="secondary">
-                          {specialty}
-                        </Badge>
-                      ));
-                    })()}
+                    {booking.teacher?.phone && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
+                        <Phone className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Điện thoại</p>
+                          <p className="font-medium">{booking.teacher.phone}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+
+                  {booking.teacher?.bio && (
+                    <div className="p-4 bg-muted/30 rounded-xl">
+                      <p className="text-sm font-medium mb-2">Giới thiệu</p>
+                      <p className="text-sm text-muted-foreground">{booking.teacher.bio}</p>
+                    </div>
+                  )}
+
+                  {booking.teacher?.specialties && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Chuyên môn</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          // Parse specialties if it's a JSON string
+                          let specialtiesArray: string[] = [];
+                          try {
+                            if (typeof booking.teacher.specialties === 'string') {
+                              specialtiesArray = JSON.parse(booking.teacher.specialties);
+                            } else if (Array.isArray(booking.teacher.specialties)) {
+                              specialtiesArray = booking.teacher.specialties;
+                            }
+                          } catch {
+                            specialtiesArray = [];
+                          }
+                          return specialtiesArray.map((specialty, index) => (
+                            <Badge key={index} variant="secondary">
+                              {specialty}
+                            </Badge>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

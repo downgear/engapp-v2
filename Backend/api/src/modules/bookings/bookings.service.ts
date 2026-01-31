@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Booking, Student, Teacher, Module, LearningHistory, BookingStatus, ActivityType, LearningStatus } from '../../entities';
+import { Booking, Student, Teacher, Module, LearningHistory, BookingStatus, ActivityType, LearningStatus, TeacherFeedback } from '../../entities';
+import { MeetingStatus } from '../../entities/booking.entity';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { GoogleCalendarService } from '../google-auth/google-calendar.service';
 import { GoogleAuthService } from '../google-auth/google-auth.service';
@@ -21,6 +22,8 @@ export class BookingsService {
     private moduleRepo: Repository<Module>,
     @InjectRepository(LearningHistory)
     private learningHistoryRepo: Repository<LearningHistory>,
+    @InjectRepository(TeacherFeedback)
+    private teacherFeedbackRepo: Repository<TeacherFeedback>,
     private readonly googleCalendarService: GoogleCalendarService,
     private readonly googleAuthService: GoogleAuthService,
   ) {}
@@ -156,8 +159,13 @@ export class BookingsService {
       slotStartTime: booking.slotStartTime,
       slotEndTime: booking.slotEndTime,
       status: booking.status,
+      meetingStatus: booking.meetingStatus || MeetingStatus.PENDING,
       meetingLink: booking.meetingLink || null,
       googleEventId: booking.googleEventId || null,
+      endedAt: booking.endedAt || null,
+      teacherFeedback: booking.teacherFeedback || null,
+      studentRating: booking.studentRating || null,
+      studentComment: booking.studentComment || null,
       createdAt: booking.createdAt,
       student: booking.student
         ? {
@@ -255,8 +263,13 @@ export class BookingsService {
       slotStartTime: booking.slotStartTime,
       slotEndTime: booking.slotEndTime,
       status: booking.status,
+      meetingStatus: booking.meetingStatus || MeetingStatus.PENDING,
       meetingLink: booking.meetingLink || null,
       googleEventId: booking.googleEventId || null,
+      endedAt: booking.endedAt || null,
+      teacherFeedback: booking.teacherFeedback || null,
+      studentRating: booking.studentRating || null,
+      studentComment: booking.studentComment || null,
       createdAt: booking.createdAt,
       student: booking.student
         ? {
@@ -278,6 +291,179 @@ export class BookingsService {
           }
         : undefined,
     };
+  }
+
+  // ==================== MEETING STATUS MANAGEMENT ====================
+
+  /**
+   * Start a meeting - change status to in_progress
+   */
+  async startMeeting(bookingId: number, teacherId: number) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId, teacherId },
+      relations: ['student', 'student.user', 'teacher', 'teacher.user', 'module'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found or unauthorized');
+    }
+
+    if (booking.meetingStatus === MeetingStatus.ENDED) {
+      throw new BadRequestException('Meeting has already ended');
+    }
+
+    booking.meetingStatus = MeetingStatus.IN_PROGRESS;
+    await this.bookingRepo.save(booking);
+
+    this.logger.log(`Meeting started for booking ${bookingId}`);
+    return this.formatBooking(booking);
+  }
+
+  /**
+   * End a meeting - change status to ended and create learning history
+   */
+  async endMeeting(bookingId: number, teacherId: number) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId, teacherId },
+      relations: ['student', 'student.user', 'teacher', 'teacher.user', 'module'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found or unauthorized');
+    }
+
+    if (booking.meetingStatus === MeetingStatus.ENDED) {
+      throw new BadRequestException('Meeting has already ended');
+    }
+
+    const now = new Date();
+    booking.meetingStatus = MeetingStatus.ENDED;
+    booking.endedAt = now;
+    booking.status = BookingStatus.COMPLETED;
+    await this.bookingRepo.save(booking);
+
+    // Create learning history entry for the video call
+    const bookingDate = new Date(booking.bookingDate);
+    const [startHour, startMin] = booking.slotStartTime.split(':').map(Number);
+    const startTime = new Date(bookingDate);
+    startTime.setHours(startHour, startMin, 0, 0);
+
+    const learningHistory = this.learningHistoryRepo.create({
+      studentId: booking.studentId,
+      moduleId: booking.moduleId,
+      activityType: ActivityType.VIDEO_CALL,
+      startTime: startTime,
+      endTime: now,
+      bookingId: booking.id,
+      status: LearningStatus.COMPLETED,
+    });
+    await this.learningHistoryRepo.save(learningHistory);
+
+    this.logger.log(`Meeting ended for booking ${bookingId}, learning history created`);
+    return this.formatBooking(booking);
+  }
+
+  /**
+   * Add teacher feedback after meeting ends
+   */
+  async addTeacherFeedback(bookingId: number, teacherId: number, feedback: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId, teacherId },
+      relations: ['student', 'student.user', 'teacher', 'teacher.user', 'module'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found or unauthorized');
+    }
+
+    if (booking.meetingStatus !== MeetingStatus.ENDED) {
+      throw new BadRequestException('Cannot add feedback before meeting ends');
+    }
+
+    booking.teacherFeedback = feedback;
+    await this.bookingRepo.save(booking);
+
+    // Find the learning history for this booking and add teacher feedback
+    const learningHistory = await this.learningHistoryRepo.findOne({
+      where: { bookingId: booking.id },
+    });
+
+    if (learningHistory) {
+      const teacherFeedbackEntry = this.teacherFeedbackRepo.create({
+        learningHistoryId: learningHistory.id,
+        teacherId: teacherId,
+        feedbackText: feedback,
+      });
+      await this.teacherFeedbackRepo.save(teacherFeedbackEntry);
+      this.logger.log(`Teacher feedback saved to learning history ${learningHistory.id}`);
+    }
+
+    this.logger.log(`Teacher feedback added for booking ${bookingId}`);
+    return this.formatBooking(booking);
+  }
+
+  /**
+   * Add student rating after meeting ends
+   */
+  async addStudentRating(bookingId: number, studentId: number, rating: number, comment?: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId, studentId },
+      relations: ['student', 'student.user', 'teacher', 'teacher.user', 'module'],
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found or unauthorized');
+    }
+
+    if (booking.meetingStatus !== MeetingStatus.ENDED) {
+      throw new BadRequestException('Cannot rate before meeting ends');
+    }
+
+    if (rating < 1 || rating > 5) {
+      throw new BadRequestException('Rating must be between 1 and 5');
+    }
+
+    booking.studentRating = rating;
+    if (comment) {
+      booking.studentComment = comment;
+    }
+    await this.bookingRepo.save(booking);
+
+    this.logger.log(`Student rating ${rating} added for booking ${bookingId}`);
+    return this.formatBooking(booking);
+  }
+
+  /**
+   * Get computed meeting status based on time and manual status
+   */
+  getMeetingStatusFromBooking(booking: Booking): MeetingStatus {
+    // If already ended, return ended
+    if (booking.meetingStatus === MeetingStatus.ENDED) {
+      return MeetingStatus.ENDED;
+    }
+
+    const now = new Date();
+    const bookingDate = new Date(booking.bookingDate);
+    const [startHour, startMin] = booking.slotStartTime.split(':').map(Number);
+    const [endHour, endMin] = booking.slotEndTime.split(':').map(Number);
+
+    const startTime = new Date(bookingDate);
+    startTime.setHours(startHour, startMin, 0, 0);
+
+    const endTime = new Date(bookingDate);
+    endTime.setHours(endHour, endMin, 0, 0);
+
+    // If current time is past end time, auto-end the meeting
+    if (now > endTime) {
+      return MeetingStatus.ENDED;
+    }
+
+    // If current time is within the meeting time range
+    if (now >= startTime && now <= endTime) {
+      return MeetingStatus.IN_PROGRESS;
+    }
+
+    return MeetingStatus.PENDING;
   }
 }
 

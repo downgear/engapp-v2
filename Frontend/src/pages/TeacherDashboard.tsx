@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   BookOpen, Calendar, Video, Users, Clock, 
-  CheckCircle, LogOut, ChevronRight, Link2, Link2Off, Loader2
+  CheckCircle, LogOut, ChevronRight, Link2, Link2Off, Loader2,
+  Play, Square, Star
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -24,6 +25,10 @@ interface TeacherBooking {
   slotStartTime: string;
   slotEndTime: string;
   status: string;
+  meetingStatus: 'pending' | 'in_progress' | 'ended';
+  meetingLink?: string | null;
+  teacherFeedback?: string | null;
+  studentRating?: number | null;
   student: { id: number; name: string };
   module: { id: number; moduleNumber: number; title: string };
 }
@@ -324,7 +329,7 @@ const TeacherDashboard = () => {
                     <div 
                       key={booking.id} 
                       className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                      onClick={() => navigate(`/session/${booking.id}`)}
+                      onClick={() => navigate(`/booking/${booking.id}`)}
                     >
                       <Avatar>
                         <AvatarFallback className="bg-primary/20 text-primary">
@@ -337,7 +342,24 @@ const TeacherDashboard = () => {
                           {format(parseISO(booking.bookingDate), "EEEE, dd/MM", { locale: vi })} - {booking.slotStartTime}
                         </p>
                       </div>
-                      <Badge variant="secondary">{booking.module?.title}</Badge>
+                      <div className="flex items-center gap-2">
+                        {booking.meetingStatus === 'pending' && (
+                          <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
+                            <Clock className="h-3 w-3" /> Chưa diễn ra
+                          </Badge>
+                        )}
+                        {booking.meetingStatus === 'in_progress' && (
+                          <Badge className="bg-green-500 gap-1">
+                            <Play className="h-3 w-3" /> Đang diễn ra
+                          </Badge>
+                        )}
+                        {booking.meetingStatus === 'ended' && (
+                          <Badge className="bg-gray-500 gap-1">
+                            <Square className="h-3 w-3" /> Đã kết thúc
+                          </Badge>
+                        )}
+                        <Badge variant="secondary">{booking.module?.title}</Badge>
+                      </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   ))}
@@ -366,7 +388,7 @@ const TeacherDashboard = () => {
                     <div 
                       key={booking.id} 
                       className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/session/${booking.id}`)}
+                      onClick={() => navigate(`/booking/${booking.id}`)}
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="text-sm bg-green-100 text-green-600">
@@ -379,9 +401,22 @@ const TeacherDashboard = () => {
                           {format(parseISO(booking.bookingDate), "dd/MM/yyyy")}
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                        Hoàn thành
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {!booking.teacherFeedback && (
+                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
+                            Chưa nhận xét
+                          </Badge>
+                        )}
+                        {booking.studentRating && (
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span className="text-xs text-muted-foreground">{booking.studentRating}</span>
+                          </div>
+                        )}
+                        <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                          Hoàn thành
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
