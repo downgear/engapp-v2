@@ -16,7 +16,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import BookingDemo from "./pages/BookingDemo";
 import AIPracticeDemo from "./pages/AIPracticeDemo";
 import ParentDashboardDemo from "./pages/ParentDashboardDemo";
-import InauguralProgram from "./pages/InauguralProgram";
+import AllPrograms from "./pages/AllPrograms";
 import NotFound from "./pages/NotFound";
 import CurriculumPage from "./pages/CurriculumPage";
 import ModuleDetailPage from "./pages/ModuleDetailPage";
@@ -44,7 +44,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/inaugural-program" element={<InauguralProgram />} />
+              <Route path="/inaugural-program" element={<AllPrograms />} />
               
               {/* Auth redirect - redirects to appropriate dashboard */}
               <Route path="/dashboard" element={<Dashboard />} />

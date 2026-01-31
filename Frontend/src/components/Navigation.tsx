@@ -47,7 +47,7 @@ export const Navigation = () => {
   const buildNavItems = (): NavItem[] => {
     const items: NavItem[] = [
       { label: t("nav.home"), href: "/" },
-      { label: t("nav.program"), href: "/inaugural-program" },
+      { label: "Tất cả chương trình", href: "/inaugural-program" },
     ];
 
     const userRole = user?.role;

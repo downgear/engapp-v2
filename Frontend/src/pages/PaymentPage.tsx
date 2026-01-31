@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,22 @@ import { useToast } from "@/hooks/use-toast";
 const PAYMENT_TIMEOUT = 300; // 5 minutes (300 seconds)
 const POLL_INTERVAL = 3000; // Poll every 3 seconds
 
+interface LocationState {
+  cohortCourseId?: number;
+  courseName?: string;
+  moduleId?: number;
+}
+
 const PaymentPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { moduleId } = useParams<{ moduleId: string }>();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  
+  // Get course info from location state
+  const locationState = location.state as LocationState | null;
+  const courseName = locationState?.courseName || "Khóa học tiếng Anh";
   
   const [countdown, setCountdown] = useState(PAYMENT_TIMEOUT);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -55,25 +66,38 @@ const PaymentPage = () => {
 
   // Poll for payment status
   const checkPaymentStatus = useCallback(async () => {
-    if (paymentComplete || paymentExpired || !user?.profileId) return;
+    if (paymentComplete || paymentExpired || !user?.profileId || !accessToken) return;
 
     try {
       const status = await api.checkPaymentStatus(user.profileId);
       
       if (status.paid) {
+        // Mark cohort enrollment as paid if we have cohortCourseId
+        if (locationState?.cohortCourseId) {
+          try {
+            await api.markCohortEnrollmentPaid(accessToken, user.profileId, locationState.cohortCourseId);
+          } catch (e) {
+            console.error("Failed to mark cohort enrollment as paid:", e);
+          }
+        }
+        
         setPaymentComplete(true);
         toast({
           title: "Thanh toán thành công! 🎉",
           description: "Khóa học đã được mở khóa. Đang chuyển hướng...",
         });
         setTimeout(() => {
-          navigate("/curriculum");
+          // Navigate to curriculum with enrolled status
+          navigate("/curriculum", { 
+            state: { enrolled: true },
+            replace: true 
+          });
         }, 2000);
       }
     } catch (error) {
       console.error("Failed to check payment status:", error);
     }
-  }, [user, paymentComplete, paymentExpired, navigate, toast]);
+  }, [user, accessToken, paymentComplete, paymentExpired, navigate, toast, locationState]);
 
   // Start polling
   useEffect(() => {
@@ -201,7 +225,7 @@ const PaymentPage = () => {
             </div>
             <CardTitle className="text-xl">Mở khóa toàn bộ khóa học</CardTitle>
             <p className="text-muted-foreground text-sm mt-2">
-              Speaking Foundation Program - 8 tuần
+              {courseName} - 8 tuần
             </p>
           </CardHeader>
           

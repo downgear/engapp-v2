@@ -15,6 +15,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { GoogleAuthModule } from './modules/google-auth/google-auth.module';
+import { ProgramsModule } from './modules/programs/programs.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -38,6 +39,7 @@ import { AppService } from './app.service';
     AdminModule,
     ChatModule,
     GoogleAuthModule,
+    ProgramsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -22,6 +22,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { VisitStatistics } from "@/components/admin/VisitStatistics";
 import { PracticeStatistics } from "@/components/admin/PracticeStatistics";
 import { ChatSupport } from "@/components/admin/ChatSupport";
+import { CourseManagement } from "@/components/admin/CourseManagement";
 
 interface UserStatistics {
   total: number;
@@ -142,10 +143,14 @@ const AdminDashboard = () => {
 
         {/* Tabs for different sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Tổng quan</span>
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <GraduationCap className="h-4 w-4" />
+              <span className="hidden sm:inline">Khóa học</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -351,6 +356,11 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Course Management Tab */}
+          <TabsContent value="courses">
+            <CourseManagement />
           </TabsContent>
 
           {/* User Management Tab */}

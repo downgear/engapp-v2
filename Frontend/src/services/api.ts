@@ -508,4 +508,163 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
+
+  // ============ Programs (Public) ============
+
+  async getAllPrograms(): Promise<ProgramResponse[]> {
+    return fetchApi('/programs');
+  },
+
+  // ============ Programs (Admin) ============
+
+  async createProgram(token: string, data: { name: string; description?: string }): Promise<ProgramResponse> {
+    return fetchApi('/programs', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateProgram(token: string, id: number, data: { name?: string; description?: string }): Promise<ProgramResponse> {
+    return fetchApi(`/programs/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteProgram(token: string, id: number): Promise<{ success: boolean }> {
+    return fetchApi(`/programs/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // ============ Cohorts (Admin) ============
+
+  async createCohort(token: string, data: { name: string; startDate: string; status?: string; programId: number }): Promise<CohortResponse> {
+    return fetchApi('/programs/cohorts', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateCohort(token: string, id: number, data: { name?: string; startDate?: string; status?: string }): Promise<CohortResponse> {
+    return fetchApi(`/programs/cohorts/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteCohort(token: string, id: number): Promise<{ success: boolean }> {
+    return fetchApi(`/programs/cohorts/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // ============ Cohort Courses (Admin) ============
+
+  async createCohortCourse(token: string, data: { cohortId: number; courseId: number; level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
+    return fetchApi('/programs/cohort-courses', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateCohortCourse(token: string, id: number, data: { level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
+    return fetchApi(`/programs/cohort-courses/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteCohortCourse(token: string, id: number): Promise<{ success: boolean }> {
+    return fetchApi(`/programs/cohort-courses/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // ============ Student Cohort Enrollments ============
+
+  async enrollInCohortCourse(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
+    return fetchApi('/programs/enroll', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ studentId, cohortCourseId }),
+    });
+  },
+
+  async getCohortEnrollment(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment | null> {
+    return fetchApi(`/programs/enrollment/${studentId}/${cohortCourseId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getStudentCohortEnrollments(token: string, studentId: number): Promise<StudentCohortEnrollment[]> {
+    return fetchApi(`/programs/enrollments/${studentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async markCohortEnrollmentPaid(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
+    return fetchApi('/programs/enrollment/pay', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ studentId, cohortCourseId }),
+    });
+  },
+
+  async checkCohortEnrollmentPaid(token: string, studentId: number, cohortCourseId: number): Promise<{ paid: boolean }> {
+    return fetchApi(`/programs/enrollment/check/${studentId}/${cohortCourseId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
 };
+
+// ============ Program Types ============
+
+export interface StudentCohortEnrollment {
+  id: number;
+  studentId: number;
+  cohortCourseId: number;
+  paid: boolean;
+  paidAt: string | null;
+  enrolledAt: string;
+  cohortCourse?: CohortCourseResponse;
+}
+
+export interface ProgramResponse {
+  id: number;
+  name: string;
+  description: string;
+  cohorts: CohortResponse[];
+}
+
+export interface CohortResponse {
+  id: number;
+  name: string;
+  startDate: string;
+  status: string;
+  courses: CohortCourseResponse[];
+}
+
+export interface CohortCourseResponse {
+  id: number;
+  courseId: number;
+  name: string;
+  description: string;
+  level: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  price: number;
+  enrolledStudents: number;
+  maxStudents: number;
+  modules: { id: number; moduleNumber: number; title: string; topic: string }[];
+}

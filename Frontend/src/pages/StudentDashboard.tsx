@@ -356,16 +356,22 @@ const StudentDashboard = () => {
                       
                       const courseModules = enrollment.course.modules || [];
                       const courseStarted = courseModules.length > 0 && today >= new Date(courseModules[0].weekStartDate);
+                      const isPaid = enrollment.paid; // Check if student has paid
                       
-                      let status: 'current' | 'completed' | 'locked';
-                      if (!courseStarted) {
+                      let status: 'current' | 'completed' | 'locked' | 'unlocked';
+                      
+                      // If NOT PAID: Only module 1 is unlocked
+                      if (!isPaid) {
                         status = module.moduleNumber === 1 ? 'current' : 'locked';
-                      } else if (today > weekEnd) {
+                      } 
+                      // If PAID: All modules are unlocked based on dates
+                      else if (today > weekEnd) {
                         status = 'completed';
                       } else if (today >= weekStart && today <= weekEnd) {
                         status = 'current';
                       } else {
-                        status = 'locked';
+                        // Future module but paid - show as unlocked/waiting
+                        status = 'unlocked';
                       }
                       
                       return (
@@ -376,12 +382,14 @@ const StudentDashboard = () => {
                               ? "bg-primary text-primary-foreground ring-2 ring-primary/20" 
                               : status === 'completed'
                               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-muted text-muted-foreground"
+                              : status === 'unlocked'
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                              : "bg-muted text-muted-foreground opacity-60"
                           }`}
                         >
                           <div className="font-bold">M{module.moduleNumber}</div>
                           <div className="truncate text-[10px] mt-0.5 opacity-80">
-                            {status === 'current' ? "Đang học" : status === 'completed' ? "Xong" : "Chờ"}
+                            {status === 'current' ? "Đang học" : status === 'completed' ? "Xong" : status === 'unlocked' ? "Sẵn sàng" : "Khóa"}
                           </div>
                         </div>
                       );

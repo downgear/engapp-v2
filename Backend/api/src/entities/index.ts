@@ -18,4 +18,7 @@ export * from './login-session.entity';
 export * from './chat-conversation.entity';
 export * from './chat-message.entity';
 export * from './teacher-google-token.entity';
-
+export * from './program.entity';
+export * from './cohort.entity';
+export * from './cohort-course.entity';
+export * from './student-cohort-enrollment.entity';
