@@ -32,8 +32,8 @@ async function bootstrap() {
   // API prefix
   app.setGlobalPrefix('api');
   
-  // Use PORT from environment (Railway provides this) or default to 3001
-  const port = process.env.PORT || 3001;
+  // Use PORT from environment (Railway provides this) or default to 3000
+  const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 Lingriser API is running on port ${port}`);
 }

@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Booking, Student, Teacher, Module, LearningHistory, BookingStatus, ActivityType, LearningStatus } from '../../entities';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { GoogleCalendarService } from '../google-auth/google-calendar.service';
+import { GoogleAuthService } from '../google-auth/google-auth.service';
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+
   constructor(
     @InjectRepository(Booking)
     private bookingRepo: Repository<Booking>,
@@ -17,6 +21,8 @@ export class BookingsService {
     private moduleRepo: Repository<Module>,
     @InjectRepository(LearningHistory)
     private learningHistoryRepo: Repository<LearningHistory>,
+    private readonly googleCalendarService: GoogleCalendarService,
+    private readonly googleAuthService: GoogleAuthService,
   ) {}
 
   async create(dto: CreateBookingDto) {
@@ -68,6 +74,48 @@ export class BookingsService {
 
     const savedBooking = await this.bookingRepo.save(booking);
 
+    // Try to create Google Meet link if teacher has connected Google
+    try {
+      const googleStatus = await this.googleAuthService.isConnected(dto.teacherId);
+      
+      if (googleStatus.connected) {
+        // Get student user info for attendee
+        const studentWithUser = await this.studentRepo.findOne({
+          where: { id: dto.studentId },
+          relations: ['user'],
+        });
+
+        // Get teacher user info
+        const teacherWithUser = await this.teacherRepo.findOne({
+          where: { id: dto.teacherId },
+          relations: ['user'],
+        });
+
+        const meetingResult = await this.googleCalendarService.createMeeting({
+          teacherId: dto.teacherId,
+          studentName: studentWithUser?.user?.fullName || 'Student',
+          teacherName: teacherWithUser?.user?.fullName || 'Teacher',
+          moduleTitle: module.title,
+          bookingDate: dto.bookingDate,
+          startTime: dto.slotStartTime,
+          endTime: this.addHour(dto.slotStartTime),
+          studentEmail: studentWithUser?.user?.email,
+        });
+
+        // Update booking with meeting link
+        savedBooking.meetingLink = meetingResult.meetingLink;
+        savedBooking.googleEventId = meetingResult.googleEventId;
+        await this.bookingRepo.save(savedBooking);
+
+        this.logger.log(`Created Google Meet for booking ${savedBooking.id}: ${meetingResult.meetingLink}`);
+      } else {
+        this.logger.log(`Teacher ${dto.teacherId} has not connected Google - no Meet link created`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to create Google Meet: ${error.message}`);
+      // Don't fail the booking - just log the error
+    }
+
     return this.formatBooking(savedBooking);
   }
 
@@ -108,6 +156,8 @@ export class BookingsService {
       slotStartTime: booking.slotStartTime,
       slotEndTime: booking.slotEndTime,
       status: booking.status,
+      meetingLink: booking.meetingLink || null,
+      googleEventId: booking.googleEventId || null,
       createdAt: booking.createdAt,
       student: booking.student
         ? {
@@ -176,6 +226,16 @@ export class BookingsService {
       throw new NotFoundException(`Booking with ID ${id} not found`);
     }
 
+    // Cancel Google Calendar event if exists
+    if (booking.googleEventId) {
+      try {
+        await this.googleCalendarService.cancelMeeting(booking.teacherId, booking.googleEventId);
+        this.logger.log(`Cancelled Google Calendar event for booking ${id}`);
+      } catch (error) {
+        this.logger.error(`Failed to cancel Google Calendar event: ${error.message}`);
+      }
+    }
+
     booking.status = BookingStatus.CANCELLED;
     await this.bookingRepo.save(booking);
 
@@ -195,6 +255,8 @@ export class BookingsService {
       slotStartTime: booking.slotStartTime,
       slotEndTime: booking.slotEndTime,
       status: booking.status,
+      meetingLink: booking.meetingLink || null,
+      googleEventId: booking.googleEventId || null,
       createdAt: booking.createdAt,
       student: booking.student
         ? {

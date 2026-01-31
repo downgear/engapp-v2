@@ -30,6 +30,8 @@ interface BookingDetail {
   slotStartTime: string;
   slotEndTime: string;
   status: string;
+  meetingLink?: string | null;
+  googleEventId?: string | null;
   createdAt: string;
   teacher: {
     id: number;
@@ -60,7 +62,7 @@ const BookingDetailPage = () => {
     if (!bookingId || !accessToken) return;
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
       const response = await fetch(`${apiUrl}/bookings/${bookingId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -215,6 +217,32 @@ const BookingDetailPage = () => {
                     <p className="font-medium">{booking.module?.topic || booking.module?.title}</p>
                   </div>
                 </div>
+
+                {/* Google Meet Link */}
+                {booking.meetingLink ? (
+                  <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
+                    <Video className="h-5 w-5 text-green-600" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-muted-foreground">Link Google Meet</p>
+                      <a 
+                        href={booking.meetingLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="font-medium text-green-600 hover:text-green-700 hover:underline truncate block"
+                      >
+                        {booking.meetingLink}
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-dashed">
+                    <Video className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Link Google Meet</p>
+                      <p className="font-medium text-muted-foreground italic">Chưa có - chờ giáo viên kết nối Google</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t flex items-center justify-between">
@@ -224,13 +252,31 @@ const BookingDetailPage = () => {
 
               {booking.status === "confirmed" && (
                 <div className="pt-2">
-                  <Button className="w-full gap-2" variant="default">
-                    <Video className="h-4 w-4" />
-                    Tham gia Video Call
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Link sẽ được kích hoạt 10 phút trước buổi học
-                  </p>
+                  {booking.meetingLink ? (
+                    <>
+                      <Button 
+                        className="w-full gap-2" 
+                        variant="default"
+                        onClick={() => window.open(booking.meetingLink!, '_blank')}
+                      >
+                        <Video className="h-4 w-4" />
+                        Tham gia Google Meet
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Nhấn để mở Google Meet trong tab mới
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Button className="w-full gap-2" variant="secondary" disabled>
+                        <Video className="h-4 w-4" />
+                        Đang chờ link họp
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Link Google Meet sẽ được tạo khi giáo viên kết nối Google Calendar
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

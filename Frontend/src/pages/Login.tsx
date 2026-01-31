@@ -115,9 +115,9 @@ const Login = () => {
             <CardTitle className="text-sm font-medium">Tài khoản demo</CardTitle>
           </CardHeader>
           <CardContent className="py-2 space-y-2 text-xs text-muted-foreground">
-            <p><strong>Học sinh:</strong> luuchilap@gmail.com</p>
+            <p><strong>Học sinh:</strong> lap.luucs@hcmut.edu.vn</p>
             <p><strong>Phụ huynh:</strong> phuhuynhlap@gmail.com</p>
-            <p><strong>Giáo viên:</strong> thaycualap@gmail.com</p>
+            <p><strong>Giáo viên:</strong> luuchilap@gmail.com</p>
             <p><strong>Admin:</strong> admin@lingriser.com</p>
             <p className="text-xs opacity-70 mt-2">Mật khẩu mặc định: 123456</p>
           </CardContent>

@@ -48,6 +48,12 @@ export class Booking {
   @Column({ type: 'text', default: BookingStatus.CONFIRMED })
   status: BookingStatus;
 
+  @Column({ name: 'meeting_link', nullable: true })
+  meetingLink: string;
+
+  @Column({ name: 'google_event_id', nullable: true })
+  googleEventId: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

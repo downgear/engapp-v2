@@ -1,12 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { MentorCard } from "@/components/booking/MentorCard";
 import { BookingCalendar } from "@/components/booking/BookingCalendar";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
-import { mentors, type Mentor } from "@/data/mentors";
+import { type Mentor } from "@/data/mentors";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { api } from "@/services/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type BookingStep = "select-mentor" | "select-time" | "confirmation";
+
+// Default avatar for teachers without one
+const DEFAULT_AVATARS = [
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face",
+];
 
 const BookingDemo = () => {
   const { t } = useLanguage();
@@ -14,6 +25,41 @@ const BookingDemo = () => {
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch video call teachers from API
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        setIsLoading(true);
+        const teachers = await api.getVideoCallTeachers();
+        
+        // Convert Teacher[] to Mentor[] format
+        const mentorsList: Mentor[] = teachers.map((teacher, index) => ({
+          id: teacher.id.toString(),
+          name: teacher.name,
+          avatar: teacher.avatarUrl || DEFAULT_AVATARS[index % DEFAULT_AVATARS.length],
+          country: "Việt Nam", // Default country
+          languages: ["Tiếng Anh", "Tiếng Việt"],
+          specialty: teacher.specialties || [],
+          rating: 4.8 + Math.random() * 0.2, // Placeholder rating
+          reviewCount: Math.floor(50 + Math.random() * 150), // Placeholder
+          bio: teacher.bio || "Giáo viên tiếng Anh chuyên nghiệp.",
+          experience: "Giảng viên tại Lingriser",
+          availability: ["09:00", "10:00", "14:00", "15:00", "16:00", "20:00", "21:00"],
+        }));
+        
+        setMentors(mentorsList);
+      } catch (error) {
+        console.error("Failed to fetch teachers:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
 
   const handleSelectMentor = (mentor: Mentor) => {
     setSelectedMentor(mentor);
@@ -87,13 +133,43 @@ const BookingDemo = () => {
           {/* Content */}
           {step === "select-mentor" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mentors.map((mentor) => (
-                <MentorCard
-                  key={mentor.id}
-                  mentor={mentor}
-                  onSelect={handleSelectMentor}
-                />
-              ))}
+              {isLoading ? (
+                // Loading skeletons
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-xl border p-6 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="h-16 w-16 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ))}
+                </>
+              ) : mentors.length === 0 ? (
+                // No teachers available
+                <div className="col-span-full text-center py-12">
+                  <p className="text-muted-foreground text-lg">
+                    Hiện chưa có giáo viên nào khả dụng.
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Vui lòng quay lại sau.
+                  </p>
+                </div>
+              ) : (
+                // Teacher cards
+                mentors.map((mentor) => (
+                  <MentorCard
+                    key={mentor.id}
+                    mentor={mentor}
+                    onSelect={handleSelectMentor}
+                  />
+                ))
+              )}
             </div>
           )}
 

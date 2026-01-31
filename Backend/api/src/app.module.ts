@@ -14,6 +14,7 @@ import { InauguralRegistrationsModule } from './modules/inaugural-registrations/
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { GoogleAuthModule } from './modules/google-auth/google-auth.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -36,6 +37,7 @@ import { AppService } from './app.service';
     PaymentsModule,
     AdminModule,
     ChatModule,
+    GoogleAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

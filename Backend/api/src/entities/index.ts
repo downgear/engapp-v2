@@ -17,4 +17,5 @@ export * from './inaugural-registration.entity';
 export * from './login-session.entity';
 export * from './chat-conversation.entity';
 export * from './chat-message.entity';
+export * from './teacher-google-token.entity';
 

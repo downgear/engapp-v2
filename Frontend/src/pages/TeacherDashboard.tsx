@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   BookOpen, Calendar, Video, Users, Clock, 
-  CheckCircle, LogOut, ChevronRight 
+  CheckCircle, LogOut, ChevronRight, Link2, Link2Off, Loader2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import { toast } from "sonner";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 interface TeacherBooking {
   id: number;
@@ -28,10 +30,32 @@ interface TeacherBooking {
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
   const [bookings, setBookings] = useState<TeacherBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Handle OAuth callback result from URL params
+  useEffect(() => {
+    const googleAuth = searchParams.get('google_auth');
+    const email = searchParams.get('email');
+    const message = searchParams.get('message');
+
+    if (googleAuth === 'success') {
+      toast.success(`Đã kết nối Google Calendar${email ? ` (${email})` : ''}`);
+      setGoogleConnected(true);
+      if (email) setGoogleEmail(email);
+      // Clear URL params
+      window.history.replaceState({}, '', '/teacher-dashboard');
+    } else if (googleAuth === 'error') {
+      toast.error(`Lỗi kết nối Google: ${message || 'Unknown error'}`);
+      window.history.replaceState({}, '', '/teacher-dashboard');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -43,6 +67,7 @@ const TeacherDashboard = () => {
 
     const fetchData = async () => {
       try {
+        // Fetch bookings
         const response = await fetch(`${API_BASE_URL}/bookings/by-teacher/${user.profileId}`, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
         });
@@ -50,8 +75,17 @@ const TeacherDashboard = () => {
           const data = await response.json();
           setBookings(data);
         }
+
+        // Check Google connection status
+        try {
+          const googleStatus = await api.getGoogleConnectionStatus(accessToken!);
+          setGoogleConnected(googleStatus.connected);
+          if (googleStatus.email) setGoogleEmail(googleStatus.email);
+        } catch (err) {
+          // Ignore - teacher may not have Google connected
+        }
       } catch (error) {
-        console.error("Failed to fetch bookings:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -63,6 +97,38 @@ const TeacherDashboard = () => {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleConnectGoogle = async () => {
+    if (!accessToken) return;
+    
+    try {
+      setGoogleLoading(true);
+      const { url } = await api.getGoogleAuthUrl(accessToken);
+      // Redirect to Google OAuth
+      window.location.href = url;
+    } catch (error) {
+      console.error("Failed to get Google auth URL:", error);
+      toast.error("Không thể kết nối với Google");
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!accessToken) return;
+    
+    try {
+      setGoogleLoading(true);
+      await api.disconnectGoogle(accessToken);
+      setGoogleConnected(false);
+      setGoogleEmail(null);
+      toast.success("Đã ngắt kết nối Google Calendar");
+    } catch (error) {
+      console.error("Failed to disconnect Google:", error);
+      toast.error("Không thể ngắt kết nối");
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const upcomingBookings = bookings.filter(b => b.status === "confirmed");
@@ -167,6 +233,79 @@ const TeacherDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Google Calendar Integration */}
+        <Card className="mb-8 border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Video className="h-5 w-5 text-red-500" />
+              Tích hợp Google Meet
+            </CardTitle>
+            <CardDescription>
+              Kết nối Google Calendar để tự động tạo link Google Meet cho các buổi học
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {googleConnected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-green-100">
+                    <Link2 className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-green-600">Đã kết nối</p>
+                    {googleEmail && (
+                      <p className="text-sm text-muted-foreground">{googleEmail}</p>
+                    )}
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleDisconnectGoogle}
+                  disabled={googleLoading}
+                >
+                  {googleLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Link2Off className="h-4 w-4 mr-2" />
+                  )}
+                  Ngắt kết nối
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-muted">
+                    <Link2Off className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">Chưa kết nối</p>
+                    <p className="text-sm text-muted-foreground">
+                      Link họp sẽ được tạo tự động khi học sinh đặt lịch
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleConnectGoogle}
+                  disabled={googleLoading}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  {googleLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  )}
+                  Kết nối Google
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-6">

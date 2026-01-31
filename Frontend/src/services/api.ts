@@ -17,7 +17,7 @@ import type {
 } from '@/types';
 
 // Use VITE_API_URL from environment, fallback to localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // ============ API Functions ============
 
@@ -485,6 +485,26 @@ export const api = {
   async closeConversation(token: string, conversationId: number): Promise<{ id: number; status: string }> {
     return fetchApi(`/chat/admin/conversations/${conversationId}/close`, {
       method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // ============ Google Auth (for Teachers) ============
+
+  async getGoogleAuthUrl(token: string): Promise<{ url: string }> {
+    return fetchApi('/auth/google/connect', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getGoogleConnectionStatus(token: string): Promise<{ connected: boolean; email?: string }> {
+    return fetchApi('/auth/google/status', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async disconnectGoogle(token: string): Promise<{ success: boolean; message: string }> {
+    return fetchApi('/auth/google/disconnect', {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
