@@ -1,5 +1,4 @@
-import { Controller, Get, Query, Res, UseGuards, Logger } from '@nestjs/common';
-import type { Response } from 'express';
+import { Controller, Get, Post, Body, UseGuards, Logger } from '@nestjs/common';
 import { GoogleAuthService } from './google-auth.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -14,55 +13,36 @@ export class GoogleAuthController {
   constructor(private readonly googleAuthService: GoogleAuthService) {}
 
   /**
-   * Get Google OAuth authorization URL
-   * Teacher clicks this to connect their Google account
+   * Exchange authorization code for tokens (GIS popup flow)
+   * Frontend gets the code via Google popup, sends it here
    */
-  @Get('connect')
+  @Post('exchange-code')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TEACHER)
-  async getAuthUrl(@CurrentUser('userId') userId: number) {
-    const teacherId = await this.googleAuthService.getTeacherIdFromUserId(userId);
-    const url = this.googleAuthService.getAuthUrl(teacherId);
-    return { url };
-  }
-
-  /**
-   * OAuth2 callback handler
-   * Google redirects here after authorization
-   */
-  @Get('callback')
-  async handleCallback(
-    @Query('code') code: string,
-    @Query('state') state: string, // teacherId
-    @Query('error') error: string,
-    @Res() res: Response,
+  async exchangeCode(
+    @CurrentUser('userId') userId: number,
+    @Body('code') code: string,
   ) {
-    // Frontend URL to redirect after auth
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
-
-    if (error) {
-      this.logger.error(`Google OAuth error: ${error}`);
-      return res.redirect(`${frontendUrl}/teacher-dashboard?google_auth=error&message=${encodeURIComponent(error)}`);
-    }
-
-    if (!code || !state) {
-      return res.redirect(`${frontendUrl}/teacher-dashboard?google_auth=error&message=missing_params`);
+    if (!code) {
+      return { success: false, error: 'Authorization code is required' };
     }
 
     try {
-      const teacherId = parseInt(state, 10);
-      const result = await this.googleAuthService.handleCallback(code, teacherId);
+      const teacherId = await this.googleAuthService.getTeacherIdFromUserId(userId);
+      const result = await this.googleAuthService.exchangeCodeForTokens(code, teacherId);
       
-      this.logger.log(`Google OAuth success for teacher ${teacherId}`);
+      this.logger.log(`Google OAuth success for teacher ${teacherId} (${result.email})`);
       
-      return res.redirect(
-        `${frontendUrl}/teacher-dashboard?google_auth=success&email=${encodeURIComponent(result.email || '')}`
-      );
+      return { 
+        success: true, 
+        email: result.email,
+      };
     } catch (error) {
-      this.logger.error(`Google OAuth callback failed: ${error.message}`);
-      return res.redirect(
-        `${frontendUrl}/teacher-dashboard?google_auth=error&message=${encodeURIComponent(error.message)}`
-      );
+      this.logger.error(`Google OAuth exchange failed: ${error.message}`);
+      return { 
+        success: false, 
+        error: error.message,
+      };
     }
   }
 

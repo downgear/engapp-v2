@@ -525,9 +525,15 @@ export const api = {
 
   // ============ Google Auth (for Teachers) ============
 
-  async getGoogleAuthUrl(token: string): Promise<{ url: string }> {
-    return fetchApi('/auth/google/connect', {
+  /**
+   * Exchange Google authorization code for tokens (GIS popup flow)
+   * Frontend gets the code via popup, sends it here to exchange for tokens
+   */
+  async exchangeGoogleCode(token: string, code: string): Promise<{ success: boolean; email?: string }> {
+    return fetchApi('/auth/google/exchange-code', {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ code }),
     });
   },
 

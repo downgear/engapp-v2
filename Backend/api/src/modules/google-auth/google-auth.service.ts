@@ -16,40 +16,24 @@ export class GoogleAuthService {
     @InjectRepository(Teacher)
     private readonly teacherRepo: Repository<Teacher>,
   ) {
+    // For GIS popup flow, we don't need redirect_uri in the client config
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI,
     );
   }
 
   /**
-   * Generate OAuth2 authorization URL for teacher
+   * Exchange authorization code for tokens (GIS popup flow)
+   * For popup flow, we use 'postmessage' as redirect_uri
    */
-  getAuthUrl(teacherId: number): string {
-    const scopes = [
-      'https://www.googleapis.com/auth/calendar',
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/userinfo.email',
-    ];
-
-    const url = this.oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes,
-      prompt: 'consent', // Force consent to get refresh token
-      state: teacherId.toString(), // Pass teacherId to callback
-    });
-
-    return url;
-  }
-
-  /**
-   * Handle OAuth2 callback and save tokens
-   */
-  async handleCallback(code: string, teacherId: number): Promise<{ success: boolean; email?: string }> {
+  async exchangeCodeForTokens(code: string, teacherId: number): Promise<{ success: boolean; email?: string }> {
     try {
-      // Exchange code for tokens
-      const { tokens } = await this.oauth2Client.getToken(code);
+      // For GIS popup flow, use 'postmessage' as redirect_uri
+      const { tokens } = await this.oauth2Client.getToken({
+        code,
+        redirect_uri: 'postmessage', // Special value for popup flow
+      });
       
       if (!tokens.refresh_token) {
         this.logger.warn('No refresh token received. User may have already authorized.');
@@ -93,7 +77,7 @@ export class GoogleAuthService {
 
       return { success: true, email };
     } catch (error) {
-      this.logger.error(`Failed to handle OAuth callback: ${error.message}`);
+      this.logger.error(`Failed to exchange code for tokens: ${error.message}`);
       throw new UnauthorizedException('Failed to authorize with Google');
     }
   }

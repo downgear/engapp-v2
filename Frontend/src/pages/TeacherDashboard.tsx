@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/services/api";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,6 @@ interface TeacherBooking {
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
   const [bookings, setBookings] = useState<TeacherBooking[]>([]);
@@ -44,23 +44,38 @@ const TeacherDashboard = () => {
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Handle OAuth callback result from URL params
-  useEffect(() => {
-    const googleAuth = searchParams.get('google_auth');
-    const email = searchParams.get('email');
-    const message = searchParams.get('message');
-
-    if (googleAuth === 'success') {
-      toast.success(`Đã kết nối Google Calendar${email ? ` (${email})` : ''}`);
-      setGoogleConnected(true);
-      if (email) setGoogleEmail(email);
-      // Clear URL params
-      window.history.replaceState({}, '', '/teacher-dashboard');
-    } else if (googleAuth === 'error') {
-      toast.error(`Lỗi kết nối Google: ${message || 'Unknown error'}`);
-      window.history.replaceState({}, '', '/teacher-dashboard');
+  // Handle Google OAuth success - exchange code for tokens
+  const handleGoogleSuccess = useCallback(async (code: string) => {
+    if (!accessToken) return;
+    
+    try {
+      setGoogleLoading(true);
+      const result = await api.exchangeGoogleCode(accessToken, code);
+      if (result.success) {
+        setGoogleConnected(true);
+        if (result.email) setGoogleEmail(result.email);
+        toast.success(`Đã kết nối Google Calendar${result.email ? ` (${result.email})` : ''}`);
+      }
+    } catch (error) {
+      console.error("Failed to exchange Google code:", error);
+      toast.error("Không thể kết nối với Google");
+    } finally {
+      setGoogleLoading(false);
     }
-  }, [searchParams]);
+  }, [accessToken]);
+
+  // Handle Google OAuth error
+  const handleGoogleError = useCallback((error: string) => {
+    console.error("Google OAuth error:", error);
+    toast.error(`Lỗi kết nối Google: ${error}`);
+    setGoogleLoading(false);
+  }, []);
+
+  // Initialize Google Auth hook
+  const { requestAuth: requestGoogleAuth, isReady: googleReady } = useGoogleAuth({
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleError,
+  });
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,19 +119,16 @@ const TeacherDashboard = () => {
     navigate("/");
   };
 
-  const handleConnectGoogle = async () => {
+  const handleConnectGoogle = () => {
     if (!accessToken) return;
-    
-    try {
-      setGoogleLoading(true);
-      const { url } = await api.getGoogleAuthUrl(accessToken);
-      // Redirect to Google OAuth
-      window.location.href = url;
-    } catch (error) {
-      console.error("Failed to get Google auth URL:", error);
-      toast.error("Không thể kết nối với Google");
-      setGoogleLoading(false);
+    if (!googleReady) {
+      toast.error("Google SDK chưa sẵn sàng, vui lòng thử lại");
+      return;
     }
+    
+    setGoogleLoading(true);
+    // Open Google OAuth popup
+    requestGoogleAuth();
   };
 
   const handleDisconnectGoogle = async () => {
