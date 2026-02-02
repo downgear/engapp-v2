@@ -58,6 +58,64 @@ export const VoicePracticeInterface = ({ topic, level, onComplete }: VoicePracti
     };
   }, []);
 
+  // AI speaks first when component mounts
+  useEffect(() => {
+    const initializeConversation = async () => {
+      const topicName = language === "vi" ? topic.titleVi : topic.titleEn;
+      const topicDesc = language === "vi" ? topic.description : topic.descriptionEn;
+
+      try {
+        setIsProcessing(true);
+
+        // Call chat API with empty messages array - AI will introduce topic
+        const chatResponse = await fetch(`${AI_PRACTICE_URL}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [], // Empty array triggers AI's opening message
+            level,
+            topic: topicName,
+            topicDescription: topicDesc,
+          }),
+        });
+
+        if (!chatResponse.ok) {
+          throw new Error(t("aiPractice.connectionError"));
+        }
+
+        const chatData = await chatResponse.json();
+        const assistantText = (chatData?.content || "").trim();
+        
+        if (!assistantText) {
+          throw new Error(t("aiPractice.connectionError"));
+        }
+
+        // Save AI's opening message
+        const assistantMessage: Message = { role: "assistant", content: assistantText };
+        setMessages([assistantMessage]);
+        messagesRef.current = [assistantMessage];
+
+        // Show caption and parse suggestions
+        const cleanAssistantText = sanitizeCaptionText(assistantText);
+        setTranscript([{ role: "agent", text: cleanAssistantText }]);
+        setCurrentCaption(cleanAssistantText);
+        setCaptionSpeaker("ai");
+        parseSuggestions(assistantText);
+
+        // Play AI's opening message
+        await playTts(cleanAssistantText);
+      } catch (error: any) {
+        console.error("Failed to initialize conversation:", error);
+        toast.error(error.message || t("aiPractice.connectionError"));
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    initializeConversation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
   const sanitizeCaptionText = (text: string) => {
     return text.replace(/---SUGGESTIONS---[\s\S]*?---END---/g, "").trim();
   };
