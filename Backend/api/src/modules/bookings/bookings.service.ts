@@ -29,16 +29,28 @@ export class BookingsService {
   ) {}
 
   async create(dto: CreateBookingDto) {
-    // Validate student exists
-    const student = await this.studentRepo.findOne({ where: { id: dto.studentId } });
+    // Validate student exists and account is not locked
+    const student = await this.studentRepo.findOne({ 
+      where: { id: dto.studentId },
+      relations: ['user'],
+    });
     if (!student) {
       throw new NotFoundException('Student not found');
     }
+    if (student.user?.isLocked) {
+      throw new BadRequestException('Student account is locked');
+    }
 
-    // Validate teacher exists and is video call type
-    const teacher = await this.teacherRepo.findOne({ where: { id: dto.teacherId } });
+    // Validate teacher exists, is video call type, and account is not locked
+    const teacher = await this.teacherRepo.findOne({ 
+      where: { id: dto.teacherId },
+      relations: ['user'],
+    });
     if (!teacher) {
       throw new NotFoundException('Teacher not found');
+    }
+    if (teacher.user?.isLocked) {
+      throw new BadRequestException('Teacher is not available');
     }
     if (teacher.teacherType === 'in_person') {
       throw new BadRequestException('This teacher is not available for video calls');

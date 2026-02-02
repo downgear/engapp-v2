@@ -30,9 +30,14 @@ export class StudentsService {
   ) {}
 
   async findAll() {
-    const students = await this.studentRepo.find({
-      relations: ['user', 'assignedInpersonTeacher', 'assignedInpersonTeacher.user'],
-    });
+    const students = await this.studentRepo
+      .createQueryBuilder('student')
+      .leftJoinAndSelect('student.user', 'user')
+      .leftJoinAndSelect('student.assignedInpersonTeacher', 'teacher')
+      .leftJoinAndSelect('teacher.user', 'teacherUser')
+      // Filter out students with locked accounts
+      .where('user.is_locked = :isLocked', { isLocked: false })
+      .getMany();
 
     return students.map((student) => this.formatStudent(student));
   }
@@ -44,6 +49,11 @@ export class StudentsService {
     });
 
     if (!student) {
+      throw new NotFoundException(`Student with ID ${id} not found`);
+    }
+
+    // Check if account is locked
+    if (student.user?.isLocked) {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
@@ -70,6 +80,8 @@ export class StudentsService {
       .leftJoinAndSelect('teacher.user', 'teacherUser')
       .where('al.linked_user_id = :parentUserId', { parentUserId: parent.userId })
       .andWhere('al.link_type = :linkType', { linkType: 'parent' })
+      // Filter out students with locked accounts
+      .andWhere('user.is_locked = :isLocked', { isLocked: false })
       .getMany();
 
     return students.map((student) => this.formatStudent(student));
@@ -274,6 +286,11 @@ export class StudentsService {
     }> = [];
 
     for (const link of links) {
+      // Skip connections to locked accounts
+      if (link.linkedUser?.isLocked) {
+        continue;
+      }
+
       const connection: typeof result[number] = {
         id: link.id,
         linkedUserId: link.linkedUserId,

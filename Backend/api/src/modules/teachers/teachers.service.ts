@@ -17,10 +17,12 @@ export class TeachersService {
   async findAll(type?: TeacherType) {
     const queryBuilder = this.teacherRepo
       .createQueryBuilder('teacher')
-      .leftJoinAndSelect('teacher.user', 'user');
+      .leftJoinAndSelect('teacher.user', 'user')
+      // Filter out teachers with locked accounts
+      .where('user.is_locked = :isLocked', { isLocked: false });
 
     if (type) {
-      queryBuilder.where('teacher.teacher_type = :type OR teacher.teacher_type = :both', {
+      queryBuilder.andWhere('(teacher.teacher_type = :type OR teacher.teacher_type = :both)', {
         type,
         both: TeacherType.BOTH,
       });
@@ -41,6 +43,11 @@ export class TeachersService {
     });
 
     if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
+    }
+
+    // Check if account is locked
+    if (teacher.user?.isLocked) {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
