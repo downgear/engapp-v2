@@ -28,5 +28,10 @@ export class TeachersController {
   ) {
     return this.teachersService.getAvailability(id, date);
   }
+
+  @Get(':id/teaching-courses')
+  getTeachingCourses(@Param('id', ParseIntPipe) id: number) {
+    return this.teachersService.getTeachingCourses(id);
+  }
 }
 

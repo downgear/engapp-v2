@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/services/api";
+import { api, type TeachingCourse } from "@/services/api";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   BookOpen, Calendar, Video, Users, Clock, 
   CheckCircle, LogOut, ChevronRight, Link2, Link2Off, Loader2,
-  Play, Square, Star
+  Play, Square, Star, GraduationCap
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -39,6 +39,7 @@ const TeacherDashboard = () => {
   const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   
   const [bookings, setBookings] = useState<TeacherBooking[]>([]);
+  const [teachingCourses, setTeachingCourses] = useState<TeachingCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
@@ -94,6 +95,14 @@ const TeacherDashboard = () => {
         if (response.ok) {
           const data = await response.json();
           setBookings(data);
+        }
+
+        // Fetch teaching courses
+        try {
+          const courses = await api.getTeachingCourses(user.profileId);
+          setTeachingCourses(courses);
+        } catch (err) {
+          console.error("Failed to fetch teaching courses:", err);
         }
 
         // Check Google connection status
@@ -319,6 +328,74 @@ const TeacherDashboard = () => {
                   )}
                   Kết nối Google
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Teaching Courses */}
+        <Card className="mb-8 border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Các khóa đang giảng dạy
+            </CardTitle>
+            <CardDescription>
+              Danh sách các khóa học mà bạn đang phụ trách
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {teachingCourses.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teachingCourses.map((course) => (
+                  <Card key={course.id} className="border-border/50 hover:border-primary/50 transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge variant={course.level === 'basic' ? 'outline' : 'secondary'}>
+                          {course.level === 'basic' ? 'Cơ bản' : 'Nâng cao'}
+                        </Badge>
+                        <Badge variant={
+                          course.status === 'in_progress' ? 'default' : 
+                          course.status === 'upcoming' ? 'secondary' : 
+                          'outline'
+                        }>
+                          {course.status === 'in_progress' ? 'Đang học' :
+                           course.status === 'upcoming' ? 'Sắp tới' :
+                           course.status === 'completed' ? 'Hoàn thành' : 'Đang mở'}
+                        </Badge>
+                      </div>
+                      <h4 className="font-semibold mb-1">{course.name}</h4>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {course.description}
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <BookOpen className="h-4 w-4" />
+                          <span>{course.cohort.name}</span>
+                        </div>
+                        {course.program && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <GraduationCap className="h-4 w-4" />
+                            <span>{course.program.name}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{course.enrolledStudents}/{course.maxStudents} học viên</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <BookOpen className="h-4 w-4" />
+                          <span>{course.moduleCount} modules</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Chưa có khóa học nào được phân công</p>
               </div>
             )}
           </CardContent>

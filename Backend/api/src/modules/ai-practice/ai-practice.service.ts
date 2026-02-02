@@ -161,7 +161,7 @@ Level: ${dto.level}
 Conversation:
 ${transcriptText}
 
-${hasHesitation ? `\n⚠️ CRITICAL: Student had ${shortOrEmptyResponses.length} turn(s) with no clear speech detected (empty or very short text). This indicates hesitation, unclear pronunciation, or speech-to-text failure. DO NOT GUESS what they said - evaluate these moments as hesitation/fluency issues.\n` : ''}
+${hasHesitation ? `CRITICAL: Student had ${shortOrEmptyResponses.length} turn(s) with no clear speech detected (empty or very short text). This indicates hesitation, unclear pronunciation, or speech-to-text failure. DO NOT GUESS what they said - evaluate these moments as hesitation/fluency issues.\n` : ''}
 
 ASSESSMENT PROCESS (Follow this order strictly):
 

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Teacher, User, Booking, TeacherType } from '../../entities';
+import { Teacher, User, Booking, TeacherType, CohortCourse, Course, Cohort } from '../../entities';
 
 @Injectable()
 export class TeachersService {
@@ -12,6 +12,12 @@ export class TeachersService {
     private userRepo: Repository<User>,
     @InjectRepository(Booking)
     private bookingRepo: Repository<Booking>,
+    @InjectRepository(CohortCourse)
+    private cohortCourseRepo: Repository<CohortCourse>,
+    @InjectRepository(Course)
+    private courseRepo: Repository<Course>,
+    @InjectRepository(Cohort)
+    private cohortRepo: Repository<Cohort>,
   ) {}
 
   async findAll(type?: TeacherType) {
@@ -102,6 +108,49 @@ export class TeachersService {
     const [hours, minutes] = time.split(':').map(Number);
     const newHours = hours + 1;
     return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  async getTeachingCourses(teacherId: number) {
+    // Verify teacher exists
+    const teacher = await this.teacherRepo.findOne({
+      where: { id: teacherId },
+      relations: ['user'],
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
+    }
+
+    // Get all cohort courses taught by this teacher
+    const cohortCourses = await this.cohortCourseRepo.find({
+      where: { teacherId },
+      relations: ['cohort', 'cohort.program', 'course', 'course.modules'],
+      order: { cohort: { startDate: 'DESC' } },
+    });
+
+    return cohortCourses.map((cc) => ({
+      id: cc.id,
+      courseId: cc.courseId,
+      name: cc.displayName || cc.course?.name,
+      description: cc.description || cc.course?.description,
+      level: cc.level,
+      enrolledStudents: cc.enrolledStudents,
+      maxStudents: cc.maxStudents,
+      status: cc.course?.status,
+      startDate: cc.course?.startDate,
+      endDate: cc.course?.endDate,
+      cohort: {
+        id: cc.cohort.id,
+        name: cc.cohort.name,
+        startDate: cc.cohort.startDate,
+        status: cc.cohort.status,
+      },
+      program: cc.cohort.program ? {
+        id: cc.cohort.program.id,
+        name: cc.cohort.program.name,
+      } : null,
+      moduleCount: cc.course?.modules?.length || 0,
+    }));
   }
 
   private formatTeacher(teacher: Teacher) {

@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IsString, IsOptional, IsBoolean, IsNumber, IsEnum } from 'class-validator';
-import { Program, Cohort, CohortCourse, Course, StudentCohortEnrollment } from '../../entities';
+import { Program, Cohort, CohortCourse, Course, StudentCohortEnrollment, Teacher, User } from '../../entities';
 import { CohortStatus } from '../../entities/cohort.entity';
 import { CourseLevel } from '../../entities/cohort-course.entity';
 
@@ -67,6 +67,10 @@ export class CreateCohortCourseDto {
   courseId: number;
 
   @IsOptional()
+  @IsNumber()
+  teacherId?: number;
+
+  @IsOptional()
   @IsEnum(CourseLevel)
   level?: CourseLevel;
 
@@ -87,6 +91,10 @@ export class UpdateCohortCourseDto {
   @IsOptional()
   @IsEnum(CourseLevel)
   level?: CourseLevel;
+
+  @IsOptional()
+  @IsNumber()
+  teacherId?: number;
 
   @IsOptional()
   @IsString()
@@ -120,6 +128,10 @@ export class ProgramsService {
     private courseRepository: Repository<Course>,
     @InjectRepository(StudentCohortEnrollment)
     private enrollmentRepository: Repository<StudentCohortEnrollment>,
+    @InjectRepository(Teacher)
+    private teacherRepository: Repository<Teacher>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   // ==================== PROGRAMS ====================
@@ -127,7 +139,14 @@ export class ProgramsService {
   async findAllPrograms(): Promise<Program[]> {
     return this.programRepository.find({
       where: { isActive: true },
-      relations: ['cohorts', 'cohorts.cohortCourses', 'cohorts.cohortCourses.course', 'cohorts.cohortCourses.course.modules'],
+      relations: [
+        'cohorts', 
+        'cohorts.cohortCourses', 
+        'cohorts.cohortCourses.course', 
+        'cohorts.cohortCourses.course.modules',
+        'cohorts.cohortCourses.teacher',
+        'cohorts.cohortCourses.teacher.user',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -135,7 +154,14 @@ export class ProgramsService {
   async findProgramById(id: number): Promise<Program> {
     const program = await this.programRepository.findOne({
       where: { id },
-      relations: ['cohorts', 'cohorts.cohortCourses', 'cohorts.cohortCourses.course', 'cohorts.cohortCourses.course.modules'],
+      relations: [
+        'cohorts', 
+        'cohorts.cohortCourses', 
+        'cohorts.cohortCourses.course', 
+        'cohorts.cohortCourses.course.modules',
+        'cohorts.cohortCourses.teacher',
+        'cohorts.cohortCourses.teacher.user',
+      ],
     });
     if (!program) {
       throw new NotFoundException(`Program with ID ${id} not found`);
@@ -172,7 +198,14 @@ export class ProgramsService {
   async findCohortById(id: number): Promise<Cohort> {
     const cohort = await this.cohortRepository.findOne({
       where: { id },
-      relations: ['program', 'cohortCourses', 'cohortCourses.course', 'cohortCourses.course.modules'],
+      relations: [
+        'program', 
+        'cohortCourses', 
+        'cohortCourses.course', 
+        'cohortCourses.course.modules',
+        'cohortCourses.teacher',
+        'cohortCourses.teacher.user',
+      ],
     });
     if (!cohort) {
       throw new NotFoundException(`Cohort with ID ${id} not found`);
@@ -214,7 +247,7 @@ export class ProgramsService {
   async findCohortCourseById(id: number): Promise<CohortCourse> {
     const cohortCourse = await this.cohortCourseRepository.findOne({
       where: { id },
-      relations: ['cohort', 'course', 'course.modules'],
+      relations: ['cohort', 'course', 'course.modules', 'teacher', 'teacher.user'],
     });
     if (!cohortCourse) {
       throw new NotFoundException(`CohortCourse with ID ${id} not found`);
@@ -230,6 +263,22 @@ export class ProgramsService {
       throw new NotFoundException(`Course with ID ${dto.courseId} not found`);
     }
 
+    // Validate teacher if provided
+    let teacherId: number | null = null;
+    if (dto.teacherId) {
+      const teacher = await this.teacherRepository.findOne({
+        where: { id: dto.teacherId },
+        relations: ['user'],
+      });
+      if (!teacher) {
+        throw new NotFoundException(`Teacher with ID ${dto.teacherId} not found`);
+      }
+      if (teacher.user?.isLocked) {
+        throw new BadRequestException('Giáo viên này đã bị khóa, không thể gán cho khóa học');
+      }
+      teacherId = dto.teacherId;
+    }
+
     const level = dto.level || CourseLevel.BASIC;
 
     // Check if this combination already exists
@@ -243,18 +292,41 @@ export class ProgramsService {
     const cohortCourse = this.cohortCourseRepository.create({
       cohortId: dto.cohortId,
       courseId: dto.courseId,
+      teacherId,
       level,
       displayName: dto.displayName || course.name,
       description: dto.description || course.description,
       maxStudents: dto.maxStudents || 20,
     });
     const saved = await this.cohortCourseRepository.save(cohortCourse);
-    this.logger.log(`Created cohort course: ${saved.displayName} (ID: ${saved.id})`);
+    this.logger.log(`Created cohort course: ${saved.displayName} (ID: ${saved.id}) with teacher: ${teacherId || 'none'}`);
     return saved;
   }
 
   async updateCohortCourse(id: number, dto: UpdateCohortCourseDto): Promise<CohortCourse> {
     const cohortCourse = await this.findCohortCourseById(id);
+    
+    // Validate teacher if being updated
+    if (dto.teacherId !== undefined) {
+      if (dto.teacherId === null) {
+        // Allow removing teacher
+        cohortCourse.teacherId = null;
+      } else {
+        const teacher = await this.teacherRepository.findOne({
+          where: { id: dto.teacherId },
+          relations: ['user'],
+        });
+        if (!teacher) {
+          throw new NotFoundException(`Teacher with ID ${dto.teacherId} not found`);
+        }
+        if (teacher.user?.isLocked) {
+          throw new BadRequestException('Giáo viên này đã bị khóa, không thể gán cho khóa học');
+        }
+        cohortCourse.teacherId = dto.teacherId;
+      }
+      delete dto.teacherId; // Remove from dto to avoid double-setting
+    }
+    
     Object.assign(cohortCourse, dto);
     const updated = await this.cohortCourseRepository.save(cohortCourse);
     this.logger.log(`Updated cohort course: ${updated.displayName} (ID: ${updated.id})`);
@@ -281,25 +353,39 @@ export class ProgramsService {
         name: cohort.name,
         startDate: cohort.startDate,
         status: cohort.status,
-        courses: cohort.cohortCourses.map(cc => ({
-          id: cc.id,
-          courseId: cc.courseId,
-          name: cc.displayName || cc.course?.name,
-          description: cc.description || cc.course?.description,
-          level: cc.level,
-          status: cc.course?.status,
-          startDate: cc.course?.startDate,
-          endDate: cc.course?.endDate,
-          price: cc.course?.price,
-          enrolledStudents: cc.enrolledStudents,
-          maxStudents: cc.maxStudents,
-          modules: cc.course?.modules?.map(m => ({
-            id: m.id,
-            moduleNumber: m.moduleNumber,
-            title: m.title,
-            topic: m.topic,
-          })) || [],
-        })),
+        courses: cohort.cohortCourses.map(cc => {
+          // Determine teacher info - show null if not found or locked
+          let teacherInfo: { id: number; name: string; email: string } | null = null;
+          if (cc.teacher && cc.teacher.user && !cc.teacher.user.isLocked) {
+            teacherInfo = {
+              id: cc.teacher.id,
+              name: cc.teacher.user.fullName,
+              email: cc.teacher.user.email,
+            };
+          }
+          
+          return {
+            id: cc.id,
+            courseId: cc.courseId,
+            name: cc.displayName || cc.course?.name,
+            description: cc.description || cc.course?.description,
+            level: cc.level,
+            status: cc.course?.status,
+            startDate: cc.course?.startDate,
+            endDate: cc.course?.endDate,
+            price: cc.course?.price,
+            enrolledStudents: cc.enrolledStudents,
+            maxStudents: cc.maxStudents,
+            teacherId: cc.teacherId,
+            teacher: teacherInfo,
+            modules: cc.course?.modules?.map(m => ({
+              id: m.id,
+              moduleNumber: m.moduleNumber,
+              title: m.title,
+              topic: m.topic,
+            })) || [],
+          };
+        }),
       })),
     }));
   }

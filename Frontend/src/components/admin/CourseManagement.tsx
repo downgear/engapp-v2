@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Accordion,
   AccordionContent,
@@ -48,10 +61,21 @@ import {
   Plus,
   Trash2,
   Loader2,
+  Check,
+  ChevronsUpDown,
+  User,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse } from "@/services/api";
+
+// Teacher type for selection
+interface TeacherOption {
+  id: number;
+  name: string;
+  email: string;
+}
 
 // Types (using API response types)
 type Program = ProgramResponse;
@@ -107,6 +131,10 @@ export const CourseManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Teachers for selection
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [teacherPopoverOpen, setTeacherPopoverOpen] = useState(false);
+  
   // Dialog states
   const [programDialogOpen, setProgramDialogOpen] = useState(false);
   const [cohortDialogOpen, setCohortDialogOpen] = useState(false);
@@ -129,6 +157,7 @@ export const CourseManagement = () => {
     endDate: "",
     price: 0,
     maxStudents: 20,
+    teacherId: null as number | null,
   });
 
   // Fetch programs from API
@@ -145,9 +174,30 @@ export const CourseManagement = () => {
     }
   };
 
+  // Fetch teachers for selection
+  const fetchTeachers = async () => {
+    try {
+      const data = await api.getTeachers();
+      setTeachers(data.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        email: t.email,
+      })));
+    } catch (error) {
+      console.error("Failed to fetch teachers:", error);
+    }
+  };
+
   useEffect(() => {
     fetchPrograms();
+    fetchTeachers();
   }, []);
+  
+  // Find selected teacher
+  const selectedTeacher = useMemo(() => {
+    if (!courseForm.teacherId) return null;
+    return teachers.find(t => t.id === courseForm.teacherId) || null;
+  }, [courseForm.teacherId, teachers]);
 
   // Program CRUD
   const openAddProgram = () => {
@@ -279,6 +329,7 @@ export const CourseManagement = () => {
       endDate: "",
       price: 0,
       maxStudents: 20,
+      teacherId: null,
     });
     setCourseDialogOpen(true);
   };
@@ -296,6 +347,7 @@ export const CourseManagement = () => {
       endDate: course.endDate,
       price: course.price,
       maxStudents: course.maxStudents,
+      teacherId: course.teacherId || null,
     });
     setCourseDialogOpen(true);
   };
@@ -318,6 +370,7 @@ export const CourseManagement = () => {
           displayName: courseForm.name,
           description: courseForm.description,
           maxStudents: courseForm.maxStudents,
+          teacherId: courseForm.teacherId,
         });
         toast({ title: "Thành công", description: "Đã cập nhật khóa học" });
       } else if (selectedCohortId) {
@@ -329,6 +382,7 @@ export const CourseManagement = () => {
           displayName: courseForm.name,
           description: courseForm.description,
           maxStudents: courseForm.maxStudents,
+          teacherId: courseForm.teacherId,
         });
         toast({ title: "Thành công", description: "Đã thêm khóa học mới" });
       }
@@ -511,6 +565,16 @@ export const CourseManagement = () => {
                                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                                   <span>{formatPrice(course.price)}</span>
                                 </div>
+                              </div>
+                              {/* Teacher Info */}
+                              <div className="mt-3 pt-3 border-t flex items-center gap-2 text-sm">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Giảng viên:</span>
+                                {course.teacher ? (
+                                  <span className="font-medium">{course.teacher.name}</span>
+                                ) : (
+                                  <span className="text-orange-500 italic">Chưa xác định</span>
+                                )}
                               </div>
                               <div className="mt-4 pt-3 border-t flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">
@@ -867,6 +931,73 @@ export const CourseManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            {/* Teacher Selection */}
+            <div className="space-y-2">
+              <Label>Giảng viên</Label>
+              <Popover open={teacherPopoverOpen} onOpenChange={setTeacherPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={teacherPopoverOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedTeacher ? (
+                      <span className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {selectedTeacher.name} ({selectedTeacher.email})
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Chọn giảng viên...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Tìm theo tên hoặc email..." />
+                    <CommandList>
+                      <CommandEmpty>Không tìm thấy giảng viên</CommandEmpty>
+                      <CommandGroup>
+                        {/* Option to clear selection */}
+                        <CommandItem
+                          onSelect={() => {
+                            setCourseForm({ ...courseForm, teacherId: null });
+                            setTeacherPopoverOpen(false);
+                          }}
+                        >
+                          <span className="text-muted-foreground italic">Chưa xác định</span>
+                        </CommandItem>
+                        {teachers.map((teacher) => (
+                          <CommandItem
+                            key={teacher.id}
+                            value={`${teacher.name} ${teacher.email}`}
+                            onSelect={() => {
+                              setCourseForm({ ...courseForm, teacherId: teacher.id });
+                              setTeacherPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                courseForm.teacherId === teacher.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span className="font-medium">{teacher.name}</span>
+                              <span className="text-xs text-muted-foreground">{teacher.email}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground">
+                Gõ để tìm kiếm theo tên hoặc email giảng viên
+              </p>
             </div>
           </div>
           <DialogFooter>

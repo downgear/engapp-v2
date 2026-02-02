@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Cohort } from './cohort.entity';
 import { Course } from './course.entity';
+import { Teacher } from './teacher.entity';
 
 export enum CourseLevel {
   BASIC = 'basic',
@@ -17,6 +18,9 @@ export class CohortCourse {
 
   @Column({ name: 'course_id' })
   courseId: number;
+
+  @Column({ name: 'teacher_id', nullable: true })
+  teacherId: number | null;
 
   @Column({ type: 'text', default: CourseLevel.BASIC })
   level: CourseLevel;
@@ -40,6 +44,10 @@ export class CohortCourse {
   @ManyToOne(() => Course, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'course_id' })
   course: Course;
+
+  @ManyToOne(() => Teacher, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'teacher_id' })
+  teacher: Teacher;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

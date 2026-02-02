@@ -124,6 +124,10 @@ export const api = {
     return fetchApi(`/teachers/${teacherId}/availability?date=${date}`);
   },
 
+  async getTeachingCourses(teacherId: number): Promise<TeachingCourse[]> {
+    return fetchApi<TeachingCourse[]>(`/teachers/${teacherId}/teaching-courses`);
+  },
+
   // ============ Courses ============
 
   async getCourses(): Promise<Course[]> {
@@ -607,7 +611,7 @@ export const api = {
 
   // ============ Cohort Courses (Admin) ============
 
-  async createCohortCourse(token: string, data: { cohortId: number; courseId: number; level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
+  async createCohortCourse(token: string, data: { cohortId: number; courseId: number; teacherId?: number | null; level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
     return fetchApi('/programs/cohort-courses', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
@@ -615,7 +619,7 @@ export const api = {
     });
   },
 
-  async updateCohortCourse(token: string, id: number, data: { level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
+  async updateCohortCourse(token: string, id: number, data: { teacherId?: number | null; level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
     return fetchApi(`/programs/cohort-courses/${id}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
@@ -706,5 +710,35 @@ export interface CohortCourseResponse {
   price: number;
   enrolledStudents: number;
   maxStudents: number;
+  teacherId?: number | null;
+  teacher?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
   modules: { id: number; moduleNumber: number; title: string; topic: string }[];
+}
+
+export interface TeachingCourse {
+  id: number;
+  courseId: number;
+  name: string;
+  description: string;
+  level: string;
+  enrolledStudents: number;
+  maxStudents: number;
+  status: string;
+  startDate: string;
+  endDate: string;
+  cohort: {
+    id: number;
+    name: string;
+    startDate: string;
+    status: string;
+  };
+  program: {
+    id: number;
+    name: string;
+  } | null;
+  moduleCount: number;
 }
