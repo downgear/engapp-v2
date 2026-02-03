@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TeachersService } from './teachers.service';
-import { Teacher, User, Booking, TeacherType } from '../../entities';
+import { Teacher, User, Booking, TeacherType, CohortCourse, Course, Cohort } from '../../entities';
 import { NotFoundException } from '@nestjs/common';
 
 describe('TeachersService', () => {
@@ -33,6 +33,7 @@ describe('TeachersService', () => {
     createQueryBuilder: jest.fn(() => ({
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
       getMany: jest.fn().mockResolvedValue([mockTeacher]),
     })),
     manager: {
@@ -42,6 +43,13 @@ describe('TeachersService', () => {
 
   const mockBookingRepo = {
     find: jest.fn(),
+    createQueryBuilder: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getRawOne: jest.fn().mockResolvedValue({ avgRating: null, reviewCount: '0' }),
+    })),
   };
 
   beforeEach(async () => {
@@ -51,6 +59,9 @@ describe('TeachersService', () => {
         { provide: getRepositoryToken(Teacher), useValue: mockTeacherRepo },
         { provide: getRepositoryToken(User), useValue: {} },
         { provide: getRepositoryToken(Booking), useValue: mockBookingRepo },
+        { provide: getRepositoryToken(CohortCourse), useValue: {} },
+        { provide: getRepositoryToken(Course), useValue: {} },
+        { provide: getRepositoryToken(Cohort), useValue: {} },
       ],
     }).compile();
 
@@ -77,6 +88,8 @@ describe('TeachersService', () => {
         teacherType: TeacherType.VIDEO_CALL,
         bio: 'Experienced teacher',
         specialties: ['speaking', 'pronunciation'],
+        rating: null,
+        reviewCount: 0,
       });
     });
 

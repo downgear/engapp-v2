@@ -34,7 +34,7 @@ const BookingDemo = () => {
       try {
         setIsLoading(true);
         const teachers = await api.getVideoCallTeachers();
-        
+
         // Convert Teacher[] to Mentor[] format
         const mentorsList: Mentor[] = teachers.map((teacher, index) => ({
           id: teacher.id.toString(),
@@ -43,13 +43,13 @@ const BookingDemo = () => {
           country: "Việt Nam", // Default country
           languages: ["Tiếng Anh", "Tiếng Việt"],
           specialty: teacher.specialties || [],
-          rating: 4.8 + Math.random() * 0.2, // Placeholder rating
-          reviewCount: Math.floor(50 + Math.random() * 150), // Placeholder
+          rating: teacher.rating ?? 0,
+          reviewCount: teacher.reviewCount ?? 0,
           bio: teacher.bio || "Giáo viên tiếng Anh chuyên nghiệp.",
           experience: "Giảng viên tại Lingriser",
           availability: ["09:00", "10:00", "14:00", "15:00", "16:00", "20:00", "21:00"],
         }));
-        
+
         setMentors(mentorsList);
       } catch (error) {
         console.error("Failed to fetch teachers:", error);
@@ -93,7 +93,7 @@ const BookingDemo = () => {
   return (
     <main className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="pt-24 pb-16 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -108,25 +108,25 @@ const BookingDemo = () => {
 
           {/* Progress Steps */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <StepIndicator 
-              number={1} 
-              label={t("booking.step1")} 
-              active={step === "select-mentor"} 
-              completed={step !== "select-mentor"} 
+            <StepIndicator
+              number={1}
+              label={t("booking.step1")}
+              active={step === "select-mentor"}
+              completed={step !== "select-mentor"}
             />
             <div className="w-12 h-0.5 bg-border" />
-            <StepIndicator 
-              number={2} 
-              label={t("booking.step2")} 
-              active={step === "select-time"} 
-              completed={step === "confirmation"} 
+            <StepIndicator
+              number={2}
+              label={t("booking.step2")}
+              active={step === "select-time"}
+              completed={step === "confirmation"}
             />
             <div className="w-12 h-0.5 bg-border" />
-            <StepIndicator 
-              number={3} 
-              label={t("booking.step3")} 
-              active={step === "confirmation"} 
-              completed={false} 
+            <StepIndicator
+              number={3}
+              label={t("booking.step3")}
+              active={step === "confirmation"}
+              completed={false}
             />
           </div>
 
@@ -196,26 +196,25 @@ const BookingDemo = () => {
   );
 };
 
-const StepIndicator = ({ 
-  number, 
-  label, 
-  active, 
-  completed 
-}: { 
-  number: number; 
-  label: string; 
-  active: boolean; 
+const StepIndicator = ({
+  number,
+  label,
+  active,
+  completed
+}: {
+  number: number;
+  label: string;
+  active: boolean;
   completed: boolean;
 }) => (
   <div className="flex flex-col items-center gap-2">
-    <div 
-      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-        active 
-          ? "bg-primary text-primary-foreground" 
-          : completed 
-            ? "bg-primary/20 text-primary" 
+    <div
+      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${active
+          ? "bg-primary text-primary-foreground"
+          : completed
+            ? "bg-primary/20 text-primary"
             : "bg-muted text-muted-foreground"
-      }`}
+        }`}
     >
       {completed ? "✓" : number}
     </div>

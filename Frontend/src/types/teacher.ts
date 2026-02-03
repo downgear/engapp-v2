@@ -11,6 +11,8 @@ export interface Teacher {
   teacherType: 'in_person' | 'video_call' | 'both';
   bio: string;
   specialties: string[];
+  rating: number | null;
+  reviewCount: number;
 }
 
 export interface TimeSlot {

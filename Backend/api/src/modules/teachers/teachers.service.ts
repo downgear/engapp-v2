@@ -18,7 +18,7 @@ export class TeachersService {
     private courseRepo: Repository<Course>,
     @InjectRepository(Cohort)
     private cohortRepo: Repository<Cohort>,
-  ) {}
+  ) { }
 
   async findAll(type?: TeacherType) {
     const queryBuilder = this.teacherRepo
@@ -35,7 +35,7 @@ export class TeachersService {
     }
 
     const teachers = await queryBuilder.getMany();
-    return teachers.map((t) => this.formatTeacher(t));
+    return Promise.all(teachers.map((t) => this.formatTeacher(t)));
   }
 
   async findVideoCallTeachers() {
@@ -153,13 +153,34 @@ export class TeachersService {
     }));
   }
 
-  private formatTeacher(teacher: Teacher) {
+  /**
+   * Get teacher rating statistics from completed bookings
+   */
+  private async getTeacherRatingStats(teacherId: number): Promise<{ rating: number | null; reviewCount: number }> {
+    const result = await this.bookingRepo
+      .createQueryBuilder('booking')
+      .select('AVG(booking.studentRating)', 'avgRating')
+      .addSelect('COUNT(booking.studentRating)', 'reviewCount')
+      .where('booking.teacherId = :teacherId', { teacherId })
+      .andWhere('booking.studentRating IS NOT NULL')
+      .getRawOne();
+
+    return {
+      rating: result.avgRating ? parseFloat(parseFloat(result.avgRating).toFixed(2)) : null,
+      reviewCount: parseInt(result.reviewCount) || 0,
+    };
+  }
+
+  private async formatTeacher(teacher: Teacher) {
     let specialties: string[] = [];
     try {
       specialties = teacher.specialties ? JSON.parse(teacher.specialties) : [];
     } catch {
       specialties = [];
     }
+
+    // Get rating statistics
+    const ratingStats = await this.getTeacherRatingStats(teacher.id);
 
     return {
       id: teacher.id,
@@ -170,6 +191,8 @@ export class TeachersService {
       teacherType: teacher.teacherType,
       bio: teacher.bio,
       specialties,
+      rating: ratingStats.rating,
+      reviewCount: ratingStats.reviewCount,
     };
   }
 }
