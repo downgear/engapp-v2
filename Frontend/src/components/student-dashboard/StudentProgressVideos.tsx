@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/services/api";
 import type { ProgressVideos } from "@/types";
 import { Video, Upload, PlayCircle, Trash2, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface StudentProgressVideosProps {
   studentId: number;
@@ -13,6 +14,7 @@ interface StudentProgressVideosProps {
 }
 
 export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVideosProps) => {
+  const { language } = useLanguage();
   const [videos, setVideos] = useState<ProgressVideos | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [uploadingType, setUploadingType] = useState<'before' | 'after' | null>(null);
@@ -40,13 +42,13 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
   const handleUpload = async (file: File, videoType: 'before' | 'after') => {
     // Validate file size (100MB max)
     if (file.size > 100 * 1024 * 1024) {
-      setError("Video không được vượt quá 100MB");
+      setError(language === "vi" ? "Video không được vượt quá 100MB" : "Video must be under 100MB");
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      setError("Chỉ chấp nhận file video");
+      setError(language === "vi" ? "Chỉ chấp nhận file video" : "Only video files accepted");
       return;
     }
 
@@ -71,7 +73,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
       clearInterval(progressInterval);
       setUploadProgress(100);
       setVideos(result);
-      setSuccess(`Upload video ${videoType === 'before' ? 'trước' : 'sau'} thành công!`);
+      setSuccess(`Upload video ${videoType === 'before' ? (language === "vi" ? 'trước' : 'before') : (language === "vi" ? 'sau' : 'after')} ${language === "vi" ? 'thành công!' : 'successful!'}`);
       
       setTimeout(() => {
         setSuccess(null);
@@ -79,7 +81,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
       }, 3000);
     } catch (err) {
       clearInterval(progressInterval);
-      setError(err instanceof Error ? err.message : "Upload thất bại");
+      setError(err instanceof Error ? err.message : (language === "vi" ? "Upload thất bại" : "Upload failed"));
     } finally {
       setUploadingType(null);
     }
@@ -95,15 +97,15 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
   };
 
   const handleDelete = async (videoType: 'before' | 'after') => {
-    if (!confirm(`Bạn có chắc muốn xóa video ${videoType === 'before' ? 'trước' : 'sau'}?`)) return;
+    if (!confirm(language === "vi" ? `Bạn có chắc muốn xóa video ${videoType === 'before' ? 'trước' : 'sau'}?` : `Are you sure you want to delete the ${videoType} video?`)) return;
     
     try {
       const result = await api.deleteStudentVideo(studentId, courseId, videoType);
       setVideos(result);
-      setSuccess(`Đã xóa video ${videoType === 'before' ? 'trước' : 'sau'}`);
+      setSuccess(language === "vi" ? `Đã xóa video ${videoType === 'before' ? 'trước' : 'sau'}` : `${videoType === 'before' ? 'Before' : 'After'} video deleted`);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Xóa thất bại");
+      setError(err instanceof Error ? err.message : (language === "vi" ? "Xóa thất bại" : "Delete failed"));
     }
   };
 
@@ -113,7 +115,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Video className="h-5 w-5 text-orange-500" />
-            Video trước và sau
+            {language === "vi" ? "Video trước và sau" : "Before & After Videos"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -130,7 +132,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold flex items-center gap-2">
           <Video className="h-5 w-5 text-orange-500" />
-          Video trước và sau
+          {language === "vi" ? "Video trước và sau" : "Before & After Videos"}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -154,7 +156,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
           <div className="mb-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                Đang upload video {uploadingType === 'before' ? 'trước' : 'sau'}...
+                {language === "vi" ? "Đang upload video" : "Uploading video"} {uploadingType === 'before' ? (language === "vi" ? 'trước' : 'before') : (language === "vi" ? 'sau' : 'after')}...
               </span>
               <span className="font-medium">{uploadProgress}%</span>
             </div>
@@ -167,13 +169,13 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Badge variant="outline" className="border-blue-300 text-blue-600 dark:text-blue-400">
-                Trước khi học
+                {language === "vi" ? "Trước khi học" : "Before"}
               </Badge>
               {videos?.beforeVideo && (
                 <button 
                   onClick={() => handleDelete('before')}
                   className="text-muted-foreground hover:text-red-500 transition-colors"
-                  title="Xóa video"
+                  title={language === "vi" ? "Xóa video" : "Delete video"}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -196,8 +198,8 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
                     <Upload className="h-6 w-6 text-blue-500" />
                   </div>
                   <div className="text-center px-4">
-                    <p className="text-sm font-medium text-foreground">Upload video trước</p>
-                    <p className="text-xs text-muted-foreground mt-1">Nhấn để chọn video (tối đa 100MB)</p>
+                    <p className="text-sm font-medium text-foreground">{language === "vi" ? "Upload video trước" : "Upload before video"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{language === "vi" ? "Nhấn để chọn video (tối đa 100MB)" : "Click to select video (max 100MB)"}</p>
                   </div>
                 </div>
               )}
@@ -215,7 +217,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
                   disabled={!!uploadingType}
                 >
                   <Upload className="h-3 w-3 mr-1" />
-                  Thay đổi
+                  {language === "vi" ? "Thay đổi" : "Change"}
                 </Button>
               </div>
             ) : null}
@@ -233,13 +235,13 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Badge variant="outline" className="border-green-300 text-green-600 dark:text-green-400">
-                Sau khi học
+                {language === "vi" ? "Sau khi học" : "After"}
               </Badge>
               {videos?.afterVideo && (
                 <button 
                   onClick={() => handleDelete('after')}
                   className="text-muted-foreground hover:text-red-500 transition-colors"
-                  title="Xóa video"
+                  title={language === "vi" ? "Xóa video" : "Delete video"}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -262,8 +264,8 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
                     <Upload className="h-6 w-6 text-green-500" />
                   </div>
                   <div className="text-center px-4">
-                    <p className="text-sm font-medium text-foreground">Upload video sau</p>
-                    <p className="text-xs text-muted-foreground mt-1">Nhấn để chọn video (tối đa 100MB)</p>
+                    <p className="text-sm font-medium text-foreground">{language === "vi" ? "Upload video sau" : "Upload after video"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{language === "vi" ? "Nhấn để chọn video (tối đa 100MB)" : "Click to select video (max 100MB)"}</p>
                   </div>
                 </div>
               )}
@@ -281,7 +283,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
                   disabled={!!uploadingType}
                 >
                   <Upload className="h-3 w-3 mr-1" />
-                  Thay đổi
+                  {language === "vi" ? "Thay đổi" : "Change"}
                 </Button>
               </div>
             ) : null}
@@ -298,7 +300,7 @@ export const StudentProgressVideos = ({ studentId, courseId }: StudentProgressVi
 
         {/* Info text */}
         <p className="text-xs text-muted-foreground mt-4 text-center">
-          Upload video nói tiếng Anh trước và sau khóa học để theo dõi sự tiến bộ của bạn
+          {language === "vi" ? "Upload video nói tiếng Anh trước và sau khóa học để theo dõi sự tiến bộ của bạn" : "Upload your English speaking videos before and after the course to track your progress"}
         </p>
       </CardContent>
     </Card>

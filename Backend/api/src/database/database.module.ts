@@ -13,6 +13,19 @@ import { join } from 'path';
       ssl: {
         rejectUnauthorized: false,
       },
+      // Retry on connection loss (ECONNRESET)
+      retryAttempts: 10,
+      retryDelay: 3000,
+      // Connection pool settings for Neon serverless
+      extra: {
+        // Keep idle connections alive
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
+        // Pool settings
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      },
     }),
   ],
 })

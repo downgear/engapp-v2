@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type TeachingCourse } from "@/services/api";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,7 @@ interface TeacherBooking {
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { language } = useLanguage();
   
   const [bookings, setBookings] = useState<TeacherBooking[]>([]);
   const [teachingCourses, setTeachingCourses] = useState<TeachingCourse[]>([]);
@@ -55,11 +57,11 @@ const TeacherDashboard = () => {
       if (result.success) {
         setGoogleConnected(true);
         if (result.email) setGoogleEmail(result.email);
-        toast.success(`Đã kết nối Google Calendar${result.email ? ` (${result.email})` : ''}`);
+        toast.success(language === "vi" ? `Đã kết nối Google Calendar${result.email ? ` (${result.email})` : ''}` : `Connected to Google Calendar${result.email ? ` (${result.email})` : ''}`);
       }
     } catch (error) {
       console.error("Failed to exchange Google code:", error);
-      toast.error("Không thể kết nối với Google");
+      toast.error(language === "vi" ? "Không thể kết nối với Google" : "Could not connect to Google");
     } finally {
       setGoogleLoading(false);
     }
@@ -68,7 +70,7 @@ const TeacherDashboard = () => {
   // Handle Google OAuth error
   const handleGoogleError = useCallback((error: string) => {
     console.error("Google OAuth error:", error);
-    toast.error(`Lỗi kết nối Google: ${error}`);
+    toast.error(language === "vi" ? `Lỗi kết nối Google: ${error}` : `Google connection error: ${error}`);
     setGoogleLoading(false);
   }, []);
 
@@ -131,7 +133,7 @@ const TeacherDashboard = () => {
   const handleConnectGoogle = () => {
     if (!accessToken) return;
     if (!googleReady) {
-      toast.error("Google SDK chưa sẵn sàng, vui lòng thử lại");
+      toast.error(language === "vi" ? "Google SDK chưa sẵn sàng, vui lòng thử lại" : "Google SDK not ready, please try again");
       return;
     }
     
@@ -148,10 +150,10 @@ const TeacherDashboard = () => {
       await api.disconnectGoogle(accessToken);
       setGoogleConnected(false);
       setGoogleEmail(null);
-      toast.success("Đã ngắt kết nối Google Calendar");
+      toast.success(language === "vi" ? "Đã ngắt kết nối Google Calendar" : "Disconnected from Google Calendar");
     } catch (error) {
       console.error("Failed to disconnect Google:", error);
-      toast.error("Không thể ngắt kết nối");
+      toast.error(language === "vi" ? "Không thể ngắt kết nối" : "Could not disconnect");
     } finally {
       setGoogleLoading(false);
     }
@@ -187,18 +189,18 @@ const TeacherDashboard = () => {
           <div>
             <Badge variant="secondary" className="mb-4">
               <BookOpen className="h-3 w-3 mr-1" />
-              Giáo viên
+              {language === "vi" ? "Giáo viên" : "Teacher"}
             </Badge>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Xin chào, {user?.fullName}! 👋
+              {language === "vi" ? "Xin chào" : "Hello"}, {user?.fullName}! 👋
             </h1>
             <p className="text-muted-foreground">
-              Quản lý lịch dạy và theo dõi học sinh
+              {language === "vi" ? "Quản lý lịch dạy và theo dõi học sinh" : "Manage your schedule and track students"}
             </p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
-            Đăng xuất
+            {language === "vi" ? "Đăng xuất" : "Sign Out"}
           </Button>
         </div>
 
@@ -212,7 +214,7 @@ const TeacherDashboard = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{upcomingBookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Lịch sắp tới</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Lịch sắp tới" : "Upcoming"}</p>
                 </div>
               </div>
             </CardContent>
@@ -225,7 +227,7 @@ const TeacherDashboard = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{completedBookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Đã hoàn thành</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Đã hoàn thành" : "Completed"}</p>
                 </div>
               </div>
             </CardContent>
@@ -240,7 +242,7 @@ const TeacherDashboard = () => {
                   <p className="text-2xl font-bold">
                     {new Set(bookings.map(b => b.student?.id)).size}
                   </p>
-                  <p className="text-sm text-muted-foreground">Học sinh</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Học sinh" : "Students"}</p>
                 </div>
               </div>
             </CardContent>
@@ -253,7 +255,7 @@ const TeacherDashboard = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{bookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Tổng buổi</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Tổng buổi" : "Total Sessions"}</p>
                 </div>
               </div>
             </CardContent>
@@ -265,10 +267,10 @@ const TeacherDashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Video className="h-5 w-5 text-red-500" />
-              Tích hợp Google Meet
+              {language === "vi" ? "Tích hợp Google Meet" : "Google Meet Integration"}
             </CardTitle>
             <CardDescription>
-              Kết nối Google Calendar để tự động tạo link Google Meet cho các buổi học
+              {language === "vi" ? "Kết nối Google Calendar để tự động tạo link Google Meet cho các buổi học" : "Connect Google Calendar to automatically create Google Meet links for sessions"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,7 +281,7 @@ const TeacherDashboard = () => {
                     <Link2 className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-green-600">Đã kết nối</p>
+                    <p className="font-medium text-green-600">{language === "vi" ? "Đã kết nối" : "Connected"}</p>
                     {googleEmail && (
                       <p className="text-sm text-muted-foreground">{googleEmail}</p>
                     )}
@@ -295,7 +297,7 @@ const TeacherDashboard = () => {
                   ) : (
                     <Link2Off className="h-4 w-4 mr-2" />
                   )}
-                  Ngắt kết nối
+                  {language === "vi" ? "Ngắt kết nối" : "Disconnect"}
                 </Button>
               </div>
             ) : (
@@ -305,9 +307,9 @@ const TeacherDashboard = () => {
                     <Link2Off className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="font-medium text-muted-foreground">Chưa kết nối</p>
+                    <p className="font-medium text-muted-foreground">{language === "vi" ? "Chưa kết nối" : "Not Connected"}</p>
                     <p className="text-sm text-muted-foreground">
-                      Link họp sẽ được tạo tự động khi học sinh đặt lịch
+                      {language === "vi" ? "Link họp sẽ được tạo tự động khi học sinh đặt lịch" : "Meeting links will be auto-created when students book"}
                     </p>
                   </div>
                 </div>
@@ -326,7 +328,7 @@ const TeacherDashboard = () => {
                       <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
                   )}
-                  Kết nối Google
+                  {language === "vi" ? "Kết nối Google" : "Connect Google"}
                 </Button>
               </div>
             )}
@@ -338,10 +340,10 @@ const TeacherDashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-primary" />
-              Các khóa đang giảng dạy
+              {language === "vi" ? "Các khóa đang giảng dạy" : "Teaching Courses"}
             </CardTitle>
             <CardDescription>
-              Danh sách các khóa học mà bạn đang phụ trách
+              {language === "vi" ? "Danh sách các khóa học mà bạn đang phụ trách" : "Courses you are currently teaching"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -352,16 +354,16 @@ const TeacherDashboard = () => {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <Badge variant={course.level === 'basic' ? 'outline' : 'secondary'}>
-                          {course.level === 'basic' ? 'Cơ bản' : 'Nâng cao'}
+                          {course.level === 'basic' ? (language === "vi" ? 'Cơ bản' : 'Basic') : (language === "vi" ? 'Nâng cao' : 'Advanced')}
                         </Badge>
                         <Badge variant={
                           course.status === 'in_progress' ? 'default' : 
                           course.status === 'upcoming' ? 'secondary' : 
                           'outline'
                         }>
-                          {course.status === 'in_progress' ? 'Đang học' :
-                           course.status === 'upcoming' ? 'Sắp tới' :
-                           course.status === 'completed' ? 'Hoàn thành' : 'Đang mở'}
+                          {course.status === 'in_progress' ? (language === "vi" ? 'Đang học' : 'In Progress') :
+                           course.status === 'upcoming' ? (language === "vi" ? 'Sắp tới' : 'Upcoming') :
+                           course.status === 'completed' ? (language === "vi" ? 'Hoàn thành' : 'Completed') : (language === "vi" ? 'Đang mở' : 'Open')}
                         </Badge>
                       </div>
                       <h4 className="font-semibold mb-1">{course.name}</h4>
@@ -381,7 +383,7 @@ const TeacherDashboard = () => {
                         )}
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Users className="h-4 w-4" />
-                          <span>{course.enrolledStudents}/{course.maxStudents} học viên</span>
+                          <span>{course.enrolledStudents}/{course.maxStudents} {language === "vi" ? "học viên" : "students"}</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <BookOpen className="h-4 w-4" />
@@ -395,7 +397,7 @@ const TeacherDashboard = () => {
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>Chưa có khóa học nào được phân công</p>
+                <p>{language === "vi" ? "Chưa có khóa học nào được phân công" : "No courses assigned yet"}</p>
               </div>
             )}
           </CardContent>
@@ -408,7 +410,7 @@ const TeacherDashboard = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <Video className="h-5 w-5 text-purple-500" />
-                Lịch dạy sắp tới
+                {language === "vi" ? "Lịch dạy sắp tới" : "Upcoming Schedule"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -434,17 +436,17 @@ const TeacherDashboard = () => {
                       <div className="flex items-center gap-2">
                         {booking.meetingStatus === 'pending' && (
                           <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
-                            <Clock className="h-3 w-3" /> Chưa diễn ra
+                            <Clock className="h-3 w-3" /> {language === "vi" ? "Chưa diễn ra" : "Pending"}
                           </Badge>
                         )}
                         {booking.meetingStatus === 'in_progress' && (
                           <Badge className="bg-green-500 gap-1">
-                            <Play className="h-3 w-3" /> Đang diễn ra
+                            <Play className="h-3 w-3" /> {language === "vi" ? "Đang diễn ra" : "In Progress"}
                           </Badge>
                         )}
                         {booking.meetingStatus === 'ended' && (
                           <Badge className="bg-gray-500 gap-1">
-                            <Square className="h-3 w-3" /> Đã kết thúc
+                            <Square className="h-3 w-3" /> {language === "vi" ? "Đã kết thúc" : "Ended"}
                           </Badge>
                         )}
                         <Badge variant="secondary">{booking.module?.title}</Badge>
@@ -456,7 +458,7 @@ const TeacherDashboard = () => {
               ) : (
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Không có lịch dạy sắp tới</p>
+                  <p className="text-muted-foreground">{language === "vi" ? "Không có lịch dạy sắp tới" : "No upcoming sessions"}</p>
                 </div>
               )}
             </CardContent>
@@ -467,7 +469,7 @@ const TeacherDashboard = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                Buổi học đã hoàn thành
+                {language === "vi" ? "Buổi học đã hoàn thành" : "Completed Sessions"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -493,7 +495,7 @@ const TeacherDashboard = () => {
                       <div className="flex items-center gap-2">
                         {!booking.teacherFeedback && (
                           <Badge variant="outline" className="text-xs border-orange-300 text-orange-600">
-                            Chưa nhận xét
+                            {language === "vi" ? "Chưa nhận xét" : "No feedback"}
                           </Badge>
                         )}
                         {booking.studentRating && (
@@ -503,7 +505,7 @@ const TeacherDashboard = () => {
                           </div>
                         )}
                         <Badge variant="outline" className="text-xs text-green-600 border-green-200">
-                          Hoàn thành
+                          {language === "vi" ? "Hoàn thành" : "Completed"}
                         </Badge>
                       </div>
                     </div>
@@ -512,7 +514,7 @@ const TeacherDashboard = () => {
               ) : (
                 <div className="text-center py-12">
                   <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Chưa có buổi học nào hoàn thành</p>
+                  <p className="text-muted-foreground">{language === "vi" ? "Chưa có buổi học nào hoàn thành" : "No completed sessions yet"}</p>
                 </div>
               )}
             </CardContent>

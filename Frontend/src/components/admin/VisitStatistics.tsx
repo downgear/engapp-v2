@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { format, parseISO, subHours } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VisitData {
   total: number;
@@ -24,6 +25,7 @@ interface VisitData {
 
 export const VisitStatistics = () => {
   const { accessToken } = useAuth();
+  const { language } = useLanguage();
   const [data, setData] = useState<VisitData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export const VisitStatistics = () => {
         const result = await api.getAdminVisitStatistics(accessToken, 24);
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        setError(err instanceof Error ? err.message : (language === "vi" ? "Có lỗi xảy ra" : "An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -82,7 +84,7 @@ export const VisitStatistics = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <LogIn className="h-5 w-5" />
-          Thống kê lượt đăng nhập (24h gần nhất)
+          {language === "vi" ? "Thống kê lượt đăng nhập (24h gần nhất)" : "Login Statistics (last 24h)"}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -103,7 +105,7 @@ export const VisitStatistics = () => {
               <div>
                 <div className="text-3xl font-bold">{data?.total || 0}</div>
                 <div className="text-sm text-muted-foreground">
-                  Tổng lượt đăng nhập trong 24h
+                  {language === "vi" ? "Tổng lượt đăng nhập trong 24h" : "Total logins in 24h"}
                 </div>
               </div>
             </div>
@@ -121,14 +123,14 @@ export const VisitStatistics = () => {
                     />
                     <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                     <Tooltip
-                      formatter={(value: number) => [`${value} lượt`, "Đăng nhập"]}
-                      labelFormatter={(label) => `Giờ: ${label}`}
+                      formatter={(value: number) => [`${value} ${language === "vi" ? "lượt" : "logins"}`, language === "vi" ? "Đăng nhập" : "Logins"]}
+                      labelFormatter={(label) => `${language === "vi" ? "Giờ" : "Hour"}: ${label}`}
                     />
                     <Legend />
                     <Line
                       type="monotone"
                       dataKey="count"
-                      name="Lượt đăng nhập"
+                      name={language === "vi" ? "Lượt đăng nhập" : "Logins"}
                       stroke="#3b82f6"
                       strokeWidth={2}
                       dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
@@ -138,7 +140,7 @@ export const VisitStatistics = () => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Không có dữ liệu
+                  {language === "vi" ? "Không có dữ liệu" : "No data available"}
                 </div>
               )}
             </div>

@@ -16,6 +16,7 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   id: number;
@@ -29,6 +30,7 @@ interface Message {
 
 export const ChatWidget = () => {
   const { user, accessToken, isAuthenticated } = useAuth();
+  const { language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -207,7 +209,7 @@ export const ChatWidget = () => {
           <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              <span className="font-semibold">Hỗ trợ khách hàng</span>
+              <span className="font-semibold">{language === "vi" ? "Hỗ trợ khách hàng" : "Customer Support"}</span>
             </div>
             <Button
               variant="ghost"
@@ -228,8 +230,8 @@ export const ChatWidget = () => {
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                 <MessageCircle className="h-12 w-12 mb-2 opacity-50" />
-                <p>Chào bạn! Bạn cần hỗ trợ gì?</p>
-                <p className="text-sm">Nhắn tin để bắt đầu cuộc trò chuyện.</p>
+                <p>{language === "vi" ? "Chào bạn! Bạn cần hỗ trợ gì?" : "Hi! How can we help you?"}</p>
+                <p className="text-sm">{language === "vi" ? "Nhắn tin để bắt đầu cuộc trò chuyện." : "Send a message to start a conversation."}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -291,7 +293,7 @@ export const ChatWidget = () => {
           <div className="p-4 border-t">
             <div className="flex gap-2">
               <Input
-                placeholder="Nhập tin nhắn..."
+                placeholder={language === "vi" ? "Nhập tin nhắn..." : "Type a message..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={handleKeyPress}

@@ -15,6 +15,7 @@ import {
   Legend,
 } from "recharts";
 import { format, parseISO, subHours } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PracticeData {
   aiPractice: {
@@ -29,6 +30,7 @@ interface PracticeData {
 
 export const PracticeStatistics = () => {
   const { accessToken } = useAuth();
+  const { language } = useLanguage();
   const [data, setData] = useState<PracticeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export const PracticeStatistics = () => {
         const result = await api.getAdminPracticeStatistics(accessToken, 24);
         setData(result);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        setError(err instanceof Error ? err.message : (language === "vi" ? "Có lỗi xảy ra" : "An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -108,7 +110,7 @@ export const PracticeStatistics = () => {
                     {data?.aiPractice.total || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Lượt luyện nói với AI (24h)
+                    {language === "vi" ? "Lượt luyện nói với AI (24h)" : "AI Practice Sessions (24h)"}
                   </div>
                 </div>
               </div>
@@ -130,7 +132,7 @@ export const PracticeStatistics = () => {
                     {data?.videoCall.total || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Lượt học với GV nước ngoài (24h)
+                    {language === "vi" ? "Lượt học với GV nước ngoài (24h)" : "Foreign Teacher Sessions (24h)"}
                   </div>
                 </div>
               </div>
@@ -144,7 +146,7 @@ export const PracticeStatistics = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Biểu đồ hoạt động luyện tập (24h gần nhất)
+            {language === "vi" ? "Biểu đồ hoạt động luyện tập (24h gần nhất)" : "Practice Activity Chart (last 24h)"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -168,15 +170,15 @@ export const PracticeStatistics = () => {
                       formatter={(value: number, name: string) => {
                         const label =
                           name === "aiPractice"
-                            ? "Luyện nói AI"
-                            : "Học với GV nước ngoài";
-                        return [`${value} lượt`, label];
+                            ? (language === "vi" ? "Luyện nói AI" : "AI Practice")
+                            : (language === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher");
+                        return [`${value} ${language === "vi" ? "lượt" : "sessions"}`, label];
                       }}
-                      labelFormatter={(label) => `Giờ: ${label}`}
+                      labelFormatter={(label) => `${language === "vi" ? "Giờ" : "Hour"}: ${label}`}
                     />
                     <Legend
                       formatter={(value) =>
-                        value === "aiPractice" ? "Luyện nói AI" : "Học với GV nước ngoài"
+                        value === "aiPractice" ? (language === "vi" ? "Luyện nói AI" : "AI Practice") : (language === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher")
                       }
                     />
                     <Line
@@ -201,7 +203,7 @@ export const PracticeStatistics = () => {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Không có dữ liệu
+                  {language === "vi" ? "Không có dữ liệu" : "No data available"}
                 </div>
               )}
             </div>

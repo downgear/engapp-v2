@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ const CurriculumPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { language } = useLanguage();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -196,11 +198,11 @@ const CurriculumPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />Hoàn thành</Badge>;
+        return <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />{language === "vi" ? "Hoàn thành" : "Completed"}</Badge>;
       case "current":
-        return <Badge className="bg-primary hover:bg-primary/90"><Clock className="h-3 w-3 mr-1" />Đang học</Badge>;
+        return <Badge className="bg-primary hover:bg-primary/90"><Clock className="h-3 w-3 mr-1" />{language === "vi" ? "Đang học" : "In Progress"}</Badge>;
       default:
-        return <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" />Chưa thanh toán</Badge>;
+        return <Badge variant="secondary"><Lock className="h-3 w-3 mr-1" />{language === "vi" ? "Chưa thanh toán" : "Unpaid"}</Badge>;
     }
   };
 
@@ -236,7 +238,7 @@ const CurriculumPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Chương Trình Học</h1>
+            <h1 className="text-2xl font-bold text-foreground">{language === "vi" ? "Chương Trình Học" : "Curriculum"}</h1>
             <p className="text-muted-foreground">
               {enrollment?.course?.name || "Speaking Foundation Program"}
             </p>
@@ -245,7 +247,7 @@ const CurriculumPage = () => {
 
         {/* Program Overview Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">Tổng Quan Chương Trình</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">{language === "vi" ? "Tổng Quan Chương Trình" : "Program Overview"}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Duration */}
             <Card className="border-border/50 bg-card">
@@ -255,8 +257,8 @@ const CurriculumPage = () => {
                     <Clock className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">Thời lượng</h3>
-                    <p className="text-muted-foreground">8 tuần</p>
+                    <h3 className="font-semibold text-foreground mb-1">{language === "vi" ? "Thời lượng" : "Duration"}</h3>
+                    <p className="text-muted-foreground">{language === "vi" ? "8 tuần" : "8 weeks"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -270,9 +272,9 @@ const CurriculumPage = () => {
                     <BookOpen className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">Hình thức học</h3>
+                    <h3 className="font-semibold text-foreground mb-1">{language === "vi" ? "Hình thức học" : "Learning Format"}</h3>
                     <p className="text-muted-foreground text-sm">
-                      Học kết hợp (Học với GV Việt Nam + Luyện nói AI hàng ngày + Học 1-1 với GV nước ngoài hàng tuần)
+                      {language === "vi" ? "Học kết hợp (Học với GV Việt Nam + Luyện nói AI hàng ngày + Học 1-1 với GV nước ngoài hàng tuần)" : "Blended learning (Learn with Vietnamese teacher + Daily AI speaking practice + Weekly 1-on-1 with native teacher)"}
                     </p>
                   </div>
                 </div>
@@ -287,9 +289,9 @@ const CurriculumPage = () => {
                     <Target className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">Trình độ mục tiêu</h3>
+                    <h3 className="font-semibold text-foreground mb-1">{language === "vi" ? "Trình độ mục tiêu" : "Target Level"}</h3>
                     <p className="text-muted-foreground text-sm">
-                      CEFR A2–B1 (Học sinh làm bài kiểm tra đầu vào để xác định trình độ)
+                      {language === "vi" ? "CEFR A2–B1 (Học sinh làm bài kiểm tra đầu vào để xác định trình độ)" : "CEFR A2–B1 (Students take a placement test to determine level)"}
                     </p>
                   </div>
                 </div>
@@ -307,12 +309,12 @@ const CurriculumPage = () => {
                   <BookOpen className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="font-semibold text-lg">Tiến độ học tập</p>
-                  <p className="text-sm text-muted-foreground">1 module / tuần</p>
+                  <p className="font-semibold text-lg">{language === "vi" ? "Tiến độ học tập" : "Learning Progress"}</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "1 module / tuần" : "1 module / week"}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Tiến độ hiện tại</p>
+                <p className="text-sm text-muted-foreground">{language === "vi" ? "Tiến độ hiện tại" : "Current Progress"}</p>
                 <p className="font-bold text-2xl text-primary">
                   {activeModuleNumber} / 8 <span className="text-base font-normal text-muted-foreground">modules</span>
                 </p>
@@ -355,11 +357,11 @@ const CurriculumPage = () => {
                   </h3>
                   
                   <p className="text-xs text-muted-foreground mb-3">
-                    Tuần {module.moduleNumber}: Chủ đề Work
+                    {language === "vi" ? `Tuần ${module.moduleNumber}: Chủ đề Work` : `Week ${module.moduleNumber}: Topic Work`}
                   </p>
                   
                   <div className="flex items-center text-sm text-primary font-medium">
-                    {status === "locked" ? "Thanh toán để mở khóa" : "Xem chi tiết"}
+                    {status === "locked" ? (language === "vi" ? "Thanh toán để mở khóa" : "Pay to unlock") : (language === "vi" ? "Xem chi tiết" : "View details")}
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </div>
                 </CardContent>

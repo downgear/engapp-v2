@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse } from "@/services/api";
 
 // Use API types
@@ -32,41 +33,47 @@ type Program = ProgramResponse;
 type Cohort = CohortResponse;
 type Course = CohortCourseResponse;
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, language: string) => {
   switch (status) {
     case "active":
     case "in_progress":
-      return <Badge className="bg-green-500">Đang diễn ra</Badge>;
+      return <Badge className="bg-green-500">{language === "vi" ? "Đang diễn ra" : "In Progress"}</Badge>;
     case "upcoming":
     case "registration_open":
-      return <Badge className="bg-blue-500">Sắp khai giảng</Badge>;
+      return <Badge className="bg-blue-500">{language === "vi" ? "Sắp khai giảng" : "Upcoming"}</Badge>;
     case "completed":
-      return <Badge variant="secondary">Đã hoàn thành</Badge>;
+      return <Badge variant="secondary">{language === "vi" ? "Đã hoàn thành" : "Completed"}</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
-const getLevelBadge = (level: string) => {
+const getLevelBadge = (level: string, language: string) => {
   switch (level) {
     case "basic":
-      return <Badge variant="outline" className="border-green-500 text-green-600">Cơ bản</Badge>;
+      return <Badge variant="outline" className="border-green-500 text-green-600">{language === "vi" ? "Cơ bản" : "Basic"}</Badge>;
     case "advanced":
-      return <Badge variant="outline" className="border-purple-500 text-purple-600">Nâng cao</Badge>;
+      return <Badge variant="outline" className="border-purple-500 text-purple-600">{language === "vi" ? "Nâng cao" : "Advanced"}</Badge>;
     default:
       return <Badge variant="outline">{level}</Badge>;
   }
 };
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("vi-VN", {
+const formatPrice = (price: number, language: string) => {
+  if (language === "vi") {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(price);
+  }
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "VND",
   }).format(price);
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("vi-VN", {
+const formatDate = (dateString: string, language: string) => {
+  return new Date(dateString).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -75,6 +82,7 @@ const formatDate = (dateString: string) => {
 
 const AllPrograms = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const { user, accessToken, isAuthenticated } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<number[]>([]);
@@ -159,10 +167,10 @@ const AllPrograms = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            Tất cả chương trình học
+            {language === "vi" ? "Tất cả chương trình học" : "All Programs"}
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Khám phá các khóa học tiếng Anh chất lượng cao, được thiết kế riêng cho người Việt
+            {language === "vi" ? "Khám phá các khóa học tiếng Anh chất lượng cao, được thiết kế riêng cho người Việt" : "Explore high-quality English courses designed specifically for Vietnamese learners"}
           </p>
         </div>
 
@@ -171,8 +179,8 @@ const AllPrograms = () => {
           <Card className="border-dashed">
             <CardContent className="py-16 text-center">
               <Layers className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Chưa có chương trình nào</h3>
-              <p className="text-muted-foreground">Vui lòng quay lại sau.</p>
+              <h3 className="text-xl font-semibold mb-2">{language === "vi" ? "Chưa có chương trình nào" : "No programs available"}</h3>
+              <p className="text-muted-foreground">{language === "vi" ? "Vui lòng quay lại sau." : "Please check back later."}</p>
             </CardContent>
           </Card>
         ) : (
@@ -204,14 +212,14 @@ const AllPrograms = () => {
                             <div>
                               <div className="font-semibold flex items-center gap-2">
                                 {cohort.name}
-                                {getStatusBadge(cohort.status)}
+                                {getStatusBadge(cohort.status, language)}
                               </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                                 <Calendar className="h-4 w-4" />
-                                Bắt đầu: {formatDate(cohort.startDate)}
+                                {language === "vi" ? "Bắt đầu" : "Starts"}: {formatDate(cohort.startDate, language)}
                                 <span className="mx-2">•</span>
                                 <BookOpen className="h-4 w-4" />
-                                {cohort.courses.length} khóa học
+                                {cohort.courses.length} {language === "vi" ? "khóa học" : "courses"}
                               </div>
                             </div>
                           </div>
@@ -238,12 +246,12 @@ const AllPrograms = () => {
                                     {enrolled ? (
                                       <span className="flex items-center gap-1">
                                         <CheckCircle2 className="h-4 w-4" />
-                                        Đang theo học
+                                        {language === "vi" ? "Đang theo học" : "Enrolled"}
                                       </span>
                                     ) : (
                                       <span className="flex items-center gap-1">
                                         <XCircle className="h-4 w-4" />
-                                        Chưa đăng ký
+                                        {language === "vi" ? "Chưa đăng ký" : "Not Enrolled"}
                                       </span>
                                     )}
                                   </div>
@@ -256,7 +264,7 @@ const AllPrograms = () => {
                                         <h3 className="text-xl font-semibold">{course.name}</h3>
                                       </div>
                                       <div className="flex gap-2">
-                                        {getLevelBadge(course.level)}
+                                        {getLevelBadge(course.level, language)}
                                       </div>
                                     </div>
 
@@ -270,29 +278,29 @@ const AllPrograms = () => {
                                       <div className="flex items-center gap-2 text-sm">
                                         <Calendar className="h-4 w-4 text-blue-500" />
                                         <div>
-                                          <p className="text-muted-foreground">Thời gian</p>
-                                          <p className="font-medium">{formatDate(course.startDate)}</p>
+                                          <p className="text-muted-foreground">{language === "vi" ? "Thời gian" : "Schedule"}</p>
+                                          <p className="font-medium">{formatDate(course.startDate, language)}</p>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 text-sm">
                                         <Clock className="h-4 w-4 text-orange-500" />
                                         <div>
-                                          <p className="text-muted-foreground">Thời lượng</p>
-                                          <p className="font-medium">3 tháng</p>
+                                          <p className="text-muted-foreground">{language === "vi" ? "Thời lượng" : "Duration"}</p>
+                                          <p className="font-medium">{language === "vi" ? "3 tháng" : "3 months"}</p>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 text-sm">
                                         <Users className="h-4 w-4 text-green-500" />
                                         <div>
-                                          <p className="text-muted-foreground">Học viên</p>
+                                          <p className="text-muted-foreground">{language === "vi" ? "Học viên" : "Students"}</p>
                                           <p className="font-medium">{course.enrolledStudents}/{course.maxStudents}</p>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2 text-sm">
                                         <DollarSign className="h-4 w-4 text-purple-500" />
                                         <div>
-                                          <p className="text-muted-foreground">Học phí</p>
-                                          <p className="font-medium">{formatPrice(course.price)}</p>
+                                          <p className="text-muted-foreground">{language === "vi" ? "Học phí" : "Tuition"}</p>
+                                          <p className="font-medium">{formatPrice(course.price, language)}</p>
                                         </div>
                                       </div>
                                     </div>
@@ -300,7 +308,7 @@ const AllPrograms = () => {
                                     {/* Modules Preview */}
                                     <div className="bg-muted/30 rounded-lg p-4 mb-6">
                                       <p className="text-sm font-medium mb-2">
-                                        Nội dung khóa học ({course.modules.length} modules)
+                                        {language === "vi" ? `Nội dung khóa học (${course.modules.length} modules)` : `Course Content (${course.modules.length} modules)`}
                                       </p>
                                       <ul className="text-sm text-muted-foreground space-y-1">
                                         {course.modules.slice(0, 3).map((module) => (
@@ -311,7 +319,7 @@ const AllPrograms = () => {
                                         ))}
                                         {course.modules.length > 3 && (
                                           <li className="text-primary">
-                                            + {course.modules.length - 3} modules khác...
+                                            + {course.modules.length - 3} {language === "vi" ? "modules khác..." : "more modules..."}
                                           </li>
                                         )}
                                       </ul>
@@ -325,12 +333,12 @@ const AllPrograms = () => {
                                     >
                                       {enrolled ? (
                                         <>
-                                          Vào học
+                                          {language === "vi" ? "Vào học" : "Continue Learning"}
                                           <ArrowRight className="h-4 w-4" />
                                         </>
                                       ) : (
                                         <>
-                                          Đăng ký ngay
+                                          {language === "vi" ? "Đăng ký ngay" : "Register Now"}
                                           <ArrowRight className="h-4 w-4" />
                                         </>
                                       )}
@@ -356,7 +364,7 @@ const AllPrograms = () => {
             <CardContent className="p-6 text-center">
               <Layers className="h-10 w-10 text-primary mx-auto mb-3" />
               <p className="text-3xl font-bold">{programs.length}</p>
-              <p className="text-sm text-muted-foreground">Chương trình</p>
+              <p className="text-sm text-muted-foreground">{language === "vi" ? "Chương trình" : "Programs"}</p>
             </CardContent>
           </Card>
           <Card>
@@ -365,7 +373,7 @@ const AllPrograms = () => {
               <p className="text-3xl font-bold">
                 {programs.reduce((acc, p) => acc + p.cohorts.length, 0)}
               </p>
-              <p className="text-sm text-muted-foreground">Đợt khai giảng</p>
+              <p className="text-sm text-muted-foreground">{language === "vi" ? "Đợt khai giảng" : "Cohorts"}</p>
             </CardContent>
           </Card>
           <Card>
@@ -377,7 +385,7 @@ const AllPrograms = () => {
                   0
                 )}
               </p>
-              <p className="text-sm text-muted-foreground">Khóa học</p>
+              <p className="text-sm text-muted-foreground">{language === "vi" ? "Khóa học" : "Courses"}</p>
             </CardContent>
           </Card>
           <Card>
@@ -394,7 +402,7 @@ const AllPrograms = () => {
                   0
                 )}
               </p>
-              <p className="text-sm text-muted-foreground">Học viên</p>
+              <p className="text-sm text-muted-foreground">{language === "vi" ? "Học viên" : "Students"}</p>
             </CardContent>
           </Card>
         </div>

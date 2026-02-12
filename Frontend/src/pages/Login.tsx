@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { Loader2, AlertCircle, GraduationCap } from "lucide-react";
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { language } = useLanguage();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +28,7 @@ const Login = () => {
       await login(email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+      setError(err instanceof Error ? err.message : language === "vi" ? "Đăng nhập thất bại" : "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +47,9 @@ const Login = () => {
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold">Đăng nhập</CardTitle>
+            <CardTitle className="text-2xl font-bold">{language === "vi" ? "Đăng nhập" : "Sign In"}</CardTitle>
             <CardDescription>
-              Nhập email và mật khẩu để tiếp tục
+              {language === "vi" ? "Nhập email và mật khẩu để tiếp tục" : "Enter your email and password to continue"}
             </CardDescription>
           </CardHeader>
           
@@ -74,7 +76,7 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
+                <Label htmlFor="password">{language === "vi" ? "Mật khẩu" : "Password"}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -92,17 +94,17 @@ const Login = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang đăng nhập...
+                    {language === "vi" ? "Đang đăng nhập..." : "Signing in..."}
                   </>
                 ) : (
-                  "Đăng nhập"
+                  language === "vi" ? "Đăng nhập" : "Sign In"
                 )}
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                Chưa có tài khoản?{" "}
+                {language === "vi" ? "Chưa có tài khoản?" : "Don't have an account?"}{" "}
                 <Link to="/register" className="text-primary hover:underline font-medium">
-                  Đăng ký ngay
+                  {language === "vi" ? "Đăng ký ngay" : "Sign up"}
                 </Link>
               </p>
             </CardFooter>
@@ -112,14 +114,14 @@ const Login = () => {
         {/* Demo accounts */}
         <Card className="mt-4 border-border/30 bg-muted/30">
           <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">Tài khoản demo</CardTitle>
+            <CardTitle className="text-sm font-medium">{language === "vi" ? "Tài khoản demo" : "Demo Accounts"}</CardTitle>
           </CardHeader>
           <CardContent className="py-2 space-y-2 text-xs text-muted-foreground">
-            <p><strong>Học sinh:</strong> lap.luucs@hcmut.edu.vn</p>
-            <p><strong>Phụ huynh:</strong> phuhuynhlap@gmail.com</p>
-            <p><strong>Giáo viên:</strong> luuchilap@gmail.com</p>
+            <p><strong>{language === "vi" ? "Học sinh" : "Student"}:</strong> lap.luucs@hcmut.edu.vn</p>
+            <p><strong>{language === "vi" ? "Phụ huynh" : "Parent"}:</strong> phuhuynhlap@gmail.com</p>
+            <p><strong>{language === "vi" ? "Giáo viên" : "Teacher"}:</strong> luuchilap@gmail.com</p>
             <p><strong>Admin:</strong> admin@lingriser.com</p>
-            <p className="text-xs opacity-70 mt-2">Mật khẩu mặc định: 123456</p>
+            <p className="text-xs opacity-70 mt-2">{language === "vi" ? "Mật khẩu mặc định: 123456" : "Default password: 123456"}</p>
           </CardContent>
         </Card>
       </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/services/api";
 import { format, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
+import { vi, enUS } from "date-fns/locale";
 
 interface BookingDetail {
   id: number;
@@ -71,6 +72,7 @@ const BookingDetailPage = () => {
   const navigate = useNavigate();
   const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { language } = useLanguage();
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,11 +120,11 @@ const BookingDetailPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "confirmed":
-        return <Badge className="bg-green-500">Đã xác nhận</Badge>;
+        return <Badge className="bg-green-500">{language === "vi" ? "Đã xác nhận" : "Confirmed"}</Badge>;
       case "completed":
-        return <Badge className="bg-blue-500">Đã hoàn thành</Badge>;
+        return <Badge className="bg-blue-500">{language === "vi" ? "Đã hoàn thành" : "Completed"}</Badge>;
       case "cancelled":
-        return <Badge variant="destructive">Đã hủy</Badge>;
+        return <Badge variant="destructive">{language === "vi" ? "Đã hủy" : "Cancelled"}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -131,11 +133,11 @@ const BookingDetailPage = () => {
   const getMeetingStatusBadge = (meetingStatus: string) => {
     switch (meetingStatus) {
       case "pending":
-        return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600"><Clock className="h-3 w-3" /> Chưa diễn ra</Badge>;
+        return <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600"><Clock className="h-3 w-3" /> {language === "vi" ? "Chưa diễn ra" : "Not started"}</Badge>;
       case "in_progress":
-        return <Badge className="bg-green-500 gap-1"><Play className="h-3 w-3" /> Đang diễn ra</Badge>;
+        return <Badge className="bg-green-500 gap-1"><Play className="h-3 w-3" /> {language === "vi" ? "Đang diễn ra" : "In progress"}</Badge>;
       case "ended":
-        return <Badge className="bg-gray-500 gap-1"><Square className="h-3 w-3" /> Đã kết thúc</Badge>;
+        return <Badge className="bg-gray-500 gap-1"><Square className="h-3 w-3" /> {language === "vi" ? "Đã kết thúc" : "Ended"}</Badge>;
       default:
         return <Badge variant="secondary">{meetingStatus}</Badge>;
     }
@@ -149,10 +151,10 @@ const BookingDetailPage = () => {
       const updated = await api.endMeeting(accessToken, booking.id, user.profileId);
       setBooking({ ...booking, ...updated } as BookingDetail);
       setShowFeedbackForm(true);
-      toast({ title: "Thành công", description: "Đã kết thúc buổi học" });
+      toast({ title: language === "vi" ? "Thành công" : "Success", description: language === "vi" ? "Đã kết thúc buổi học" : "Session ended" });
     } catch (error) {
       console.error("Failed to end meeting:", error);
-      toast({ title: "Lỗi", description: "Không thể kết thúc buổi học", variant: "destructive" });
+      toast({ title: language === "vi" ? "Lỗi" : "Error", description: language === "vi" ? "Không thể kết thúc buổi học" : "Failed to end session", variant: "destructive" });
     } finally {
       setIsActionLoading(false);
     }
@@ -165,10 +167,10 @@ const BookingDetailPage = () => {
       const updated = await api.addTeacherFeedback(accessToken, booking.id, user?.profileId || 0, teacherFeedback);
       setBooking({ ...booking, ...updated } as BookingDetail);
       setShowFeedbackForm(false);
-      toast({ title: "Thành công", description: "Đã gửi nhận xét cho học sinh" });
+      toast({ title: language === "vi" ? "Thành công" : "Success", description: language === "vi" ? "Đã gửi nhận xét cho học sinh" : "Feedback sent to student" });
     } catch (error) {
       console.error("Failed to submit feedback:", error);
-      toast({ title: "Lỗi", description: "Không thể gửi nhận xét", variant: "destructive" });
+      toast({ title: language === "vi" ? "Lỗi" : "Error", description: language === "vi" ? "Không thể gửi nhận xét" : "Failed to submit feedback", variant: "destructive" });
     } finally {
       setIsActionLoading(false);
     }
@@ -181,10 +183,10 @@ const BookingDetailPage = () => {
       const updated = await api.addStudentRating(accessToken, booking.id, user?.profileId || 0, studentRating, studentComment);
       setBooking({ ...booking, ...updated } as BookingDetail);
       setShowRatingForm(false);
-      toast({ title: "Thành công", description: "Đã gửi đánh giá cho giáo viên" });
+      toast({ title: language === "vi" ? "Thành công" : "Success", description: language === "vi" ? "Đã gửi đánh giá cho giáo viên" : "Rating sent to teacher" });
     } catch (error) {
       console.error("Failed to submit rating:", error);
-      toast({ title: "Lỗi", description: "Không thể gửi đánh giá", variant: "destructive" });
+      toast({ title: language === "vi" ? "Lỗi" : "Error", description: language === "vi" ? "Không thể gửi đánh giá" : "Failed to submit rating", variant: "destructive" });
     } finally {
       setIsActionLoading(false);
     }
@@ -193,11 +195,11 @@ const BookingDetailPage = () => {
   const getTeacherTypeBadge = (type: string) => {
     switch (type) {
       case "in_person":
-        return <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> GV Việt Nam</Badge>;
+        return <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> {language === "vi" ? "GV Việt Nam" : "Vietnamese Teacher"}</Badge>;
       case "video_call":
-        return <Badge variant="outline" className="gap-1"><Video className="h-3 w-3" /> GV nước ngoài</Badge>;
+        return <Badge variant="outline" className="gap-1"><Video className="h-3 w-3" /> {language === "vi" ? "GV nước ngoài" : "Foreign Teacher"}</Badge>;
       case "both":
-        return <Badge variant="outline" className="gap-1"><GraduationCap className="h-3 w-3" /> Cả hai</Badge>;
+        return <Badge variant="outline" className="gap-1"><GraduationCap className="h-3 w-3" /> {language === "vi" ? "Cả hai" : "Both"}</Badge>;
       default:
         return null;
     }
@@ -225,9 +227,9 @@ const BookingDetailPage = () => {
         <main className="container mx-auto px-4 pt-28 pb-16 max-w-4xl">
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Không tìm thấy lịch hẹn</h2>
+            <h2 className="text-xl font-semibold mb-2">{language === "vi" ? "Không tìm thấy lịch hẹn" : "Booking not found"}</h2>
             <Button onClick={() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : "/student-dashboard")}>
-              Quay lại Dashboard
+              {language === "vi" ? "Quay lại Dashboard" : "Back to Dashboard"}
             </Button>
           </div>
         </main>
@@ -250,9 +252,9 @@ const BookingDetailPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Chi tiết lịch hẹn</h1>
+            <h1 className="text-2xl font-bold text-foreground">{language === "vi" ? "Chi tiết lịch hẹn" : "Booking Details"}</h1>
             <p className="text-muted-foreground">
-              Thông tin buổi học với GV nước ngoài
+              {language === "vi" ? "Thông tin buổi học với GV nước ngoài" : "Session information with foreign teacher"}
             </p>
           </div>
         </div>
@@ -263,7 +265,7 @@ const BookingDetailPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <Video className="h-5 w-5 text-purple-500" />
-                Thông tin cuộc họp
+                {language === "vi" ? "Thông tin cuộc họp" : "Meeting Information"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -271,9 +273,9 @@ const BookingDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Calendar className="h-5 w-5 text-blue-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Ngày</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Ngày" : "Date"}</p>
                     <p className="font-medium">
-                      {format(parseISO(booking.bookingDate), "EEEE, dd MMMM yyyy", { locale: vi })}
+                      {format(parseISO(booking.bookingDate), "EEEE, dd MMMM yyyy", { locale: language === "vi" ? vi : enUS })}
                     </p>
                   </div>
                 </div>
@@ -281,7 +283,7 @@ const BookingDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Clock className="h-5 w-5 text-orange-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Thời gian</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Thời gian" : "Time"}</p>
                     <p className="font-medium">
                       {booking.slotStartTime} - {booking.slotEndTime || "N/A"}
                     </p>
@@ -301,7 +303,7 @@ const BookingDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Star className="h-5 w-5 text-yellow-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Chủ đề</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Chủ đề" : "Topic"}</p>
                     <p className="font-medium">{booking.module?.topic || booking.module?.title}</p>
                   </div>
                 </div>
@@ -311,7 +313,7 @@ const BookingDetailPage = () => {
                   <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-500/20">
                     <Video className="h-5 w-5 text-green-600" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-muted-foreground">Link Google Meet</p>
+                      <p className="text-sm text-muted-foreground">{language === "vi" ? "Link Google Meet" : "Google Meet Link"}</p>
                       <a 
                         href={booking.meetingLink} 
                         target="_blank" 
@@ -326,8 +328,8 @@ const BookingDetailPage = () => {
                   <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-dashed">
                     <Video className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Link Google Meet</p>
-                      <p className="font-medium text-muted-foreground italic">Chưa có - chờ giáo viên kết nối Google</p>
+                      <p className="text-sm text-muted-foreground">{language === "vi" ? "Link Google Meet" : "Google Meet Link"}</p>
+                      <p className="font-medium text-muted-foreground italic">{language === "vi" ? "Chưa có - chờ giáo viên kết nối Google" : "Not available - waiting for teacher to connect Google"}</p>
                     </div>
                   </div>
                 )}
@@ -335,11 +337,11 @@ const BookingDetailPage = () => {
 
               <div className="pt-4 border-t space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Trạng thái đặt lịch</span>
+                  <span className="text-sm text-muted-foreground">{language === "vi" ? "Trạng thái đặt lịch" : "Booking Status"}</span>
                   {getStatusBadge(booking.status)}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Trạng thái buổi học</span>
+                  <span className="text-sm text-muted-foreground">{language === "vi" ? "Trạng thái buổi học" : "Session Status"}</span>
                   {getMeetingStatusBadge(booking.meetingStatus || 'pending')}
                 </div>
               </div>
@@ -355,7 +357,7 @@ const BookingDetailPage = () => {
                         onClick={() => window.open(booking.meetingLink!, '_blank')}
                       >
                         <Video className="h-4 w-4" />
-                        Tham gia Google Meet
+                        {language === "vi" ? "Tham gia Google Meet" : "Join Google Meet"}
                       </Button>
                       
                       {/* Teacher: End Meeting Button */}
@@ -367,7 +369,7 @@ const BookingDetailPage = () => {
                           disabled={isActionLoading}
                         >
                           {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-                          Kết thúc buổi học
+                          {language === "vi" ? "Kết thúc buổi học" : "End Session"}
                         </Button>
                       )}
                     </>
@@ -375,10 +377,10 @@ const BookingDetailPage = () => {
                     <>
                       <Button className="w-full gap-2" variant="secondary" disabled>
                         <Video className="h-4 w-4" />
-                        Đang chờ link họp
+                        {language === "vi" ? "Đang chờ link họp" : "Waiting for meeting link"}
                       </Button>
                       <p className="text-xs text-muted-foreground text-center mt-2">
-                        Link Google Meet sẽ được tạo khi giáo viên kết nối Google Calendar
+                        {language === "vi" ? "Link Google Meet sẽ được tạo khi giáo viên kết nối Google Calendar" : "Google Meet link will be created when teacher connects Google Calendar"}
                       </p>
                     </>
                   )}
@@ -390,10 +392,10 @@ const BookingDetailPage = () => {
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-3">
                     <MessageSquare className="h-5 w-5 text-blue-500" />
-                    <h4 className="font-medium">Nhận xét cho học sinh</h4>
+                    <h4 className="font-medium">{language === "vi" ? "Nhận xét cho học sinh" : "Feedback for student"}</h4>
                   </div>
                   <Textarea 
-                    placeholder="Nhập nhận xét về buổi học..."
+                    placeholder={language === "vi" ? "Nhập nhận xét về buổi học..." : "Enter feedback about the session..."}
                     value={teacherFeedback}
                     onChange={(e) => setTeacherFeedback(e.target.value)}
                     className="mb-2"
@@ -404,7 +406,7 @@ const BookingDetailPage = () => {
                     disabled={!teacherFeedback.trim() || isActionLoading}
                   >
                     {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Gửi nhận xét
+                    {language === "vi" ? "Gửi nhận xét" : "Submit Feedback"}
                   </Button>
                 </div>
               )}
@@ -414,7 +416,7 @@ const BookingDetailPage = () => {
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm font-medium">Nhận xét từ giáo viên</span>
+                    <span className="text-sm font-medium">{language === "vi" ? "Nhận xét từ giáo viên" : "Teacher Feedback"}</span>
                   </div>
                   <p className="text-sm bg-muted/30 p-3 rounded-lg">{booking.teacherFeedback}</p>
                 </div>
@@ -425,7 +427,7 @@ const BookingDetailPage = () => {
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-3">
                     <Star className="h-5 w-5 text-yellow-500" />
-                    <h4 className="font-medium">Đánh giá giáo viên</h4>
+                    <h4 className="font-medium">{language === "vi" ? "Đánh giá giáo viên" : "Rate Teacher"}</h4>
                   </div>
                   <div className="flex gap-1 mb-3">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -441,7 +443,7 @@ const BookingDetailPage = () => {
                     ))}
                   </div>
                   <Textarea 
-                    placeholder="Nhập nhận xét (không bắt buộc)..."
+                    placeholder={language === "vi" ? "Nhập nhận xét (không bắt buộc)..." : "Enter comment (optional)..."}
                     value={studentComment}
                     onChange={(e) => setStudentComment(e.target.value)}
                     className="mb-2"
@@ -452,7 +454,7 @@ const BookingDetailPage = () => {
                     disabled={studentRating === 0 || isActionLoading}
                   >
                     {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Gửi đánh giá
+                    {language === "vi" ? "Gửi đánh giá" : "Submit Rating"}
                   </Button>
                 </div>
               )}
@@ -462,7 +464,7 @@ const BookingDetailPage = () => {
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-2">
                     <Star className="h-4 w-4 text-yellow-500" />
-                    <span className="text-sm font-medium">Đánh giá từ học sinh</span>
+                    <span className="text-sm font-medium">{language === "vi" ? "Đánh giá từ học sinh" : "Student Rating"}</span>
                   </div>
                   <div className="flex gap-1 mb-2">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -485,7 +487,7 @@ const BookingDetailPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-500" />
-                {user?.role === 'teacher' ? 'Học sinh' : 'Giảng viên'}
+                {user?.role === 'teacher' ? (language === "vi" ? 'Học sinh' : 'Student') : (language === "vi" ? 'Giảng viên' : 'Teacher')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -499,9 +501,9 @@ const BookingDetailPage = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-xl">{booking.student?.name || "Học sinh"}</p>
+                      <p className="font-semibold text-xl">{booking.student?.name || (language === "vi" ? "Học sinh" : "Student")}</p>
                       <Badge variant="outline" className="gap-1">
-                        <GraduationCap className="h-3 w-3" /> Học sinh
+                        <GraduationCap className="h-3 w-3" /> {language === "vi" ? "Học sinh" : "Student"}
                       </Badge>
                     </div>
                   </div>
@@ -536,7 +538,7 @@ const BookingDetailPage = () => {
                       <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                         <Phone className="h-5 w-5 text-green-500" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Điện thoại</p>
+                          <p className="text-sm text-muted-foreground">{language === "vi" ? "Điện thoại" : "Phone"}</p>
                           <p className="font-medium">{booking.teacher.phone}</p>
                         </div>
                       </div>
@@ -545,14 +547,14 @@ const BookingDetailPage = () => {
 
                   {booking.teacher?.bio && (
                     <div className="p-4 bg-muted/30 rounded-xl">
-                      <p className="text-sm font-medium mb-2">Giới thiệu</p>
+                      <p className="text-sm font-medium mb-2">{language === "vi" ? "Giới thiệu" : "About"}</p>
                       <p className="text-sm text-muted-foreground">{booking.teacher.bio}</p>
                     </div>
                   )}
 
                   {booking.teacher?.specialties && (
                     <div>
-                      <p className="text-sm font-medium mb-2">Chuyên môn</p>
+                      <p className="text-sm font-medium mb-2">{language === "vi" ? "Chuyên môn" : "Specialties"}</p>
                       <div className="flex flex-wrap gap-2">
                         {(() => {
                           // Parse specialties if it's a JSON string
@@ -583,7 +585,7 @@ const BookingDetailPage = () => {
 
         {/* Booking Created Info */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          Đặt lịch vào: {format(parseISO(booking.createdAt), "dd/MM/yyyy 'lúc' HH:mm", { locale: vi })}
+          {language === "vi" ? "Đặt lịch vào" : "Booked on"}: {format(parseISO(booking.createdAt), language === "vi" ? "dd/MM/yyyy 'lúc' HH:mm" : "dd/MM/yyyy 'at' HH:mm", { locale: language === "vi" ? vi : enUS })}
         </div>
       </main>
     </div>

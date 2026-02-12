@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2 } from "lucide-react";
 
 /**
@@ -10,6 +11,7 @@ import { Loader2 } from "lucide-react";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (isLoading) return;
@@ -42,7 +44,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-        <p className="text-muted-foreground">Đang chuyển hướng...</p>
+        <p className="text-muted-foreground">{language === "vi" ? "Đang chuyển hướng..." : "Redirecting..."}</p>
       </div>
     </div>
   );

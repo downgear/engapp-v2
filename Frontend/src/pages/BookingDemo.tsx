@@ -20,7 +20,7 @@ const DEFAULT_AVATARS = [
 ];
 
 const BookingDemo = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [step, setStep] = useState<BookingStep>("select-mentor");
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -40,13 +40,13 @@ const BookingDemo = () => {
           id: teacher.id.toString(),
           name: teacher.name,
           avatar: teacher.avatarUrl || DEFAULT_AVATARS[index % DEFAULT_AVATARS.length],
-          country: "Việt Nam", // Default country
-          languages: ["Tiếng Anh", "Tiếng Việt"],
+          country: language === "vi" ? "Việt Nam" : "Vietnam", // Default country
+          languages: language === "vi" ? ["Tiếng Anh", "Tiếng Việt"] : ["English", "Vietnamese"],
           specialty: teacher.specialties || [],
           rating: teacher.rating ?? 0,
           reviewCount: teacher.reviewCount ?? 0,
-          bio: teacher.bio || "Giáo viên tiếng Anh chuyên nghiệp.",
-          experience: "Giảng viên tại Lingriser",
+          bio: teacher.bio || (language === "vi" ? "Giáo viên tiếng Anh chuyên nghiệp." : "Professional English teacher."),
+          experience: language === "vi" ? "Giảng viên tại Lingriser" : "Teacher at Lingriser",
           availability: ["09:00", "10:00", "14:00", "15:00", "16:00", "20:00", "21:00"],
         }));
 

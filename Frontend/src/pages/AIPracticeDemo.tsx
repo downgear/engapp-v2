@@ -255,15 +255,23 @@ const AIPracticeDemo = () => {
     fluency: 6.0,
     coherence: 6.0,
     cohesion: 6.0,
-    suggestions: [
+    suggestions: language === "vi" ? [
       "Thử luyện tập thêm để có nhiều dữ liệu đánh giá hơn",
       "Cố gắng nói nhiều hơn trong các buổi thực hành",
       "Mở rộng câu trả lời với nhiều chi tiết hơn",
+    ] : [
+      "Try practicing more to get more evaluation data",
+      "Try speaking more during practice sessions",
+      "Expand your answers with more details",
     ],
-    highlights: [
+    highlights: language === "vi" ? [
       "Bạn đã hoàn thành buổi luyện tập",
       "Bạn có sự dũng cảm để thực hành tiếng Anh",
       "Tiếp tục cố gắng để tiến bộ hơn",
+    ] : [
+      "You completed the practice session",
+      "You have the courage to practice English",
+      "Keep trying to improve",
     ],
   });
 

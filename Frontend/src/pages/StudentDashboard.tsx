@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,11 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { StudentProgressVideos } from "@/components/student-dashboard/StudentProgressVideos";
 
-const activityConfig = {
-  in_person_class: { icon: BookOpen, label: "Học với GV Việt Nam", color: "text-blue-500 bg-blue-50" },
-  ai_practice: { icon: MessageSquare, label: "Luyện tập AI", color: "text-green-500 bg-green-50" },
-  video_call: { icon: Video, label: "Học với GV nước ngoài", color: "text-purple-500 bg-purple-50" },
-};
+const getActivityConfig = (lang: string) => ({
+  in_person_class: { icon: BookOpen, label: lang === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Class", color: "text-blue-500 bg-blue-50" },
+  ai_practice: { icon: MessageSquare, label: lang === "vi" ? "Luyện tập AI" : "AI Practice", color: "text-green-500 bg-green-50" },
+  video_call: { icon: Video, label: lang === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher Class", color: "text-purple-500 bg-purple-50" },
+});
 
 interface ParsedFeedback {
   overall: number;
@@ -62,6 +63,7 @@ interface FeedbackSectionProps {
   items: string[];
   colorClass: string;
   bulletColor: string;
+  language: string;
 }
 
 // Type for structured feedback items (grammar, pronunciation errors, etc.)
@@ -85,19 +87,19 @@ const tryParseJSON = (str: string): StructuredFeedbackItem | null => {
 };
 
 // Render a structured feedback item nicely
-const StructuredItem = ({ item, bulletColor }: { item: StructuredFeedbackItem; bulletColor: string }) => (
+const StructuredItem = ({ item, bulletColor, language }: { item: StructuredFeedbackItem; bulletColor: string; language: string }) => (
   <li className="flex items-start gap-1 pb-1.5 border-b border-border/30 last:border-0">
     <span className={`${bulletColor} mt-0.5`}>•</span>
     <div className="flex-1 space-y-0.5">
       {item.quote && (
         <div>
-          <span className="text-muted-foreground/70">Câu gốc: </span>
+          <span className="text-muted-foreground/70">{language === "vi" ? "Câu gốc: " : "Original: "}</span>
           <span className="italic text-red-600 dark:text-red-400">"{item.quote}"</span>
         </div>
       )}
       {item.spoken && (
         <div>
-          <span className="text-muted-foreground/70">Phát âm: </span>
+          <span className="text-muted-foreground/70">{language === "vi" ? "Phát âm: " : "Pronunciation: "}</span>
           <span className="italic text-red-600 dark:text-red-400">"{item.spoken}"</span>
           {item.expected && (
             <>
@@ -109,19 +111,19 @@ const StructuredItem = ({ item, bulletColor }: { item: StructuredFeedbackItem; b
       )}
       {item.explanation && (
         <div>
-          <span className="text-muted-foreground/70">Giải thích: </span>
+          <span className="text-muted-foreground/70">{language === "vi" ? "Giải thích: " : "Explanation: "}</span>
           <span>{item.explanation}</span>
         </div>
       )}
       {item.correction && (
         <div>
-          <span className="text-muted-foreground/70">Sửa lại: </span>
+          <span className="text-muted-foreground/70">{language === "vi" ? "Sửa lại: " : "Correction: "}</span>
           <span className="text-green-600 dark:text-green-400">"{item.correction}"</span>
         </div>
       )}
       {item.errorType && (
         <div>
-          <span className="text-muted-foreground/70">Loại lỗi: </span>
+          <span className="text-muted-foreground/70">{language === "vi" ? "Loại lỗi: " : "Error type: "}</span>
           <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{item.errorType}</span>
         </div>
       )}
@@ -129,7 +131,7 @@ const StructuredItem = ({ item, bulletColor }: { item: StructuredFeedbackItem; b
   </li>
 );
 
-const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: FeedbackSectionProps) => {
+const FeedbackSection = ({ icon, title, items, colorClass, bulletColor, language }: FeedbackSectionProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
   // Process items - handle both plain strings and JSON objects
@@ -167,7 +169,7 @@ const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: Feedba
         <ul className="text-xs text-muted-foreground space-y-1 mt-1 ml-4">
           {processedItems.map((item, i) => (
             item.type === 'structured' ? (
-              <StructuredItem key={i} item={item.data} bulletColor={bulletColor} />
+              <StructuredItem key={i} item={item.data} bulletColor={bulletColor} language={language} />
             ) : (
               <li key={i} className="flex items-start gap-1">
                 <span className={`${bulletColor} mt-0.5`}>•</span>
@@ -184,6 +186,9 @@ const FeedbackSection = ({ icon, title, items, colorClass, bulletColor }: Feedba
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { language } = useLanguage();
+  
+  const activityConfig = getActivityConfig(language);
   
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [learningHistory, setLearningHistory] = useState<LearningHistoryItem[]>([]);
@@ -270,18 +275,18 @@ const StudentDashboard = () => {
           <div>
             <Badge variant="secondary" className="mb-4">
               <User className="h-3 w-3 mr-1" />
-              Học sinh
+              {language === "vi" ? "Học sinh" : "Student"}
             </Badge>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Xin chào, {user?.fullName}! 👋
+              {language === "vi" ? "Xin chào" : "Hello"}, {user?.fullName}! 👋
             </h1>
             <p className="text-muted-foreground">
-              Tiếp tục hành trình học tiếng Anh của bạn
+              {language === "vi" ? "Tiếp tục hành trình học tiếng Anh của bạn" : "Continue your English learning journey"}
             </p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
-            Đăng xuất
+            {language === "vi" ? "Đăng xuất" : "Sign Out"}
           </Button>
         </div>
 
@@ -295,7 +300,7 @@ const StudentDashboard = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-primary" />
-                    Khoá học đang tham gia
+                    {language === "vi" ? "Khoá học đang tham gia" : "Current Course"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -306,11 +311,11 @@ const StudentDashboard = () => {
                         Module {enrollment.currentModuleNumber} / {enrollment.course.modules?.length || 8}
                       </p>
                     </div>
-                    <Badge variant="default">Đang học</Badge>
+                    <Badge variant="default">{language === "vi" ? "Đang học" : "In Progress"}</Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Tiến độ</span>
+                      <span className="text-muted-foreground">{language === "vi" ? "Tiến độ" : "Progress"}</span>
                       <span className="font-medium">
                         {Math.round((enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100)}%
                       </span>
@@ -337,10 +342,10 @@ const StudentDashboard = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                       <GraduationCap className="h-5 w-5 text-primary" />
-                      Chương trình
+                      {language === "vi" ? "Chương trình" : "Program"}
                     </CardTitle>
                     <div className="flex items-center text-sm text-muted-foreground">
-                      Thời lượng 8 tuần
+                      {language === "vi" ? "Thời lượng 8 tuần" : "8-week duration"}
                       <ChevronRight className="h-4 w-4 ml-1" />
                     </div>
                   </div>
@@ -390,7 +395,7 @@ const StudentDashboard = () => {
                         >
                           <div className="font-bold">M{module.moduleNumber}</div>
                           <div className="truncate text-[10px] mt-0.5 opacity-80">
-                            {status === 'current' ? "Đang học" : status === 'completed' ? "Xong" : status === 'unlocked' ? "Sẵn sàng" : "Khóa"}
+                            {status === 'current' ? (language === "vi" ? "Đang học" : "Current") : status === 'completed' ? (language === "vi" ? "Xong" : "Done") : status === 'unlocked' ? (language === "vi" ? "Sẵn sàng" : "Ready") : (language === "vi" ? "Khóa" : "Locked")}
                           </div>
                         </div>
                       );
@@ -408,7 +413,7 @@ const StudentDashboard = () => {
                 onClick={() => navigate("/ai-practice")}
               >
                 <MessageSquare className="h-8 w-8 text-green-500" />
-                <span className="text-xs font-medium">Luyện tập với AI</span>
+                <span className="text-xs font-medium">{language === "vi" ? "Luyện tập với AI" : "Practice with AI"}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -416,7 +421,7 @@ const StudentDashboard = () => {
                 onClick={() => navigate("/booking")}
               >
                 <Video className="h-8 w-8 text-purple-500" />
-                <span className="text-xs font-medium">Đặt lịch với GV nước ngoài</span>
+                <span className="text-xs font-medium">{language === "vi" ? "Đặt lịch với GV nước ngoài" : "Book Foreign Teacher"}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -424,7 +429,7 @@ const StudentDashboard = () => {
                 onClick={() => navigate("/connections")}
               >
                 <Users className="h-8 w-8 text-blue-500" />
-                <span className="text-xs font-medium">Kết nối</span>
+                <span className="text-xs font-medium">{language === "vi" ? "Kết nối" : "Connections"}</span>
               </Button>
             </div>
 
@@ -441,7 +446,7 @@ const StudentDashboard = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-purple-500" />
-                  Lịch học với GV nước ngoài sắp tới
+                  {language === "vi" ? "Lịch học với GV nước ngoài sắp tới" : "Upcoming Foreign Teacher Sessions"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -467,17 +472,17 @@ const StudentDashboard = () => {
                           <div className="flex items-center gap-1 justify-end">
                             {booking.meetingStatus === 'pending' && (
                               <Badge variant="outline" className="text-xs gap-1 border-yellow-500 text-yellow-600">
-                                <Clock className="h-2.5 w-2.5" /> Chưa diễn ra
+                                <Clock className="h-2.5 w-2.5" /> {language === "vi" ? "Chưa diễn ra" : "Pending"}
                               </Badge>
                             )}
                             {booking.meetingStatus === 'in_progress' && (
                               <Badge className="text-xs gap-1 bg-green-500">
-                                <Play className="h-2.5 w-2.5" /> Đang diễn ra
+                                <Play className="h-2.5 w-2.5" /> {language === "vi" ? "Đang diễn ra" : "In Progress"}
                               </Badge>
                             )}
                             {booking.meetingStatus === 'ended' && (
                               <Badge className="text-xs gap-1 bg-gray-500">
-                                <Square className="h-2.5 w-2.5" /> Đã kết thúc
+                                <Square className="h-2.5 w-2.5" /> {language === "vi" ? "Đã kết thúc" : "Ended"}
                               </Badge>
                             )}
                           </div>
@@ -489,9 +494,9 @@ const StudentDashboard = () => {
                 ) : (
                   <div className="text-center py-6">
                     <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">Chưa có lịch hẹn nào</p>
+                    <p className="text-muted-foreground">{language === "vi" ? "Chưa có lịch hẹn nào" : "No upcoming appointments"}</p>
                     <Button variant="outline" className="mt-4" onClick={() => navigate("/booking")}>
-                      Đặt lịch ngay
+                      {language === "vi" ? "Đặt lịch ngay" : "Book Now"}
                     </Button>
                   </div>
                 )}
@@ -504,7 +509,7 @@ const StudentDashboard = () => {
             <Card className="border-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold">
-                  Hoạt động gần đây
+                  {language === "vi" ? "Hoạt động gần đây" : "Recent Activity"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -545,7 +550,7 @@ const StudentDashboard = () => {
                               {hasTeacherFeedback && (
                                 <Badge variant="outline" className="text-xs shrink-0 border-purple-300 text-purple-600">
                                   <MessageSquare className="h-3 w-3 mr-0.5" />
-                                  Nhận xét
+                                  {language === "vi" ? "Nhận xét" : "Feedback"}
                                 </Badge>
                               )}
                               {hasFeedback && (
@@ -563,32 +568,32 @@ const StudentDashboard = () => {
                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                   <div className="flex items-center gap-1.5">
                                     <Mic className="h-3 w-3 text-blue-500" />
-                                    <span className="text-muted-foreground">Phát âm:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Phát âm:" : "Pronunciation:"}</span>
                                     <span className="font-medium">{parsedFeedback.pronunciation}/10</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <BookText className="h-3 w-3 text-purple-500" />
-                                    <span className="text-muted-foreground">Ngữ pháp:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Ngữ pháp:" : "Grammar:"}</span>
                                     <span className="font-medium">{parsedFeedback.grammar}/10</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <Brain className="h-3 w-3 text-orange-500" />
-                                    <span className="text-muted-foreground">Từ vựng:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Từ vựng:" : "Vocabulary:"}</span>
                                     <span className="font-medium">{parsedFeedback.vocabulary}/10</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <Zap className="h-3 w-3 text-yellow-500" />
-                                    <span className="text-muted-foreground">Lưu loát:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Lưu loát:" : "Fluency:"}</span>
                                     <span className="font-medium">{parsedFeedback.fluency}/10</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <Target className="h-3 w-3 text-cyan-500" />
-                                    <span className="text-muted-foreground">Mạch lạc:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Mạch lạc:" : "Coherence:"}</span>
                                     <span className="font-medium">{parsedFeedback.coherence}/10</span>
                                   </div>
                                   <div className="flex items-center gap-1.5">
                                     <Link2 className="h-3 w-3 text-pink-500" />
-                                    <span className="text-muted-foreground">Liên kết:</span>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Liên kết:" : "Cohesion:"}</span>
                                     <span className="font-medium">{parsedFeedback.cohesion}/10</span>
                                   </div>
                                 </div>
@@ -596,73 +601,81 @@ const StudentDashboard = () => {
                                 {/* Pronunciation Issues - Collapsible */}
                                 <FeedbackSection
                                   icon={<Mic className="h-3 w-3" />}
-                                  title="Lỗi phát âm"
+                                  title={language === "vi" ? "Lỗi phát âm" : "Pronunciation Issues"}
                                   items={parsedFeedback.pronunciationIssues || []}
                                   colorClass="text-blue-700 dark:text-blue-400"
                                   bulletColor="text-blue-500"
+                                  language={language}
                                 />
 
                                 {/* Grammar Issues - Collapsible */}
                                 <FeedbackSection
                                   icon={<BookText className="h-3 w-3" />}
-                                  title="Lỗi ngữ pháp"
+                                  title={language === "vi" ? "Lỗi ngữ pháp" : "Grammar Issues"}
                                   items={parsedFeedback.grammarIssues || []}
                                   colorClass="text-purple-700 dark:text-purple-400"
                                   bulletColor="text-purple-500"
+                                  language={language}
                                 />
 
                                 {/* Vocabulary Notes - Collapsible */}
                                 <FeedbackSection
                                   icon={<Brain className="h-3 w-3" />}
-                                  title="Ghi chú từ vựng"
+                                  title={language === "vi" ? "Ghi chú từ vựng" : "Vocabulary Notes"}
                                   items={parsedFeedback.vocabularyNotes || []}
                                   colorClass="text-orange-700 dark:text-orange-400"
                                   bulletColor="text-orange-500"
+                                  language={language}
                                 />
 
                                 {/* Fluency Notes - Collapsible */}
                                 <FeedbackSection
                                   icon={<Zap className="h-3 w-3" />}
-                                  title="Ghi chú lưu loát"
+                                  title={language === "vi" ? "Ghi chú lưu loát" : "Fluency Notes"}
                                   items={parsedFeedback.fluencyNotes || []}
                                   colorClass="text-yellow-700 dark:text-yellow-400"
                                   bulletColor="text-yellow-500"
+                                  language={language}
                                 />
 
                                 {/* Coherence Notes - Collapsible */}
                                 <FeedbackSection
                                   icon={<Target className="h-3 w-3" />}
-                                  title="Tính mạch lạc"
+                                  title={language === "vi" ? "Tính mạch lạc" : "Coherence"}
                                   items={parsedFeedback.coherenceNotes || []}
                                   colorClass="text-cyan-700 dark:text-cyan-400"
                                   bulletColor="text-cyan-500"
+                                  language={language}
                                 />
 
                                 {/* Cohesion Notes - Collapsible */}
                                 <FeedbackSection
                                   icon={<Link2 className="h-3 w-3" />}
-                                  title="Tính liên kết"
+                                  title={language === "vi" ? "Tính liên kết" : "Cohesion"}
                                   items={parsedFeedback.cohesionNotes || []}
                                   colorClass="text-pink-700 dark:text-pink-400"
                                   bulletColor="text-pink-500"
+                                  language={language}
                                 />
                                 
                                 {/* Highlights - Collapsible */}
                                 <FeedbackSection
                                   icon={<Star className="h-3 w-3" />}
-                                  title="Điểm nổi bật"
+                                  title={language === "vi" ? "Điểm nổi bật" : "Highlights"}
                                   items={parsedFeedback.highlights || []}
                                   colorClass="text-green-700 dark:text-green-400"
                                   bulletColor="text-green-500"
+                                  language={language}
                                 />
                                 
                                 {/* Suggestions - Collapsible */}
                                 <FeedbackSection
                                   icon={<Lightbulb className="h-3 w-3" />}
-                                  title="Gợi ý cải thiện"
+                                  title={language === "vi" ? "Gợi ý cải thiện" : "Improvement Suggestions"}
                                   items={parsedFeedback.suggestions || []}
                                   colorClass="text-amber-700 dark:text-amber-400"
                                   bulletColor="text-amber-500"
+                                  language={language}
                                 />
                               </div>
                             </CollapsibleContent>
@@ -678,12 +691,12 @@ const StudentDashboard = () => {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-400">
                                     <User className="h-4 w-4" />
-                                    <span>Nhận xét từ giáo viên {item.teacherFeedback?.teacherName && `(${item.teacherFeedback.teacherName})`}</span>
+                                    <span>{language === "vi" ? "Nhận xét từ giáo viên" : "Teacher Feedback"} {item.teacherFeedback?.teacherName && `(${item.teacherFeedback.teacherName})`}</span>
                                   </div>
                                   {item.bookingId && (
                                     <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900">
                                       <Video className="h-3 w-3 mr-1" />
-                                      Xem chi tiết & Đánh giá
+                                      {language === "vi" ? "Xem chi tiết & Đánh giá" : "View Details & Rate"}
                                     </Badge>
                                   )}
                                 </div>
@@ -694,7 +707,7 @@ const StudentDashboard = () => {
                                   <div className="mt-2 pt-2 border-t border-purple-100/50 dark:border-purple-900/30">
                                     <p className="text-xs font-medium text-purple-600 dark:text-purple-400 flex items-center gap-1">
                                       <Lightbulb className="h-3 w-3" />
-                                      Gợi ý cải thiện
+                                      {language === "vi" ? "Gợi ý cải thiện" : "Improvement Suggestions"}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-1">
                                       {item.teacherFeedback.improvementSuggestions}
@@ -710,7 +723,7 @@ const StudentDashboard = () => {
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground py-8">
-                    Chưa có hoạt động nào
+                    {language === "vi" ? "Chưa có hoạt động nào" : "No activities yet"}
                   </p>
                 )}
               </CardContent>

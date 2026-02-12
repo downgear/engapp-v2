@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { api } from "@/services/api";
 import { Navigation } from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,11 +54,11 @@ const COLORS = {
   teacher: "#8b5cf6", // purple
 };
 
-const ROLE_LABELS: Record<string, string> = {
-  student: "Học sinh",
-  parent: "Phụ huynh",
-  teacher: "Giáo viên",
-};
+const getRoleLabels = (lang: string): Record<string, string> => ({
+  student: lang === "vi" ? "Học sinh" : "Student",
+  parent: lang === "vi" ? "Phụ huynh" : "Parent",
+  teacher: lang === "vi" ? "Giáo viên" : "Teacher",
+});
 
 const ROLE_ICONS: Record<string, React.ReactNode> = {
   student: <GraduationCap className="h-5 w-5" />,
@@ -67,6 +68,8 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 
 const AdminDashboard = () => {
   const { user, accessToken, logout } = useAuth();
+  const { language } = useLanguage();
+  const roleLabels = getRoleLabels(language);
   const [userStats, setUserStats] = useState<UserStatistics | null>(null);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
   const [practiceStats, setPracticeStats] = useState<PracticeStats | null>(null);
@@ -92,7 +95,7 @@ const AdminDashboard = () => {
         setPracticeStats(practice);
         setChatUnread(unread);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        setError(err instanceof Error ? err.message : (language === "vi" ? "Có lỗi xảy ra" : "An error occurred"));
       } finally {
         setLoading(false);
       }
@@ -102,7 +105,7 @@ const AdminDashboard = () => {
   }, [accessToken]);
 
   const pieChartData = userStats?.breakdown.map((item) => ({
-    name: ROLE_LABELS[item.role] || item.role,
+    name: roleLabels[item.role] || item.role,
     value: item.count,
     percentage: item.percentage,
     color: COLORS[item.role as keyof typeof COLORS] || "#6b7280",
@@ -120,15 +123,15 @@ const AdminDashboard = () => {
               <Shield className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <h1 className="text-3xl font-bold">{language === "vi" ? "Bảng điều khiển quản trị" : "Admin Dashboard"}</h1>
               <p className="text-muted-foreground">
-                Xin chào, {user?.fullName}
+                {language === "vi" ? "Xin chào" : "Hello"}, {user?.fullName}
               </p>
             </div>
           </div>
           <Button variant="outline" onClick={logout}>
             <LogOut className="h-4 w-4 mr-2" />
-            Đăng xuất
+            {language === "vi" ? "Đăng xuất" : "Log out"}
           </Button>
         </div>
 
@@ -146,27 +149,27 @@ const AdminDashboard = () => {
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Tổng quan</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Tổng quan" : "Overview"}</span>
             </TabsTrigger>
             <TabsTrigger value="courses" className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4" />
-              <span className="hidden sm:inline">Khóa học</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Khóa học" : "Courses"}</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Người dùng</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Người dùng" : "Users"}</span>
             </TabsTrigger>
             <TabsTrigger value="visits" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Truy cập</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Truy cập" : "Visits"}</span>
             </TabsTrigger>
             <TabsTrigger value="practice" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline">Luyện tập</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Luyện tập" : "Practice"}</span>
             </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Hỗ trợ</span>
+              <span className="hidden sm:inline">{language === "vi" ? "Hỗ trợ" : "Support"}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -178,7 +181,7 @@ const AdminDashboard = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Thống kê người dùng
+                    {language === "vi" ? "Thống kê người dùng" : "User Statistics"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -196,7 +199,7 @@ const AdminDashboard = () => {
                           {userStats.total}
                         </div>
                         <div className="text-muted-foreground mt-1">
-                          Tổng số người đăng ký
+                          {language === "vi" ? "Tổng số người đăng ký" : "Total registered users"}
                         </div>
                       </div>
 
@@ -217,7 +220,7 @@ const AdminDashboard = () => {
                                 {ROLE_ICONS[item.role]}
                               </div>
                               <span className="font-medium">
-                                {ROLE_LABELS[item.role] || item.role}
+                                {roleLabels[item.role] || item.role}
                               </span>
                             </div>
                             <div className="text-right">
@@ -231,7 +234,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">Không có dữ liệu</p>
+                    <p className="text-muted-foreground">{language === "vi" ? "Không có dữ liệu" : "No data available"}</p>
                   )}
                 </CardContent>
               </Card>
@@ -239,7 +242,7 @@ const AdminDashboard = () => {
               {/* Pie Chart Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Phân bố người dùng</CardTitle>
+                  <CardTitle>{language === "vi" ? "Phân bố người dùng" : "User Distribution"}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -268,7 +271,7 @@ const AdminDashboard = () => {
                           </Pie>
                           <Tooltip
                             formatter={(value: number, name: string) => [
-                              `${value} người`,
+                              `${value} ${language === "vi" ? "người" : "users"}`,
                               name,
                             ]}
                           />
@@ -278,7 +281,7 @@ const AdminDashboard = () => {
                     </div>
                   ) : (
                     <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      Không có dữ liệu
+                      {language === "vi" ? "Không có dữ liệu" : "No data available"}
                     </div>
                   )}
                 </CardContent>
@@ -303,8 +306,8 @@ const AdminDashboard = () => {
                       <div className="text-3xl font-bold text-blue-500">
                         {visitStats?.total ?? 0}
                       </div>
-                      <p className="font-medium">Lượt truy cập</p>
-                      <p className="text-sm text-muted-foreground">trong 24h qua</p>
+                      <p className="font-medium">{language === "vi" ? "Lượt truy cập" : "Visits"}</p>
+                      <p className="text-sm text-muted-foreground">{language === "vi" ? "trong 24h qua" : "in the last 24h"}</p>
                     </div>
                   )}
                 </CardContent>
@@ -325,7 +328,7 @@ const AdminDashboard = () => {
                       <div className="text-3xl font-bold text-green-500">
                         {(practiceStats?.aiPractice?.total ?? 0) + (practiceStats?.videoCall?.total ?? 0)}
                       </div>
-                      <p className="font-medium">Lượt luyện tập</p>
+                      <p className="font-medium">{language === "vi" ? "Lượt luyện tập" : "Practice Sessions"}</p>
                       <p className="text-sm text-muted-foreground">
                         AI: {practiceStats?.aiPractice?.total ?? 0} | Video: {practiceStats?.videoCall?.total ?? 0}
                       </p>
@@ -349,8 +352,8 @@ const AdminDashboard = () => {
                       <div className="text-3xl font-bold text-orange-500">
                         {chatUnread?.count ?? 0}
                       </div>
-                      <p className="font-medium">Tin nhắn chờ</p>
-                      <p className="text-sm text-muted-foreground">cần phản hồi</p>
+                      <p className="font-medium">{language === "vi" ? "Tin nhắn chờ" : "Pending Messages"}</p>
+                      <p className="text-sm text-muted-foreground">{language === "vi" ? "cần phản hồi" : "need reply"}</p>
                     </div>
                   )}
                 </CardContent>

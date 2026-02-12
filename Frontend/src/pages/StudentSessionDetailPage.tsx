@@ -29,8 +29,9 @@ import {
   Target,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
+import { vi, enUS } from "date-fns/locale";
 import { api } from "@/services/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { LearningHistoryItem } from "@/types";
 
 interface BookingDetail {
@@ -59,6 +60,7 @@ const StudentSessionDetailPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { language } = useLanguage();
 
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [learningHistory, setLearningHistory] = useState<LearningHistoryItem[]>([]);
@@ -131,11 +133,11 @@ const StudentSessionDetailPage = () => {
   const getActivityLabel = (type: string) => {
     switch (type) {
       case "ai_practice":
-        return "Luyện tập AI";
+        return language === "vi" ? "Luyện tập AI" : "AI Practice";
       case "video_call":
-        return "Học với GV nước ngoài";
+        return language === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher Session";
       case "in_person_class":
-        return "Học với GV Việt Nam";
+        return language === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Session";
       default:
         return type;
     }
@@ -170,9 +172,9 @@ const StudentSessionDetailPage = () => {
         <main className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Không tìm thấy buổi học</h2>
+            <h2 className="text-xl font-semibold mb-2">{language === "vi" ? "Không tìm thấy buổi học" : "Session not found"}</h2>
             <Button onClick={() => navigate("/teacher-dashboard")}>
-              Quay lại Dashboard
+              {language === "vi" ? "Quay lại Dashboard" : "Back to Dashboard"}
             </Button>
           </div>
         </main>
@@ -195,9 +197,9 @@ const StudentSessionDetailPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Chi tiết buổi học</h1>
+            <h1 className="text-2xl font-bold text-foreground">{language === "vi" ? "Chi tiết buổi học" : "Session Details"}</h1>
             <p className="text-muted-foreground">
-              Thông tin học sinh và lịch sử học tập
+              {language === "vi" ? "Thông tin học sinh và lịch sử học tập" : "Student information and learning history"}
             </p>
           </div>
         </div>
@@ -208,7 +210,7 @@ const StudentSessionDetailPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <Video className="h-5 w-5 text-purple-500" />
-                Thông tin cuộc họp
+                {language === "vi" ? "Thông tin cuộc họp" : "Meeting Information"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -232,9 +234,9 @@ const StudentSessionDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Calendar className="h-5 w-5 text-blue-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Ngày</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Ngày" : "Date"}</p>
                     <p className="font-medium">
-                      {format(parseISO(booking.bookingDate), "EEEE, dd MMMM yyyy", { locale: vi })}
+                      {format(parseISO(booking.bookingDate), "EEEE, dd MMMM yyyy", { locale: language === "vi" ? vi : enUS })}
                     </p>
                   </div>
                 </div>
@@ -242,7 +244,7 @@ const StudentSessionDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Clock className="h-5 w-5 text-orange-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Thời gian</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Thời gian" : "Time"}</p>
                     <p className="font-medium">
                       {booking.slotStartTime} - {booking.slotEndTime || "N/A"}
                     </p>
@@ -262,7 +264,7 @@ const StudentSessionDetailPage = () => {
                 <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-lg">
                   <Target className="h-5 w-5 text-purple-500" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Chủ đề</p>
+                    <p className="text-sm text-muted-foreground">{language === "vi" ? "Chủ đề" : "Topic"}</p>
                     <p className="font-medium">{booking.module?.topic || booking.module?.title}</p>
                   </div>
                 </div>
@@ -280,9 +282,9 @@ const StudentSessionDetailPage = () => {
                   }
                 >
                   {booking.status === "confirmed"
-                    ? "Đã xác nhận"
+                    ? (language === "vi" ? "Đã xác nhận" : "Confirmed")
                     : booking.status === "completed"
-                    ? "Đã hoàn thành"
+                    ? (language === "vi" ? "Đã hoàn thành" : "Completed")
                     : booking.status}
                 </Badge>
               </div>
@@ -294,7 +296,7 @@ const StudentSessionDetailPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-500" />
-                Thông tin học sinh
+                {language === "vi" ? "Thông tin học sinh" : "Student Information"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -303,20 +305,20 @@ const StudentSessionDetailPage = () => {
                   <p className="text-3xl font-bold text-primary">
                     {learningHistory.length}
                   </p>
-                  <p className="text-sm text-muted-foreground">Hoạt động</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Hoạt động" : "Activities"}</p>
                 </div>
                 <div className="p-4 bg-muted/30 rounded-xl text-center">
                   <p className="text-3xl font-bold text-green-500">
                     {learningHistory.filter((h) => h.aiFeedback?.overallScore && h.aiFeedback.overallScore >= 7).length}
                   </p>
-                  <p className="text-sm text-muted-foreground">Điểm cao (≥7)</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Điểm cao (≥7)" : "High Score (≥7)"}</p>
                 </div>
               </div>
 
               <div className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <Star className="h-5 w-5 text-yellow-500" />
-                  <span className="font-medium">Điểm trung bình</span>
+                  <span className="font-medium">{language === "vi" ? "Điểm trung bình" : "Average Score"}</span>
                 </div>
                 <p className="text-3xl font-bold">
                   {learningHistory.filter((h) => h.aiFeedback?.overallScore).length > 0
@@ -332,7 +334,7 @@ const StudentSessionDetailPage = () => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Phân loại hoạt động</p>
+                <p className="text-sm font-medium text-muted-foreground">{language === "vi" ? "Phân loại hoạt động" : "Activity Breakdown"}</p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="gap-1">
                     <MessageSquare className="h-3 w-3" />
@@ -357,14 +359,14 @@ const StudentSessionDetailPage = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <History className="h-5 w-5 text-orange-500" />
-              Lịch sử học tập của {booking.student?.name}
+              {language === "vi" ? `Lịch sử học tập của ${booking.student?.name}` : `Learning History of ${booking.student?.name}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {learningHistory.length === 0 ? (
               <div className="text-center py-12">
                 <History className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">Chưa có lịch sử học tập</p>
+                <p className="text-muted-foreground">{language === "vi" ? "Chưa có lịch sử học tập" : "No learning history yet"}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -382,7 +384,7 @@ const StudentSessionDetailPage = () => {
                             {getActivityLabel(item.activityType)} - Module {item.module?.moduleNumber}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {item.module?.title} • {format(parseISO(item.startTime), "dd/MM/yyyy 'lúc' HH:mm")}
+                            {item.module?.title} • {format(parseISO(item.startTime), language === "vi" ? "dd/MM/yyyy 'lúc' HH:mm" : "dd/MM/yyyy 'at' HH:mm")}
                           </p>
                         </div>
                         {item.aiFeedback?.overallScore && (
@@ -419,7 +421,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Highlights */}
                                 {Array.isArray(parsedFeedback.highlights) && parsedFeedback.highlights.length > 0 && (
                                   <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-green-600 mb-2">✨ Điểm tốt</p>
+                                    <p className="text-xs font-medium text-green-600 mb-2">{language === "vi" ? "✨ Điểm tốt" : "✨ Highlights"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.highlights as string[]).map((h, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -434,7 +436,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Pronunciation Issues */}
                                 {Array.isArray(parsedFeedback.pronunciationIssues) && parsedFeedback.pronunciationIssues.length > 0 && (
                                   <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-red-600 mb-2">🎤 Phát âm cần cải thiện</p>
+                                    <p className="text-xs font-medium text-red-600 mb-2">{language === "vi" ? "🎤 Phát âm cần cải thiện" : "🎤 Pronunciation Issues"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.pronunciationIssues as string[]).map((p, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -449,7 +451,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Grammar Issues */}
                                 {Array.isArray(parsedFeedback.grammarIssues) && parsedFeedback.grammarIssues.length > 0 && (
                                   <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-orange-600 mb-2">📝 Ngữ pháp cần sửa</p>
+                                    <p className="text-xs font-medium text-orange-600 mb-2">{language === "vi" ? "📝 Ngữ pháp cần sửa" : "📝 Grammar Issues"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.grammarIssues as string[]).map((g, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -464,7 +466,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Vocabulary Notes */}
                                 {Array.isArray(parsedFeedback.vocabularyNotes) && parsedFeedback.vocabularyNotes.length > 0 && (
                                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-blue-600 mb-2">📚 Từ vựng</p>
+                                    <p className="text-xs font-medium text-blue-600 mb-2">{language === "vi" ? "📚 Từ vựng" : "📚 Vocabulary"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.vocabularyNotes as string[]).map((v, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -479,7 +481,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Fluency Notes */}
                                 {Array.isArray(parsedFeedback.fluencyNotes) && parsedFeedback.fluencyNotes.length > 0 && (
                                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-purple-600 mb-2">🎯 Độ lưu loát</p>
+                                    <p className="text-xs font-medium text-purple-600 mb-2">{language === "vi" ? "🎯 Độ lưu loát" : "🎯 Fluency"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.fluencyNotes as string[]).map((f, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -494,7 +496,7 @@ const StudentSessionDetailPage = () => {
                                 {/* Suggestions */}
                                 {Array.isArray(parsedFeedback.suggestions) && parsedFeedback.suggestions.length > 0 && (
                                   <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                                    <p className="text-xs font-medium text-yellow-600 mb-2">💡 Gợi ý cải thiện</p>
+                                    <p className="text-xs font-medium text-yellow-600 mb-2">{language === "vi" ? "💡 Gợi ý cải thiện" : "💡 Suggestions"}</p>
                                     <ul className="text-sm space-y-1">
                                       {(parsedFeedback.suggestions as string[]).map((s, i) => (
                                         <li key={i} className="flex items-start gap-2">
@@ -515,7 +517,7 @@ const StudentSessionDetailPage = () => {
                               <div>
                                 <p className="text-sm font-medium mb-1 flex items-center gap-1">
                                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                  Phản hồi AI
+                                  {language === "vi" ? "Phản hồi AI" : "AI Feedback"}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   {item.aiFeedback.feedbackText}
@@ -524,28 +526,28 @@ const StudentSessionDetailPage = () => {
 
                               {item.aiFeedback.pronunciationNotes && (
                                 <div className="p-3 bg-background rounded-lg">
-                                  <p className="text-xs font-medium text-red-500 mb-1">🎤 Phát âm</p>
+                                  <p className="text-xs font-medium text-red-500 mb-1">{language === "vi" ? "🎤 Phát âm" : "🎤 Pronunciation"}</p>
                                   <p className="text-sm">{item.aiFeedback.pronunciationNotes}</p>
                                 </div>
                               )}
 
                               {item.aiFeedback.grammarNotes && (
                                 <div className="p-3 bg-background rounded-lg">
-                                  <p className="text-xs font-medium text-orange-500 mb-1">📝 Ngữ pháp</p>
+                                  <p className="text-xs font-medium text-orange-500 mb-1">{language === "vi" ? "📝 Ngữ pháp" : "📝 Grammar"}</p>
                                   <p className="text-sm">{item.aiFeedback.grammarNotes}</p>
                                 </div>
                               )}
 
                               {item.aiFeedback.vocabularyNotes && (
                                 <div className="p-3 bg-background rounded-lg">
-                                  <p className="text-xs font-medium text-blue-500 mb-1">📚 Từ vựng</p>
+                                  <p className="text-xs font-medium text-blue-500 mb-1">{language === "vi" ? "📚 Từ vựng" : "📚 Vocabulary"}</p>
                                   <p className="text-sm">{item.aiFeedback.vocabularyNotes}</p>
                                 </div>
                               )}
 
                               {item.aiFeedback.fluencyNotes && (
                                 <div className="p-3 bg-background rounded-lg">
-                                  <p className="text-xs font-medium text-green-500 mb-1">🎯 Lưu loát</p>
+                                  <p className="text-xs font-medium text-green-500 mb-1">{language === "vi" ? "🎯 Lưu loát" : "🎯 Fluency"}</p>
                                   <p className="text-sm">{item.aiFeedback.fluencyNotes}</p>
                                 </div>
                               )}
@@ -557,14 +559,14 @@ const StudentSessionDetailPage = () => {
                           <div className="border-t pt-3">
                             <p className="text-sm font-medium mb-1 flex items-center gap-1">
                               <Lightbulb className="h-4 w-4 text-yellow-500" />
-                              Nhận xét giáo viên ({item.teacherFeedback.teacherName})
+                              {language === "vi" ? `Nhận xét giáo viên (${item.teacherFeedback.teacherName})` : `Teacher Feedback (${item.teacherFeedback.teacherName})`}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {item.teacherFeedback.feedbackText}
                             </p>
                             {item.teacherFeedback.improvementSuggestions && (
                               <p className="text-sm mt-2">
-                                <span className="font-medium">Gợi ý cải thiện:</span>{" "}
+                                <span className="font-medium">{language === "vi" ? "Gợi ý cải thiện:" : "Improvement suggestions:"}</span>{" "}
                                 {item.teacherFeedback.improvementSuggestions}
                               </p>
                             )}

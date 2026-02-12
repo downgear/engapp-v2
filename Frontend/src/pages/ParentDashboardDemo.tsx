@@ -42,20 +42,21 @@ const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | n
 };
 
 // Activity type icons and labels
-const activityConfig = {
-  in_person_class: { icon: BookOpen, label: "Học với GV Việt Nam", color: "text-blue-500 bg-blue-50" },
-  ai_practice: { icon: MessageSquare, label: "Luyện tập AI", color: "text-green-500 bg-green-50" },
-  video_call: { icon: Video, label: "Học với GV nước ngoài", color: "text-purple-500 bg-purple-50" },
-};
+const getActivityConfig = (language: string) => ({
+  in_person_class: { icon: BookOpen, label: language === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Class", color: "text-blue-500 bg-blue-50" },
+  ai_practice: { icon: MessageSquare, label: language === "vi" ? "Luyện tập AI" : "AI Practice", color: "text-green-500 bg-green-50" },
+  video_call: { icon: Video, label: language === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher Class", color: "text-purple-500 bg-purple-50" },
+});
 
 // Learning History Item Component with expandable feedback
 const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
+  const { language } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
-  const config = activityConfig[item.activityType];
+  const config = getActivityConfig(language)[item.activityType];
   const Icon = config.icon;
   const date = parseISO(item.startTime);
-  const formattedDate = format(date, "dd/MM/yyyy", { locale: vi });
-  const formattedTime = format(date, "HH:mm", { locale: vi });
+  const formattedDate = format(date, "dd/MM/yyyy", { locale: language === "vi" ? vi : undefined });
+  const formattedTime = format(date, "HH:mm", { locale: language === "vi" ? vi : undefined });
   const parsedFeedback = parseFeedbackText(item.aiFeedback?.feedbackText);
   const hasFeedback = !!parsedFeedback || !!item.aiFeedback?.overallScore;
 
@@ -84,7 +85,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             <div className="flex items-center gap-2 mt-1">
               <Calendar className="h-3 w-3 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
-                {formattedDate} lúc {formattedTime}
+                {formattedDate} {language === "vi" ? "lúc" : "at"} {formattedTime}
               </span>
             </div>
           </div>
@@ -103,22 +104,22 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center gap-1.5">
                 <Mic className="h-3 w-3 text-blue-500" />
-                <span className="text-muted-foreground">Phát âm:</span>
+                <span className="text-muted-foreground">{language === "vi" ? "Phát âm:" : "Pronunciation:"}</span>
                 <span className="font-medium">{parsedFeedback.pronunciation}/10</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <BookText className="h-3 w-3 text-purple-500" />
-                <span className="text-muted-foreground">Ngữ pháp:</span>
+                <span className="text-muted-foreground">{language === "vi" ? "Ngữ pháp:" : "Grammar:"}</span>
                 <span className="font-medium">{parsedFeedback.grammar}/10</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Brain className="h-3 w-3 text-orange-500" />
-                <span className="text-muted-foreground">Từ vựng:</span>
+                <span className="text-muted-foreground">{language === "vi" ? "Từ vựng:" : "Vocabulary:"}</span>
                 <span className="font-medium">{parsedFeedback.vocabulary}/10</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Zap className="h-3 w-3 text-yellow-500" />
-                <span className="text-muted-foreground">Lưu loát:</span>
+                <span className="text-muted-foreground">{language === "vi" ? "Lưu loát:" : "Fluency:"}</span>
                 <span className="font-medium">{parsedFeedback.fluency}/10</span>
               </div>
             </div>
@@ -127,7 +128,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.pronunciationIssues?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1">
-                  <Mic className="h-3 w-3" /> Lỗi phát âm
+                  <Mic className="h-3 w-3" /> {language === "vi" ? "Lỗi phát âm" : "Pronunciation Issues"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.pronunciationIssues.map((issue, i) => (
@@ -144,7 +145,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.grammarIssues?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1 flex items-center gap-1">
-                  <BookText className="h-3 w-3" /> Lỗi ngữ pháp
+                  <BookText className="h-3 w-3" /> {language === "vi" ? "Lỗi ngữ pháp" : "Grammar Issues"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.grammarIssues.map((issue, i) => (
@@ -161,7 +162,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.vocabularyNotes?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1">
-                  <Brain className="h-3 w-3" /> Ghi chú từ vựng
+                  <Brain className="h-3 w-3" /> {language === "vi" ? "Ghi chú từ vựng" : "Vocabulary Notes"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.vocabularyNotes.map((note, i) => (
@@ -178,7 +179,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.fluencyNotes?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400 mb-1 flex items-center gap-1">
-                  <Zap className="h-3 w-3" /> Ghi chú lưu loát
+                  <Zap className="h-3 w-3" /> {language === "vi" ? "Ghi chú lưu loát" : "Fluency Notes"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.fluencyNotes.map((note, i) => (
@@ -195,7 +196,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.highlights?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-green-700 dark:text-green-400 mb-1 flex items-center gap-1">
-                  <Star className="h-3 w-3" /> Điểm nổi bật
+                  <Star className="h-3 w-3" /> {language === "vi" ? "Điểm nổi bật" : "Highlights"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.highlights.map((h, i) => (
@@ -212,7 +213,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
             {parsedFeedback.suggestions?.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                  <Lightbulb className="h-3 w-3" /> Gợi ý cải thiện
+                  <Lightbulb className="h-3 w-3" /> {language === "vi" ? "Gợi ý cải thiện" : "Suggestions for Improvement"}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-0.5">
                   {parsedFeedback.suggestions.map((s, i) => (
@@ -272,7 +273,7 @@ const CollapsibleSection = ({
 };
 
 const ParentDashboardDemo = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const parentId = user?.role === "parent" ? user.profileId : undefined;
   const { children, isLoading: isLoadingChildren, error: childrenError } = useChildren(parentId ?? 1);
@@ -333,7 +334,7 @@ const ParentDashboardDemo = () => {
             <CardContent className="flex items-center gap-3 py-4">
               <AlertCircle className="h-5 w-5 text-destructive" />
               <p className="text-sm text-destructive">
-                Không thể tải dữ liệu. Vui lòng thử lại sau.
+                {language === "vi" ? "Không thể tải dữ liệu. Vui lòng thử lại sau." : "Unable to load data. Please try again later."}
               </p>
             </CardContent>
           </Card>
@@ -363,7 +364,7 @@ const ParentDashboardDemo = () => {
         <div className="space-y-6 mb-8">
           {/* Learning History Section - Collapsible */}
           <CollapsibleSection
-            title="Lịch Sử Học Tập"
+            title={language === "vi" ? "Lịch Sử Học Tập" : "Learning History"}
             icon={<History className="h-5 w-5 text-muted-foreground" />}
             defaultOpen={true}
           >
@@ -380,7 +381,7 @@ const ParentDashboardDemo = () => {
                 ))}
                 {learningHistory.length > 10 && (
                   <button className="w-full py-2 text-sm text-primary hover:text-primary/80 transition-colors">
-                    Xem thêm {learningHistory.length - 10} hoạt động
+                    {language === "vi" ? `Xem thêm ${learningHistory.length - 10} hoạt động` : `View ${learningHistory.length - 10} more activities`}
                   </button>
                 )}
               </div>
@@ -390,7 +391,7 @@ const ParentDashboardDemo = () => {
                   <History className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Chưa có lịch sử học tập.
+                  {language === "vi" ? "Chưa có lịch sử học tập." : "No learning history yet."}
                 </p>
               </div>
             )}
@@ -398,7 +399,7 @@ const ParentDashboardDemo = () => {
 
           {/* Progress Videos Section - Collapsible */}
           <CollapsibleSection
-            title="Video Tiến Bộ"
+            title={language === "vi" ? "Video Tiến Bộ" : "Progress Videos"}
             icon={<Video className="h-5 w-5 text-purple-500" />}
             defaultOpen={true}
           >
@@ -417,7 +418,7 @@ const ParentDashboardDemo = () => {
             ) : (
               <div className="flex items-center justify-center py-12">
                 <p className="text-sm text-muted-foreground">
-                  Chưa có video tiến bộ cho học sinh này.
+                  {language === "vi" ? "Chưa có video tiến bộ cho học sinh này." : "No progress videos available for this student."}
                 </p>
               </div>
             )}
@@ -426,7 +427,7 @@ const ParentDashboardDemo = () => {
           {/* Enrollment Info Section - Collapsible */}
           {enrollment && (
             <CollapsibleSection
-              title="Khoá Học Đang Tham Gia"
+              title={language === "vi" ? "Khoá Học Đang Tham Gia" : "Current Enrollment"}
               icon={<BookOpen className="h-5 w-5 text-primary" />}
               defaultOpen={true}
             >
@@ -434,17 +435,17 @@ const ParentDashboardDemo = () => {
                 <div>
                   <p className="font-medium text-foreground">{enrollment.course.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Đang học Module {enrollment.currentModuleNumber} / {enrollment.course.modules?.length || 8}
+                    {language === "vi" ? "Đang học" : "Currently on"} Module {enrollment.currentModuleNumber} / {enrollment.course.modules?.length || 8}
                   </p>
                 </div>
                 <Badge variant={enrollment.status === 'active' ? 'default' : 'secondary'}>
-                  {enrollment.status === 'active' ? 'Đang học' : enrollment.status}
+                  {enrollment.status === 'active' ? (language === "vi" ? 'Đang học' : 'Active') : enrollment.status}
                 </Badge>
               </div>
               {/* Progress bar */}
               <div className="mt-4">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>Tiến độ</span>
+                  <span>{language === "vi" ? "Tiến độ" : "Progress"}</span>
                   <span>{Math.round((enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100)}%</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
