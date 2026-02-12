@@ -20,9 +20,9 @@ import { vi } from "date-fns/locale";
 import { StudentProgressVideos } from "@/components/student-dashboard/StudentProgressVideos";
 
 const activityConfig = {
-  in_person_class: { icon: BookOpen, label: "Học trên lớp", color: "text-blue-500 bg-blue-50" },
+  in_person_class: { icon: BookOpen, label: "Học với GV Việt Nam", color: "text-blue-500 bg-blue-50" },
   ai_practice: { icon: MessageSquare, label: "Luyện tập AI", color: "text-green-500 bg-green-50" },
-  video_call: { icon: Video, label: "Video Call", color: "text-purple-500 bg-purple-50" },
+  video_call: { icon: Video, label: "Học với GV nước ngoài", color: "text-purple-500 bg-purple-50" },
 };
 
 interface ParsedFeedback {
@@ -416,7 +416,7 @@ const StudentDashboard = () => {
                 onClick={() => navigate("/booking")}
               >
                 <Video className="h-8 w-8 text-purple-500" />
-                <span className="text-xs font-medium">Đặt lịch Video Call</span>
+                <span className="text-xs font-medium">Đặt lịch với GV nước ngoài</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -441,7 +441,7 @@ const StudentDashboard = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-purple-500" />
-                  Lịch Video Call sắp tới
+                  Lịch học với GV nước ngoài sắp tới
                 </CardTitle>
               </CardHeader>
               <CardContent>

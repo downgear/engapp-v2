@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class S3Service {
@@ -26,7 +26,7 @@ export class S3Service {
     folder: string,
   ): Promise<{ url: string; key: string }> {
     const ext = file.originalname.split('.').pop();
-    const key = `${folder}/${uuidv4()}.${ext}`;
+    const key = `${folder}/${randomUUID()}.${ext}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,

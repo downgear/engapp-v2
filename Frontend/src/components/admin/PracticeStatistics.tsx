@@ -130,7 +130,7 @@ export const PracticeStatistics = () => {
                     {data?.videoCall.total || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Lượt video call với giáo viên (24h)
+                    Lượt học với GV nước ngoài (24h)
                   </div>
                 </div>
               </div>
@@ -169,14 +169,14 @@ export const PracticeStatistics = () => {
                         const label =
                           name === "aiPractice"
                             ? "Luyện nói AI"
-                            : "Video call";
+                            : "Học với GV nước ngoài";
                         return [`${value} lượt`, label];
                       }}
                       labelFormatter={(label) => `Giờ: ${label}`}
                     />
                     <Legend
                       formatter={(value) =>
-                        value === "aiPractice" ? "Luyện nói AI" : "Video call"
+                        value === "aiPractice" ? "Luyện nói AI" : "Học với GV nước ngoài"
                       }
                     />
                     <Line

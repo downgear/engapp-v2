@@ -43,9 +43,9 @@ const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | n
 
 // Activity type icons and labels
 const activityConfig = {
-  in_person_class: { icon: BookOpen, label: "Học trên lớp", color: "text-blue-500 bg-blue-50" },
+  in_person_class: { icon: BookOpen, label: "Học với GV Việt Nam", color: "text-blue-500 bg-blue-50" },
   ai_practice: { icon: MessageSquare, label: "Luyện tập AI", color: "text-green-500 bg-green-50" },
-  video_call: { icon: Video, label: "Video Call", color: "text-purple-500 bg-purple-50" },
+  video_call: { icon: Video, label: "Học với GV nước ngoài", color: "text-purple-500 bg-purple-50" },
 };
 
 // Learning History Item Component with expandable feedback

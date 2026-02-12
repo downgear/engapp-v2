@@ -232,8 +232,8 @@ const Register = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="video_call">Video Call</SelectItem>
-                        <SelectItem value="in_person">Dạy trực tiếp</SelectItem>
+                        <SelectItem value="video_call">Giáo viên nước ngoài</SelectItem>
+                        <SelectItem value="in_person">Giáo viên Việt Nam</SelectItem>
                         <SelectItem value="both">Cả hai</SelectItem>
                       </SelectContent>
                     </Select>

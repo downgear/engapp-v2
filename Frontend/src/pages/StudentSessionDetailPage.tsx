@@ -133,9 +133,9 @@ const StudentSessionDetailPage = () => {
       case "ai_practice":
         return "Luyện tập AI";
       case "video_call":
-        return "Video Call";
+        return "Học với GV nước ngoài";
       case "in_person_class":
-        return "Học trên lớp";
+        return "Học với GV Việt Nam";
       default:
         return type;
     }

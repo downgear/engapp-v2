@@ -152,7 +152,7 @@ const ModuleDetailPage = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-blue-900 dark:text-blue-100">
-                        Buổi Học Trực Tiếp Trên Lớp
+                        Buổi Học Với Giáo Viên Việt Nam
                       </h3>
                       <p className="text-blue-700 dark:text-blue-300 text-sm">
                         Hình thức: Lớp nhóm nhỏ (15 học sinh, 1 giáo viên)
@@ -263,7 +263,7 @@ const ModuleDetailPage = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-purple-900 dark:text-purple-100">
-                        Video Call 1-1 Với Giáo Viên
+                        Học 1-1 Với Giáo Viên Nước Ngoài
                       </h3>
                       <p className="text-purple-700 dark:text-purple-300 text-sm">
                         Hình thức: Buổi học riêng 30 phút với mentor
@@ -309,7 +309,7 @@ const ModuleDetailPage = () => {
                     size="lg"
                   >
                     <Calendar className="h-5 w-5 mr-2" />
-                    Đặt lịch Video Call với Giáo Viên
+                    Đặt lịch học với Giáo Viên Nước Ngoài
                   </Button>
                 </div>
               </TabsContent>

@@ -193,11 +193,11 @@ const BookingDetailPage = () => {
   const getTeacherTypeBadge = (type: string) => {
     switch (type) {
       case "in_person":
-        return <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> Trực tiếp</Badge>;
+        return <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> GV Việt Nam</Badge>;
       case "video_call":
-        return <Badge variant="outline" className="gap-1"><Video className="h-3 w-3" /> Video Call</Badge>;
+        return <Badge variant="outline" className="gap-1"><Video className="h-3 w-3" /> GV nước ngoài</Badge>;
       case "both":
-        return <Badge variant="outline" className="gap-1"><GraduationCap className="h-3 w-3" /> Cả hai hình thức</Badge>;
+        return <Badge variant="outline" className="gap-1"><GraduationCap className="h-3 w-3" /> Cả hai</Badge>;
       default:
         return null;
     }
@@ -252,7 +252,7 @@ const BookingDetailPage = () => {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Chi tiết lịch hẹn</h1>
             <p className="text-muted-foreground">
-              Thông tin buổi học Video Call
+              Thông tin buổi học với GV nước ngoài
             </p>
           </div>
         </div>

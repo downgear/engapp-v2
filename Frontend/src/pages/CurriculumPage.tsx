@@ -272,7 +272,7 @@ const CurriculumPage = () => {
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Hình thức học</h3>
                     <p className="text-muted-foreground text-sm">
-                      Học kết hợp (Học trực tiếp trên lớp + Luyện nói AI hàng ngày + Mentor 1-1 hàng tuần)
+                      Học kết hợp (Học với GV Việt Nam + Luyện nói AI hàng ngày + Học 1-1 với GV nước ngoài hàng tuần)
                     </p>
                   </div>
                 </div>

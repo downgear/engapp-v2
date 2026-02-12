@@ -154,8 +154,8 @@ const ConnectionsPage = () => {
       </div>
       {showTeacherType && connection.teacher && (
         <Badge variant="secondary" className="shrink-0">
-          {connection.teacher.teacherType === 'in_person' && 'Trực tiếp'}
-          {connection.teacher.teacherType === 'video_call' && 'Video Call'}
+          {connection.teacher.teacherType === 'in_person' && 'GV Việt Nam'}
+          {connection.teacher.teacherType === 'video_call' && 'GV nước ngoài'}
           {connection.teacher.teacherType === 'both' && 'Cả hai'}
         </Badge>
       )}
@@ -311,7 +311,7 @@ const ConnectionsPage = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <BookOpen className="h-4 w-4 text-blue-500" />
-                        <h4 className="font-medium text-sm text-muted-foreground">Giảng dạy trực tiếp</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">Giáo viên Việt Nam</h4>
                       </div>
                       <div className="space-y-3">
                         {inPersonTeachers.map((conn) => (
@@ -326,7 +326,7 @@ const ConnectionsPage = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <Video className="h-4 w-4 text-purple-500" />
-                        <h4 className="font-medium text-sm text-muted-foreground">Giảng dạy qua Video Call</h4>
+                        <h4 className="font-medium text-sm text-muted-foreground">Giáo viên nước ngoài</h4>
                       </div>
                       <div className="space-y-3">
                         {videoCallTeachers.map((conn) => (
