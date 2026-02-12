@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Menu, X, Bell, Check } from "lucide-react";
 import lingriserLogo from "@/assets/lingriser-logo.svg";
+import flagVn from "@/assets/flag-vn.png";
+import flagUk from "@/assets/flag-uk.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -39,7 +41,7 @@ export const Navigation = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +49,7 @@ export const Navigation = () => {
   const buildNavItems = (): NavItem[] => {
     const items: NavItem[] = [
       { label: t("nav.home"), href: "/" },
-      { label: "Tất cả chương trình", href: "/inaugural-program" },
+      { label: t("nav.allPrograms"), href: "/inaugural-program" },
     ];
 
     const userRole = user?.role;
@@ -240,6 +242,32 @@ export const Navigation = () => {
                 )}
               </div>
             ))}
+            {/* Language Toggle */}
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                onClick={() => setLanguage("en")}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
+                  language === "en"
+                    ? "border-primary/30 bg-primary/10 hover:bg-primary/20"
+                    : "border-border/50 hover:bg-muted/50"
+                }`}
+              >
+                <img src={flagUk} alt="English" className="w-5 h-3.5 object-cover rounded-sm" />
+                <span className={`text-sm font-medium ${language === "en" ? "text-primary" : "text-foreground/70"}`}>EN</span>
+              </button>
+              <button
+                onClick={() => setLanguage("vi")}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
+                  language === "vi"
+                    ? "border-primary/30 bg-primary/10 hover:bg-primary/20"
+                    : "border-border/50 hover:bg-muted/50"
+                }`}
+              >
+                <img src={flagVn} alt="Tiếng Việt" className="w-5 h-3.5 object-cover rounded-sm" />
+                <span className={`text-sm font-medium ${language === "vi" ? "text-primary" : "text-foreground/70"}`}>VI</span>
+              </button>
+            </div>
+
             <div className="flex items-center gap-2 pl-2 border-l border-border/50">
               {isLoading ? null : isAuthenticated ? (
                 <>
@@ -257,7 +285,7 @@ export const Navigation = () => {
                     </PopoverTrigger>
                     <PopoverContent className="w-80 p-0" align="end">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-                        <h4 className="font-semibold">Thông báo</h4>
+                        <h4 className="font-semibold">{language === "vi" ? "Thông báo" : "Notifications"}</h4>
                         {unreadCount > 0 && (
                           <Button
                             variant="ghost"
@@ -266,14 +294,14 @@ export const Navigation = () => {
                             onClick={handleMarkAllAsRead}
                           >
                             <Check className="h-3 w-3 mr-1" />
-                            Đọc tất cả
+                            {language === "vi" ? "Đọc tất cả" : "Read all"}
                           </Button>
                         )}
                       </div>
                       <div className="max-h-[300px] overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-4 text-center text-muted-foreground text-sm">
-                            Không có thông báo nào
+                            {language === "vi" ? "Không có thông báo nào" : "No notifications"}
                           </div>
                         ) : (
                           notifications.map((notif) => (
@@ -314,7 +342,7 @@ export const Navigation = () => {
                     </a>
                   </Button>
                   <Button variant="outline" onClick={logout}>
-                    Đăng xuất
+                    {language === "vi" ? "Đăng xuất" : "Log Out"}
                   </Button>
                 </>
               ) : (
@@ -330,8 +358,33 @@ export const Navigation = () => {
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile: Language + Menu */}
           <div className="flex items-center gap-2">
+            {/* Mobile Language Toggle */}
+            <div className="flex sm:hidden items-center gap-1">
+              <button
+                onClick={() => setLanguage("en")}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs transition-colors ${
+                  language === "en"
+                    ? "border-primary/30 bg-primary/10"
+                    : "border-border/50 hover:bg-muted/50"
+                }`}
+              >
+                <img src={flagUk} alt="EN" className="w-4 h-3 object-cover rounded-sm" />
+                <span className={language === "en" ? "text-primary font-medium" : "text-foreground/70"}>EN</span>
+              </button>
+              <button
+                onClick={() => setLanguage("vi")}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs transition-colors ${
+                  language === "vi"
+                    ? "border-primary/30 bg-primary/10"
+                    : "border-border/50 hover:bg-muted/50"
+                }`}
+              >
+                <img src={flagVn} alt="VI" className="w-4 h-3 object-cover rounded-sm" />
+                <span className={language === "vi" ? "text-primary font-medium" : "text-foreground/70"}>VI</span>
+              </button>
+            </div>
             {/* Mobile Menu Button */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild className="md:hidden">
@@ -400,7 +453,7 @@ export const Navigation = () => {
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-sm font-medium flex items-center gap-2">
                                 <Bell className="h-4 w-4" />
-                                Thông báo
+                                {language === "vi" ? "Thông báo" : "Notifications"}
                                 {unreadCount > 0 && (
                                   <span className="bg-red-500 text-white text-xs font-bold rounded-sm min-w-[18px] h-[18px] flex items-center justify-center px-1">
                                     {unreadCount}
@@ -445,7 +498,7 @@ export const Navigation = () => {
                             handleMobileLinkClick();
                           }}
                         >
-                          Đăng xuất
+                          {language === "vi" ? "Đăng xuất" : "Log Out"}
                         </Button>
                       </>
                     ) : (

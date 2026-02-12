@@ -147,7 +147,7 @@ const BookingDetailPage = () => {
     setIsActionLoading(true);
     try {
       const updated = await api.endMeeting(accessToken, booking.id, user.profileId);
-      setBooking({ ...booking, ...updated });
+      setBooking({ ...booking, ...updated } as BookingDetail);
       setShowFeedbackForm(true);
       toast({ title: "Thành công", description: "Đã kết thúc buổi học" });
     } catch (error) {
@@ -163,7 +163,7 @@ const BookingDetailPage = () => {
     setIsActionLoading(true);
     try {
       const updated = await api.addTeacherFeedback(accessToken, booking.id, user?.profileId || 0, teacherFeedback);
-      setBooking({ ...booking, ...updated });
+      setBooking({ ...booking, ...updated } as BookingDetail);
       setShowFeedbackForm(false);
       toast({ title: "Thành công", description: "Đã gửi nhận xét cho học sinh" });
     } catch (error) {
@@ -179,7 +179,7 @@ const BookingDetailPage = () => {
     setIsActionLoading(true);
     try {
       const updated = await api.addStudentRating(accessToken, booking.id, user?.profileId || 0, studentRating, studentComment);
-      setBooking({ ...booking, ...updated });
+      setBooking({ ...booking, ...updated } as BookingDetail);
       setShowRatingForm(false);
       toast({ title: "Thành công", description: "Đã gửi đánh giá cho giáo viên" });
     } catch (error) {
