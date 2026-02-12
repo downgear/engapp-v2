@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Student, User, Parent, Enrollment, LearningHistory, StudentVideo, Module as CourseModule, AiFeedback, ActivityType, LearningStatus, Teacher, AccountLink } from '../../entities';
+import { Student, User, Parent, Enrollment, LearningHistory, StudentVideo, VideoType, Module as CourseModule, AiFeedback, ActivityType, LearningStatus, Teacher, AccountLink } from '../../entities';
 import { CreateLearningHistoryDto } from './dto/create-learning-history.dto';
 
 @Injectable()
@@ -324,6 +324,52 @@ export class StudentsService {
     }
 
     return result;
+  }
+
+  async saveProgressVideo(
+    studentId: number,
+    courseId: number,
+    videoType: 'before' | 'after',
+    fileUrl: string,
+    fileName: string,
+    fileSize: number,
+  ) {
+    // Check if a video of this type already exists and replace it
+    const existing = await this.studentVideoRepo.findOne({
+      where: { studentId, courseId, videoType: videoType as VideoType },
+    });
+
+    if (existing) {
+      existing.fileUrl = fileUrl;
+      existing.fileName = fileName;
+      existing.fileSize = fileSize;
+      await this.studentVideoRepo.save(existing);
+    } else {
+      const video = this.studentVideoRepo.create({
+        studentId,
+        courseId,
+        videoType: videoType as VideoType,
+        fileUrl,
+        fileName,
+        fileSize,
+      });
+      await this.studentVideoRepo.save(video);
+    }
+
+    return this.getProgressVideos(studentId, courseId);
+  }
+
+  async deleteProgressVideo(studentId: number, courseId: number, videoType: 'before' | 'after') {
+    const video = await this.studentVideoRepo.findOne({
+      where: { studentId, courseId, videoType: videoType as VideoType },
+    });
+
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    await this.studentVideoRepo.remove(video);
+    return this.getProgressVideos(studentId, courseId);
   }
 
   private formatStudent(student: Student) {

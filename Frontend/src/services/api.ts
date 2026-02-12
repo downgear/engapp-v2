@@ -106,6 +106,41 @@ export const api = {
     return fetchApi<ProgressVideos>(`/students/${studentId}/progress-videos?courseId=${courseId}`);
   },
 
+  async uploadStudentVideo(
+    studentId: number,
+    courseId: number,
+    videoType: 'before' | 'after',
+    file: File,
+  ): Promise<ProgressVideos> {
+    const formData = new FormData();
+    formData.append('video', file);
+    formData.append('videoType', videoType);
+    formData.append('courseId', courseId.toString());
+
+    const response = await fetch(`${API_BASE_URL}/students/${studentId}/upload-video`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  async deleteStudentVideo(
+    studentId: number,
+    courseId: number,
+    videoType: 'before' | 'after',
+  ): Promise<ProgressVideos> {
+    return fetchApi<ProgressVideos>(
+      `/students/${studentId}/progress-video?videoType=${videoType}&courseId=${courseId}`,
+      { method: 'DELETE' },
+    );
+  },
+
   // ============ Teachers ============
 
   async getTeachers(): Promise<Teacher[]> {

@@ -1,10 +1,15 @@
-import { Controller, Get, Param, Query, ParseIntPipe, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseIntPipe, Post, Body, UseInterceptors, UploadedFile, Delete, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { StudentsService } from './students.service';
 import { CreateLearningHistoryDto } from './dto/create-learning-history.dto';
+import { S3Service } from './s3.service';
 
 @Controller('students')
 export class StudentsController {
-  constructor(private readonly studentsService: StudentsService) {}
+  constructor(
+    private readonly studentsService: StudentsService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   @Get()
   findAll() {
@@ -56,6 +61,55 @@ export class StudentsController {
   @Get(':id/connections')
   getConnections(@Param('id', ParseIntPipe) id: number) {
     return this.studentsService.getConnections(id);
+  }
+
+  @Post(':id/upload-video')
+  @UseInterceptors(FileInterceptor('video', {
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
+    fileFilter: (_req, file, cb) => {
+      if (!file.mimetype.startsWith('video/')) {
+        return cb(new BadRequestException('Only video files are allowed'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  async uploadVideo(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('videoType') videoType: 'before' | 'after',
+    @Body('courseId') courseId: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Video file is required');
+    }
+    if (!videoType || !['before', 'after'].includes(videoType)) {
+      throw new BadRequestException('videoType must be "before" or "after"');
+    }
+    if (!courseId) {
+      throw new BadRequestException('courseId is required');
+    }
+
+    // Upload to S3 in the lingriser folder
+    const { url } = await this.s3Service.uploadFile(file, 'lingriser');
+
+    // Save video metadata to database
+    return this.studentsService.saveProgressVideo(
+      id,
+      parseInt(courseId),
+      videoType,
+      url,
+      file.originalname,
+      file.size,
+    );
+  }
+
+  @Delete(':id/progress-video')
+  async deleteProgressVideo(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('videoType') videoType: 'before' | 'after',
+    @Query('courseId', ParseIntPipe) courseId: number,
+  ) {
+    return this.studentsService.deleteProgressVideo(id, courseId, videoType);
   }
 }
 

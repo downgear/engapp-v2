@@ -17,6 +17,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import { StudentProgressVideos } from "@/components/student-dashboard/StudentProgressVideos";
 
 const activityConfig = {
   in_person_class: { icon: BookOpen, label: "Học trên lớp", color: "text-blue-500 bg-blue-50" },
@@ -426,6 +427,14 @@ const StudentDashboard = () => {
                 <span className="text-xs font-medium">Kết nối</span>
               </Button>
             </div>
+
+            {/* Progress Videos - Before & After */}
+            {enrollment && (
+              <StudentProgressVideos 
+                studentId={user!.profileId} 
+                courseId={enrollment.course.id} 
+              />
+            )}
 
             {/* Upcoming Bookings */}
             <Card className="border-border/50">
