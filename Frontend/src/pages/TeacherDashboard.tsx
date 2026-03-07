@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, type TeachingCourse } from "@/services/api";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { WeeklyFocusForm } from "@/components/teacher/WeeklyFocusForm";
+import type { Module } from "@/types/module";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,7 @@ const TeacherDashboard = () => {
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleEmail, setGoogleEmail] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [allModules, setAllModules] = useState<Module[]>([]);
 
   // Handle Google OAuth success - exchange code for tokens
   const handleGoogleSuccess = useCallback(async (code: string) => {
@@ -99,10 +102,15 @@ const TeacherDashboard = () => {
           setBookings(data);
         }
 
-        // Fetch teaching courses
+        // Fetch teaching courses and their modules
         try {
           const courses = await api.getTeachingCourses(user.profileId);
           setTeachingCourses(courses);
+          // Load modules for all courses
+          const modulesArrays = await Promise.all(
+            courses.map(c => api.getCourseModules(c.courseId).catch(() => []))
+          );
+          setAllModules(modulesArrays.flat());
         } catch (err) {
           console.error("Failed to fetch teaching courses:", err);
         }
@@ -402,6 +410,18 @@ const TeacherDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Weekly Focus (3L Model) */}
+        {allModules.length > 0 && accessToken && user?.profileId && (
+          <div className="mb-8">
+            <WeeklyFocusForm
+              teacherId={user.profileId}
+              accessToken={accessToken}
+              language={language}
+              modules={allModules}
+            />
+          </div>
+        )}
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-6">

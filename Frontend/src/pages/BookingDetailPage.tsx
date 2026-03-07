@@ -29,6 +29,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/services/api";
+import { MentorBriefCard } from "@/components/booking/MentorBriefCard";
 import { format, parseISO } from "date-fns";
 import { vi, enUS } from "date-fns/locale";
 
@@ -582,6 +583,18 @@ const BookingDetailPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Mentor Brief - shown for teacher before/during session */}
+        {user?.role === 'teacher' && booking.student?.id && booking.module?.id && accessToken && (
+          <div className="mt-6">
+            <MentorBriefCard
+              studentId={booking.student.id}
+              moduleId={booking.module.id}
+              accessToken={accessToken}
+              language={language}
+            />
+          </div>
+        )}
 
         {/* Booking Created Info */}
         <div className="mt-6 text-center text-sm text-muted-foreground">

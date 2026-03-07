@@ -704,6 +704,50 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
+
+  // ============ Weekly Focus (3L Model) ============
+
+  async createOrUpdateWeeklyFocus(token: string, data: {
+    moduleId: number;
+    teacherId: number;
+    weekTopic: string;
+    speakingGoals?: string[];
+    teacherNotes?: string;
+  }): Promise<WeeklyFocusResponse> {
+    return fetchApi('/weekly-focus', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateWeeklyFocus(token: string, id: number, data: {
+    weekTopic?: string;
+    speakingGoals?: string[];
+    teacherNotes?: string;
+  }): Promise<WeeklyFocusResponse> {
+    return fetchApi(`/weekly-focus/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getWeeklyFocusByModule(moduleId: number): Promise<WeeklyFocusResponse | null> {
+    return fetchApi(`/weekly-focus/module/${moduleId}`);
+  },
+
+  async getWeeklyFocusByTeacher(token: string, teacherId: number): Promise<WeeklyFocusResponse[]> {
+    return fetchApi(`/weekly-focus/teacher/${teacherId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async getMentorBrief(token: string, studentId: number, moduleId: number): Promise<MentorBriefResponse> {
+    return fetchApi(`/weekly-focus/mentor-brief?studentId=${studentId}&moduleId=${moduleId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
 };
 
 // ============ Program Types ============
@@ -776,4 +820,29 @@ export interface TeachingCourse {
     name: string;
   } | null;
   moduleCount: number;
+}
+
+// ============ Weekly Focus Types (3L Model) ============
+
+export interface WeeklyFocusResponse {
+  id: number;
+  moduleId: number;
+  teacherId: number;
+  weekTopic: string;
+  speakingGoals: string[];
+  teacherNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  module?: {
+    id: number;
+    moduleNumber: number;
+    title: string;
+    topic: string;
+  };
+}
+
+export interface MentorBriefResponse {
+  weeklyFocus: WeeklyFocusResponse | null;
+  aiPracticeCount: number;
+  lastAiFeedbackSummary: string | null;
 }

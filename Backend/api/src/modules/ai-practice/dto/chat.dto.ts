@@ -24,6 +24,11 @@ export class ChatRequestDto {
   @IsString()
   @IsOptional()
   topicDescription?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  speakingGoals?: string[];
 }
 
 export class FeedbackRequestDto {

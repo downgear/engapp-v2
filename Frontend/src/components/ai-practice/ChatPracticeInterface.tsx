@@ -16,6 +16,7 @@ interface ChatPracticeInterfaceProps {
   topic: Topic;
   level: Level;
   onComplete: (transcript: TranscriptEntry[]) => void;
+  speakingGoals?: string[];
 }
 
 interface Message {
@@ -26,7 +27,7 @@ interface Message {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const CHAT_URL = `${API_BASE_URL}/ai-practice/chat`;
 
-export const ChatPracticeInterface = ({ topic, level, onComplete }: ChatPracticeInterfaceProps) => {
+export const ChatPracticeInterface = ({ topic, level, onComplete, speakingGoals }: ChatPracticeInterfaceProps) => {
   const { t, language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -65,6 +66,7 @@ export const ChatPracticeInterface = ({ topic, level, onComplete }: ChatPractice
           level,
           topic: topicName,
           topicDescription: topicDesc,
+          speakingGoals,
         }),
       });
 
@@ -142,6 +144,7 @@ export const ChatPracticeInterface = ({ topic, level, onComplete }: ChatPractice
           level,
           topic: topicName,
           topicDescription: topicDesc,
+          speakingGoals,
         }),
       });
 

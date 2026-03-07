@@ -22,3 +22,4 @@ export * from './program.entity';
 export * from './cohort.entity';
 export * from './cohort-course.entity';
 export * from './student-cohort-enrollment.entity';
+export * from './weekly-focus.entity';

@@ -13,7 +13,7 @@ export class AIPracticeService {
   }
 
   async chat(dto: ChatRequestDto): Promise<ReadableStream> {
-    const systemPrompt = this.buildSystemPrompt(dto.level, dto.topic, dto.topicDescription);
+    const systemPrompt = this.buildSystemPrompt(dto.level, dto.topic, dto.topicDescription, dto.speakingGoals);
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
@@ -35,7 +35,7 @@ export class AIPracticeService {
   }
 
   async chatNonStream(dto: ChatRequestDto): Promise<string> {
-    const systemPrompt = this.buildSystemPrompt(dto.level, dto.topic, dto.topicDescription);
+    const systemPrompt = this.buildSystemPrompt(dto.level, dto.topic, dto.topicDescription, dto.speakingGoals);
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
@@ -55,7 +55,7 @@ export class AIPracticeService {
     return response.choices[0]?.message?.content || '';
   }
 
-  private buildSystemPrompt(level: string, topic: string, topicDescription?: string): string {
+  private buildSystemPrompt(level: string, topic: string, topicDescription?: string, speakingGoals?: string[]): string {
     const levelDescriptions: Record<string, string> = {
       beginner: 'Use simple vocabulary and short sentences. Speak slowly and clearly. Avoid complex grammar.',
       intermediate: 'Use moderate vocabulary with some complex sentences. Include idioms occasionally.',
@@ -64,11 +64,15 @@ export class AIPracticeService {
 
     const levelGuide = levelDescriptions[level] || levelDescriptions.intermediate;
 
+    const goalsSection = speakingGoals?.length
+      ? `\n\nWEEKLY SPEAKING GOALS (set by the student's in-person teacher):\n${speakingGoals.map((g, i) => `${i + 1}. ${g}`).join('\n')}\nGently steer the conversation to help the student practice these specific goals. For example, if a goal is "speak for at least 60 seconds", encourage longer answers. If a goal is "expand ideas", ask follow-up questions that require elaboration.`
+      : '';
+
     return `You are a friendly English conversation practice partner helping a Vietnamese student improve their English speaking skills.
 
 Topic: ${topic}
 ${topicDescription ? `Topic Description: ${topicDescription}` : ''}
-Student Level: ${level}
+Student Level: ${level}${goalsSection}
 
 CRITICAL CONVERSATION RULES:
 

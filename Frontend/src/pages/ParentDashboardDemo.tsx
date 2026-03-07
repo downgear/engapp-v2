@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChildSelector } from "@/components/parent-dashboard/ChildSelector";
 import { ProgressVideos } from "@/components/parent-dashboard/ProgressVideos";
+import { LearningFlowCard } from "@/components/parent-dashboard/LearningFlowCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChildren, useProgressVideos, useLearningHistory, useEnrollment } from "@/hooks/useParentDashboard";
@@ -362,6 +363,16 @@ const ParentDashboardDemo = () => {
 
         {/* Main Content - Vertical Layout */}
         <div className="space-y-6 mb-8">
+          {/* 3L Learning Flow */}
+          {enrollment && (
+            <LearningFlowCard
+              moduleId={enrollment.course?.modules?.find(m => m.moduleNumber === enrollment.currentModuleNumber)?.id}
+              aiPracticeCount={learningHistory.filter(h => h.activityType === "ai_practice").length}
+              hasVideoCall={learningHistory.some(h => h.activityType === "video_call")}
+              language={language}
+            />
+          )}
+
           {/* Learning History Section - Collapsible */}
           <CollapsibleSection
             title={language === "vi" ? "Lịch Sử Học Tập" : "Learning History"}

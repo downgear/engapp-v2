@@ -19,6 +19,7 @@ interface VoicePracticeInterfaceProps {
   topic: Topic;
   level: Level;
   onComplete: (transcript: TranscriptEntry[]) => void;
+  speakingGoals?: string[];
 }
 
 interface Message {
@@ -29,7 +30,7 @@ interface Message {
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const AI_PRACTICE_URL = `${API_BASE_URL}/ai-practice`;
 
-export const VoicePracticeInterface = ({ topic, level, onComplete }: VoicePracticeInterfaceProps) => {
+export const VoicePracticeInterface = ({ topic, level, onComplete, speakingGoals }: VoicePracticeInterfaceProps) => {
   const { t, language } = useLanguage();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -76,6 +77,7 @@ export const VoicePracticeInterface = ({ topic, level, onComplete }: VoicePracti
             level,
             topic: topicName,
             topicDescription: topicDesc,
+            speakingGoals,
           }),
         });
 
@@ -213,6 +215,7 @@ export const VoicePracticeInterface = ({ topic, level, onComplete }: VoicePracti
             level,
             topic: topicName,
             topicDescription: topicDesc,
+            speakingGoals,
           }),
         });
 

@@ -16,6 +16,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { GoogleAuthModule } from './modules/google-auth/google-auth.module';
 import { ProgramsModule } from './modules/programs/programs.module';
+import { WeeklyFocusModule } from './modules/weekly-focus/weekly-focus.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -40,6 +41,7 @@ import { AppService } from './app.service';
     ChatModule,
     GoogleAuthModule,
     ProgramsModule,
+    WeeklyFocusModule,
   ],
   controllers: [AppController],
   providers: [AppService],

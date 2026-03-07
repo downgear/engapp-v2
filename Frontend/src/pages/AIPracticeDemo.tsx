@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, Check, Bot, Loader2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Bot, Loader2, Target } from "lucide-react";
 import { PracticeTypeSelector } from "@/components/ai-practice/PracticeTypeSelector";
 import { ChatPracticeInterface } from "@/components/ai-practice/ChatPracticeInterface";
 import { VoicePracticeInterface } from "@/components/ai-practice/VoicePracticeInterface";
@@ -11,7 +11,7 @@ import { ModeSelector, PracticeMode } from "@/components/ai-practice/ModeSelecto
 import { FeedbackPanel } from "@/components/ai-practice/FeedbackPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/services/api";
+import { api, type WeeklyFocusResponse } from "@/services/api";
 import { toast } from "sonner";
 
 export type PracticeType = "ielts" | "conversation";
@@ -73,6 +73,7 @@ const AIPracticeDemo = () => {
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
   const [currentModule, setCurrentModule] = useState<CurrentModule | null>(null);
   const [isLoadingModule, setIsLoadingModule] = useState(true);
+  const [weeklyFocus, setWeeklyFocus] = useState<WeeklyFocusResponse | null>(null);
 
   // Fetch current module on load
   useEffect(() => {
@@ -93,20 +94,34 @@ const AIPracticeDemo = () => {
 
         if (studentId) {
           const enrollment = await api.getStudentEnrollment(studentId);
-          const module = enrollment?.course?.modules?.find(
-            (m) => m.moduleNumber === enrollment.currentModuleNumber
-          );
+          const topicFromUrl = searchParams.get("topic");
+          const modules = enrollment?.course?.modules || [];
+
+          // If topic is in URL, find matching module; otherwise use current module
+          let module = topicFromUrl
+            ? modules.find((m) => m.topic === topicFromUrl || m.title === topicFromUrl)
+            : undefined;
+          if (!module) {
+            module = modules.find((m) => m.moduleNumber === enrollment?.currentModuleNumber);
+          }
+
           if (module) {
+            const topicName = topicFromUrl || module.topic || "Work";
             setCurrentModule({
               id: module.id,
               moduleNumber: module.moduleNumber,
               title: module.title,
-              topic: module.topic || "Work",
+              topic: topicName,
             });
+
+            // Fetch weekly focus for this module
+            try {
+              const focus = await api.getWeeklyFocusByModule(module.id);
+              if (focus) setWeeklyFocus(focus);
+            } catch {
+              // no weekly focus set
+            }
             
-            // Auto-set topic based on current module
-            const topicFromUrl = searchParams.get("topic");
-            const topicName = topicFromUrl || module.topic || "Work";
             setSelectedTopic({
               id: `module-${module.id}`,
               title: module.title,
@@ -338,6 +353,23 @@ const AIPracticeDemo = () => {
               </span>
             </div>
           )}
+
+          {/* Weekly speaking goals from teacher */}
+          {weeklyFocus && weeklyFocus.speakingGoals.length > 0 && (
+            <div className="mt-3 inline-flex flex-col items-center gap-1.5 px-5 py-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/30">
+              <div className="flex items-center gap-2 text-sm font-medium text-orange-700 dark:text-orange-400">
+                <Target className="w-4 h-4" />
+                {language === "vi" ? "Mục tiêu tuần này:" : "This week's goals:"}
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {weeklyFocus.speakingGoals.map((goal, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
+                    {goal}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step Indicator */}
@@ -370,10 +402,10 @@ const AIPracticeDemo = () => {
           {step === "select-level" && <LevelSelector onSelect={handleSelectLevel} />}
           {step === "select-mode" && <ModeSelector onSelect={handleSelectMode} />}
           {step === "practice" && selectedTopic && selectedLevel && selectedMode === "chat" && (
-            <ChatPracticeInterface topic={selectedTopic} level={selectedLevel} onComplete={handlePracticeComplete} />
+            <ChatPracticeInterface topic={selectedTopic} level={selectedLevel} onComplete={handlePracticeComplete} speakingGoals={weeklyFocus?.speakingGoals} />
           )}
           {step === "practice" && selectedTopic && selectedLevel && selectedMode === "voice" && (
-            <VoicePracticeInterface topic={selectedTopic} level={selectedLevel} onComplete={handlePracticeComplete} />
+            <VoicePracticeInterface topic={selectedTopic} level={selectedLevel} onComplete={handlePracticeComplete} speakingGoals={weeklyFocus?.speakingGoals} />
           )}
           {step === "loading-feedback" && (
             <div className="bg-card rounded-2xl border border-border p-12 text-center">
