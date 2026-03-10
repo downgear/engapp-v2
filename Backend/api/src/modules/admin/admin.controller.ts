@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Param,
   Body,
@@ -74,5 +75,30 @@ export class AdminController {
   @Patch('users/:id/lock')
   toggleUserLock(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.toggleUserLock(id);
+  }
+
+  @Post('users')
+  createUser(
+    @Body()
+    data: {
+      email: string;
+      password: string;
+      fullName: string;
+      phone?: string;
+      role: string;
+    },
+  ) {
+    return this.adminService.createUser({
+      ...data,
+      role: data.role as UserRole,
+    });
+  }
+
+  @Patch('users/:id/role')
+  updateUserRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: { role: string },
+  ) {
+    return this.adminService.updateUserRole(id, data.role as UserRole);
   }
 }

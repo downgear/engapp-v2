@@ -461,6 +461,49 @@ export const api = {
     });
   },
 
+  async createAdminUser(
+    token: string,
+    data: { email: string; password: string; fullName: string; phone?: string; role: string }
+  ): Promise<{
+    id: number;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    role: string;
+    avatarUrl: string | null;
+    isLocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    return fetchApi('/admin/users', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateAdminUserRole(
+    token: string,
+    id: number,
+    role: string
+  ): Promise<{
+    id: number;
+    email: string;
+    fullName: string;
+    phone: string | null;
+    role: string;
+    avatarUrl: string | null;
+    isLocked: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }> {
+    return fetchApi(`/admin/users/${id}/role`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role }),
+    });
+  },
+
   // ============ Chat (User) ============
 
   async getOrCreateConversation(token: string): Promise<{

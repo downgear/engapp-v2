@@ -39,6 +39,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  UserPlus,
+  ShieldCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -101,6 +103,20 @@ export const UserManagement = () => {
 
   // Lock/unlock loading state
   const [lockingUserId, setLockingUserId] = useState<number | null>(null);
+
+  // Create user modal state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "student",
+  });
+  const [creating, setCreating] = useState(false);
+
+  // Role change loading state
+  const [changingRoleUserId, setChangingRoleUserId] = useState<number | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -204,13 +220,65 @@ export const UserManagement = () => {
     setPagination((prev) => ({ ...prev, page }));
   };
 
+  // Handle create user
+  const handleCreateUser = async () => {
+    if (!accessToken) return;
+    if (!createForm.email || !createForm.fullName || !createForm.password) {
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      await api.createAdminUser(accessToken, {
+        email: createForm.email,
+        password: createForm.password,
+        fullName: createForm.fullName,
+        phone: createForm.phone || undefined,
+        role: createForm.role,
+      });
+      toast.success("Tạo tài khoản thành công");
+      setCreateModalOpen(false);
+      setCreateForm({ fullName: "", email: "", phone: "", password: "", role: "student" });
+      fetchUsers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Handle role change
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    if (!accessToken) return;
+
+    try {
+      setChangingRoleUserId(userId);
+      const updatedUser = await api.updateAdminUserRole(accessToken, userId, newRole);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? updatedUser : u))
+      );
+      toast.success("Đã cập nhật vai trò");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+    } finally {
+      setChangingRoleUserId(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Quản lý người dùng
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Quản lý người dùng
+          </CardTitle>
+          <Button onClick={() => setCreateModalOpen(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Tạo tài khoản
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {/* Filters */}
@@ -272,12 +340,27 @@ export const UserManagement = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phone || "-"}</TableCell>
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={ROLE_COLORS[user.role] || ""}
+                        <Select
+                          value={user.role}
+                          onValueChange={(val) => handleRoleChange(user.id, val)}
+                          disabled={changingRoleUserId === user.id}
                         >
-                          {ROLE_LABELS[user.role] || user.role}
-                        </Badge>
+                          <SelectTrigger className="w-[130px] h-8">
+                            <SelectValue>
+                              <Badge
+                                variant="secondary"
+                                className={ROLE_COLORS[user.role] || ""}
+                              >
+                                {ROLE_LABELS[user.role] || user.role}
+                              </Badge>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Học sinh</SelectItem>
+                            <SelectItem value="parent">Phụ huynh</SelectItem>
+                            <SelectItem value="teacher">Giáo viên</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>
                         {user.isLocked ? (
@@ -409,6 +492,100 @@ export const UserManagement = () => {
               <Button onClick={handleSaveEdit} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Lưu thay đổi
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create User Modal */}
+        <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Tạo tài khoản mới
+              </DialogTitle>
+              <DialogDescription>
+                Tạo tài khoản cho học sinh, phụ huynh hoặc giáo viên
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="create-fullName">Họ và tên *</Label>
+                <Input
+                  id="create-fullName"
+                  value={createForm.fullName}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, fullName: e.target.value })
+                  }
+                  placeholder="Nguyễn Văn A"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-email">Email *</Label>
+                <Input
+                  id="create-email"
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, email: e.target.value })
+                  }
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-password">Mật khẩu *</Label>
+                <Input
+                  id="create-password"
+                  type="password"
+                  value={createForm.password}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, password: e.target.value })
+                  }
+                  placeholder="Tối thiểu 6 ký tự"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-phone">Số điện thoại</Label>
+                <Input
+                  id="create-phone"
+                  value={createForm.phone}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, phone: e.target.value })
+                  }
+                  placeholder="0912345678"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="create-role">Vai trò *</Label>
+                <Select
+                  value={createForm.role}
+                  onValueChange={(val) =>
+                    setCreateForm({ ...createForm, role: val })
+                  }
+                >
+                  <SelectTrigger id="create-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Học sinh</SelectItem>
+                    <SelectItem value="parent">Phụ huynh</SelectItem>
+                    <SelectItem value="teacher">Giáo viên</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setCreateModalOpen(false)}
+                disabled={creating}
+              >
+                Hủy
+              </Button>
+              <Button onClick={handleCreateUser} disabled={creating}>
+                {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Tạo tài khoản
               </Button>
             </DialogFooter>
           </DialogContent>

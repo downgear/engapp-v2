@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { User, UserRole } from '../../entities/user.entity';
+import { Student } from '../../entities/student.entity';
+import { Parent } from '../../entities/parent.entity';
+import { Teacher, TeacherType } from '../../entities/teacher.entity';
 import { LearningHistory, ActivityType } from '../../entities/learning-history.entity';
 import { LoginSession } from '../../entities/login-session.entity';
 
@@ -10,6 +13,12 @@ export class AdminService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Student)
+    private readonly studentRepository: Repository<Student>,
+    @InjectRepository(Parent)
+    private readonly parentRepository: Repository<Parent>,
+    @InjectRepository(Teacher)
+    private readonly teacherRepository: Repository<Teacher>,
     @InjectRepository(LearningHistory)
     private readonly learningHistoryRepository: Repository<LearningHistory>,
     @InjectRepository(LoginSession)
@@ -194,6 +203,119 @@ export class AdminService {
       isLocked: user.isLocked,
       message: user.isLocked ? 'User has been locked' : 'User has been unlocked',
     };
+  }
+
+  // ==================== CREATE USER (ADMIN) ====================
+
+  async createUser(data: {
+    email: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+    role: UserRole;
+  }) {
+    if (data.role === UserRole.ADMIN) {
+      throw new BadRequestException('Cannot create admin users');
+    }
+
+    // Check email uniqueness
+    const existingEmail = await this.userRepository.findOne({ where: { email: data.email } });
+    if (existingEmail) {
+      throw new ConflictException('Email đã được sử dụng');
+    }
+
+    // Check phone uniqueness
+    if (data.phone) {
+      const existingPhone = await this.userRepository.findOne({ where: { phone: data.phone } });
+      if (existingPhone) {
+        throw new ConflictException('Số điện thoại đã được sử dụng');
+      }
+    }
+
+    // Create user
+    const user = this.userRepository.create({
+      email: data.email,
+      passwordHash: data.password,
+      fullName: data.fullName,
+      phone: data.phone || undefined,
+      role: data.role,
+    });
+    await this.userRepository.save(user);
+
+    // Create role-specific profile
+    switch (data.role) {
+      case UserRole.STUDENT:
+        const student = this.studentRepository.create({ userId: user.id, cefrLevel: 'A1' });
+        await this.studentRepository.save(student);
+        break;
+      case UserRole.PARENT:
+        const parent = this.parentRepository.create({ userId: user.id });
+        await this.parentRepository.save(parent);
+        break;
+      case UserRole.TEACHER:
+        const teacher = this.teacherRepository.create({ userId: user.id, teacherType: TeacherType.VIDEO_CALL });
+        await this.teacherRepository.save(teacher);
+        break;
+    }
+
+    return this.getUserById(user.id);
+  }
+
+  // ==================== UPDATE USER ROLE ====================
+
+  async updateUserRole(id: number, newRole: UserRole) {
+    if (newRole === UserRole.ADMIN) {
+      throw new BadRequestException('Cannot assign admin role');
+    }
+
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      throw new BadRequestException('Cannot modify admin user');
+    }
+
+    const oldRole = user.role;
+    if (oldRole === newRole) {
+      return this.getUserById(id);
+    }
+
+    // Remove old role-specific profile
+    switch (oldRole) {
+      case UserRole.STUDENT:
+        await this.studentRepository.delete({ userId: user.id });
+        break;
+      case UserRole.PARENT:
+        await this.parentRepository.delete({ userId: user.id });
+        break;
+      case UserRole.TEACHER:
+        await this.teacherRepository.delete({ userId: user.id });
+        break;
+    }
+
+    // Create new role-specific profile
+    switch (newRole) {
+      case UserRole.STUDENT:
+        const student = this.studentRepository.create({ userId: user.id, cefrLevel: 'A1' });
+        await this.studentRepository.save(student);
+        break;
+      case UserRole.PARENT:
+        const parent = this.parentRepository.create({ userId: user.id });
+        await this.parentRepository.save(parent);
+        break;
+      case UserRole.TEACHER:
+        const teacher = this.teacherRepository.create({ userId: user.id, teacherType: TeacherType.VIDEO_CALL });
+        await this.teacherRepository.save(teacher);
+        break;
+    }
+
+    // Update user role
+    user.role = newRole;
+    await this.userRepository.save(user);
+
+    return this.getUserById(id);
   }
 
   // ==================== VISIT STATISTICS ====================
