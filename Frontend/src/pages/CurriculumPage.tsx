@@ -238,7 +238,7 @@ const CurriculumPage = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{language === "vi" ? "Chương Trình Học" : "Curriculum"}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{language === "vi" ? "Khoá Học Của Tôi" : "My Course"}</h1>
             <p className="text-muted-foreground">
               {enrollment?.course?.name || "Speaking Foundation Program"}
             </p>
@@ -247,7 +247,7 @@ const CurriculumPage = () => {
 
         {/* Program Overview Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-4">{language === "vi" ? "Tổng Quan Chương Trình" : "Program Overview"}</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">{language === "vi" ? "Tổng Quan Khoá Học" : "Course Overview"}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Duration */}
             <Card className="border-border/50 bg-card">

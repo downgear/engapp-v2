@@ -342,7 +342,7 @@ const StudentDashboard = () => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
                       <GraduationCap className="h-5 w-5 text-primary" />
-                      {language === "vi" ? "Chương trình" : "Program"}
+                      {language === "vi" ? "Khoá học của tôi" : "My Course"}
                     </CardTitle>
                     <div className="flex items-center text-sm text-muted-foreground">
                       {language === "vi" ? "Thời lượng 8 tuần" : "8-week duration"}

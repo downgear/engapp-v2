@@ -49,8 +49,17 @@ export const Navigation = () => {
   const buildNavItems = (): NavItem[] => {
     const items: NavItem[] = [
       { label: t("nav.home"), href: "/" },
-      { label: t("nav.allPrograms"), href: "/inaugural-program" },
     ];
+
+    // Only show "All Programs" for non-students (hide program hierarchy from students)
+    if (!isAuthenticated || (user?.role !== 'student')) {
+      items.push({ label: t("nav.allPrograms"), href: "/inaugural-program" });
+    }
+
+    // Students get a simple "My Course" link instead of program hierarchy
+    if (isAuthenticated && user?.role === 'student') {
+      items.push({ label: language === "vi" ? "Khoá học của tôi" : "My Course", href: "/curriculum" });
+    }
 
     const userRole = user?.role;
 

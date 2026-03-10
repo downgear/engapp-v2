@@ -89,6 +89,13 @@ const AllPrograms = () => {
   const [paidCourseIds, setPaidCourseIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // For students: skip the Program→Cohort→Course hierarchy, go straight to "My Course"
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'student') {
+      navigate('/curriculum', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
