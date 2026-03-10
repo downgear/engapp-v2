@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { MentorCard } from "@/components/booking/MentorCard";
 import { BookingCalendar } from "@/components/booking/BookingCalendar";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
@@ -20,6 +23,7 @@ const DEFAULT_AVATARS = [
 ];
 
 const BookingDemo = () => {
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const [step, setStep] = useState<BookingStep>("select-mentor");
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
@@ -96,6 +100,19 @@ const BookingDemo = () => {
 
       <div className="pt-24 pb-16 px-4">
         <div className="max-w-6xl mx-auto">
+          {/* Back to dashboard */}
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/student-dashboard")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {language === "vi" ? "Quay lại Dashboard" : "Back to Dashboard"}
+            </Button>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">

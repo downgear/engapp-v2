@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen, Check, Bot, Loader2, Target } from "lucide-react";
@@ -330,10 +330,25 @@ const AIPracticeDemo = () => {
   ];
   const currentIndex = steps.findIndex(s => s.key === step || (step === "loading-feedback" && s.key === "feedback"));
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container mx-auto px-4 pt-28 pb-16">
+        {/* Back to dashboard */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/student-dashboard")}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {language === "vi" ? "Quay lại Dashboard" : "Back to Dashboard"}
+          </Button>
+        </div>
+
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
             <Bot className="w-4 h-4" />
