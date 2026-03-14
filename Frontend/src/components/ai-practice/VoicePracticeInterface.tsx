@@ -425,6 +425,13 @@ export const VoicePracticeInterface = ({ topic, level, onComplete, speakingGoals
         </div>
       )}
 
+      {/* Closed Captions - inline to avoid overlay with controls */}
+      <ClosedCaptions
+        text={currentCaption}
+        isVisible={captionsEnabled && isActive}
+        speaker={captionSpeaker}
+      />
+
       {/* Footer */}
       <div className="border-t border-border p-4 text-center">
         <p className="text-xs text-muted-foreground">
@@ -443,13 +450,6 @@ export const VoicePracticeInterface = ({ topic, level, onComplete, speakingGoals
           </Button>
         )}
       </div>
-
-      {/* Closed Captions */}
-      <ClosedCaptions
-        text={currentCaption}
-        isVisible={captionsEnabled && isActive}
-        speaker={captionSpeaker}
-      />
     </div>
   );
 };
