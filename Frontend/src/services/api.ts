@@ -907,4 +907,8 @@ export interface AIPracticeWeeklyStats {
   }[];
   totalSessions: number;
   totalMinutes: number;
+  completedPracticeRounds: number;
+  currentStreakDays: number;
+  recommendedDailyMinutesMin: number;
+  recommendedDailyMinutesMax: number;
 }

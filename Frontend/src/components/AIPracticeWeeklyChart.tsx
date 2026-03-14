@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare, Clock, BarChart3 } from "lucide-react";
+import { MessageSquare, Clock, BarChart3, Flame, Timer } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -72,17 +72,30 @@ export const AIPracticeWeeklyChart = ({
       <CardContent>
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
+            <Timer className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div>
+              <p className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                {stats.recommendedDailyMinutesMin}-{stats.recommendedDailyMinutesMax} {language === "vi" ? "phút" : "min"}
+              </p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                {language === "vi" ? "Gợi ý tối thiểu mỗi ngày" : "Recommended daily minimum"}
+              </p>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/30">
             <MessageSquare className="h-5 w-5 text-green-600 dark:text-green-400" />
             <div>
               <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                {stats.totalSessions}
+                {stats.completedPracticeRounds}
               </p>
               <p className="text-xs text-green-600/80 dark:text-green-400/80">
-                {language === "vi" ? "Tổng phiên" : "Total sessions"}
+                {language === "vi" ? "Số vòng practice hoàn thành" : "Completed practice rounds"}
               </p>
             </div>
           </div>
+
           <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30">
             <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <div>
@@ -90,7 +103,19 @@ export const AIPracticeWeeklyChart = ({
                 {stats.totalMinutes}
               </p>
               <p className="text-xs text-blue-600/80 dark:text-blue-400/80">
-                {language === "vi" ? "Tổng phút" : "Total minutes"}
+                {language === "vi" ? "Tổng số phút luyện trong tuần" : "Total practice minutes this week"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30">
+            <Flame className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            <div>
+              <p className="text-2xl font-bold text-rose-700 dark:text-rose-300">
+                {stats.currentStreakDays}
+              </p>
+              <p className="text-xs text-rose-600/80 dark:text-rose-400/80">
+                {language === "vi" ? "Streak duy trì liên tục (ngày)" : "Consecutive streak (days)"}
               </p>
             </div>
           </div>
