@@ -52,7 +52,7 @@ interface TranscriptEntry {
 }
 
 // Removed "select-topic" step - topic is auto-selected from current module
-type Step = "select-type" | "select-level" | "select-mode" | "practice" | "loading-feedback" | "feedback";
+type Step = "select-type" | "select-level" | "select-mode" | "ready" | "practice" | "loading-feedback" | "feedback";
 
 interface CurrentModule {
   id: number;
@@ -74,6 +74,7 @@ const AIPracticeDemo = () => {
   const [currentModule, setCurrentModule] = useState<CurrentModule | null>(null);
   const [isLoadingModule, setIsLoadingModule] = useState(true);
   const [weeklyFocus, setWeeklyFocus] = useState<WeeklyFocusResponse | null>(null);
+  const [practiceStartTime, setPracticeStartTime] = useState<string | null>(null);
 
   // Fetch current module on load
   useEffect(() => {
@@ -156,6 +157,12 @@ const AIPracticeDemo = () => {
 
   const handleSelectMode = (mode: PracticeMode) => {
     setSelectedMode(mode);
+    setPracticeStartTime(null);
+    setStep("ready");
+  };
+
+  const handleStartPractice = () => {
+    setPracticeStartTime(new Date().toISOString());
     setStep("practice");
   };
 
@@ -186,14 +193,14 @@ const AIPracticeDemo = () => {
     const module = await resolveCurrentModule(studentId);
     
     // Luôn dùng thời gian thực tế
-    const now = new Date();
-    const timestamp = now.toISOString();
+    const endTime = new Date().toISOString();
+    const startTime = practiceStartTime || endTime;
     
     await api.createStudentLearningHistory(studentId, {
       moduleId: module?.id,
       activityType: "ai_practice",
-      startTime: timestamp,
-      endTime: timestamp,
+      startTime,
+      endTime,
       aiFeedback: {
         feedbackText: JSON.stringify(feedbackToStore),
         overallScore: feedbackToStore.overall,
@@ -300,9 +307,12 @@ const AIPracticeDemo = () => {
         setStep("select-level");
         setSelectedLevel(null);
         break;
-      case "practice":
+      case "ready":
         setStep("select-mode");
         setSelectedMode(null);
+        break;
+      case "practice":
+        setStep("ready");
         break;
       case "feedback":
         setStep("practice");
@@ -318,6 +328,7 @@ const AIPracticeDemo = () => {
     setSelectedLevel(null);
     setSelectedMode(null);
     setFeedback(null);
+    setPracticeStartTime(null);
   };
 
   // Updated steps - removed topic selection step
@@ -328,7 +339,12 @@ const AIPracticeDemo = () => {
     { key: "practice", label: t("aiPractice.step5") },
     { key: "feedback", label: t("aiPractice.step6") },
   ];
-  const currentIndex = steps.findIndex(s => s.key === step || (step === "loading-feedback" && s.key === "feedback"));
+  const currentIndex = steps.findIndex(
+    (s) =>
+      s.key === step ||
+      (step === "ready" && s.key === "practice") ||
+      (step === "loading-feedback" && s.key === "feedback"),
+  );
 
   const navigate = useNavigate();
 
@@ -416,6 +432,21 @@ const AIPracticeDemo = () => {
           {step === "select-type" && <PracticeTypeSelector onSelect={handleSelectType} />}
           {step === "select-level" && <LevelSelector onSelect={handleSelectLevel} />}
           {step === "select-mode" && <ModeSelector onSelect={handleSelectMode} />}
+          {step === "ready" && selectedMode && (
+            <div className="bg-card rounded-2xl border border-border p-8 text-center">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {language === "vi" ? "Sẵn sàng bắt đầu" : "Ready to start"}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {language === "vi"
+                  ? `Bạn đã chọn chế độ ${selectedMode === "chat" ? "Chat" : "Voice"}. Nhấn Start để bắt đầu bài luyện tập.`
+                  : `You selected ${selectedMode === "chat" ? "Chat" : "Voice"} mode. Click Start to begin.`}
+              </p>
+              <Button onClick={handleStartPractice} size="lg" className="px-8">
+                {language === "vi" ? "Start" : "Start"}
+              </Button>
+            </div>
+          )}
           {step === "practice" && selectedTopic && selectedLevel && selectedMode === "chat" && (
             <ChatPracticeInterface topic={selectedTopic} level={selectedLevel} onComplete={handlePracticeComplete} speakingGoals={weeklyFocus?.speakingGoals} />
           )}

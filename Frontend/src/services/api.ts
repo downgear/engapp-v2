@@ -60,6 +60,10 @@ export const api = {
     return fetchApi<ProgressVideos>(`/parents/${parentId}/children/${studentId}/progress-videos?courseId=${courseId}`);
   },
 
+  async getChildAIPracticeStats(parentId: number, studentId: number, weeks: number = 8): Promise<AIPracticeWeeklyStats> {
+    return fetchApi<AIPracticeWeeklyStats>(`/parents/${parentId}/children/${studentId}/ai-practice-stats?weeks=${weeks}`);
+  },
+
   // ============ Students ============
 
   async getStudents(): Promise<Child[]> {
@@ -202,6 +206,10 @@ export const api = {
 
   async getStudentBookings(studentId: number): Promise<Booking[]> {
     return fetchApi<Booking[]>(`/bookings?studentId=${studentId}`);
+  },
+
+  async getStudentAIPracticeStats(studentId: number, weeks: number = 8): Promise<AIPracticeWeeklyStats> {
+    return fetchApi<AIPracticeWeeklyStats>(`/students/${studentId}/ai-practice-stats?weeks=${weeks}`);
   },
 
   async getBooking(id: number): Promise<Booking> {
@@ -888,4 +896,15 @@ export interface MentorBriefResponse {
   weeklyFocus: WeeklyFocusResponse | null;
   aiPracticeCount: number;
   lastAiFeedbackSummary: string | null;
+}
+
+export interface AIPracticeWeeklyStats {
+  weeklyData: {
+    week: string;
+    weekLabel: string;
+    sessions: number;
+    minutes: number;
+  }[];
+  totalSessions: number;
+  totalMinutes: number;
 }

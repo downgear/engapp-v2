@@ -63,6 +63,17 @@ export class StudentsController {
     return this.studentsService.getConnections(id);
   }
 
+  @Get(':id/ai-practice-stats')
+  getAIPracticeWeeklyStats(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('weeks') weeks?: string,
+  ) {
+    return this.studentsService.getAIPracticeWeeklyStats(
+      id,
+      weeks ? parseInt(weeks, 10) : 8,
+    );
+  }
+
   @Post(':id/upload-video')
   @UseInterceptors(FileInterceptor('video', {
     limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max

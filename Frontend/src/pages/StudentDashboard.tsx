@@ -19,6 +19,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { StudentProgressVideos } from "@/components/student-dashboard/StudentProgressVideos";
+import { AIPracticeWeeklyChart } from "@/components/AIPracticeWeeklyChart";
 
 const getActivityConfig = (lang: string) => ({
   in_person_class: { icon: BookOpen, label: lang === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Class", color: "text-blue-500 bg-blue-50" },
@@ -504,8 +505,14 @@ const StudentDashboard = () => {
             </Card>
           </div>
 
-          {/* Right Column - Learning History */}
+          {/* Right Column - AI Practice Stats + Learning History */}
           <div className="space-y-6">
+            {/* AI Practice Weekly Chart */}
+            <AIPracticeWeeklyChart
+              studentId={user!.profileId}
+              language={language}
+            />
+
             <Card className="border-border/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-semibold">

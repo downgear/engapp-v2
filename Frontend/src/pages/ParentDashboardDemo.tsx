@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChildSelector } from "@/components/parent-dashboard/ChildSelector";
 import { ProgressVideos } from "@/components/parent-dashboard/ProgressVideos";
 import { LearningFlowCard } from "@/components/parent-dashboard/LearningFlowCard";
+import { AIPracticeWeeklyChart } from "@/components/AIPracticeWeeklyChart";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChildren, useProgressVideos, useLearningHistory, useEnrollment } from "@/hooks/useParentDashboard";
@@ -369,6 +370,15 @@ const ParentDashboardDemo = () => {
               moduleId={enrollment.course?.modules?.find(m => m.moduleNumber === enrollment.currentModuleNumber)?.id}
               aiPracticeCount={learningHistory.filter(h => h.activityType === "ai_practice").length}
               hasVideoCall={learningHistory.some(h => h.activityType === "video_call")}
+              language={language}
+            />
+          )}
+
+          {/* AI Practice Weekly Chart */}
+          {selectedChildId && (
+            <AIPracticeWeeklyChart
+              studentId={selectedChildId}
+              parentId={parentId ?? 1}
               language={language}
             />
           )}

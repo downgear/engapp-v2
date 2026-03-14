@@ -69,6 +69,17 @@ export class ParentsService {
     return this.studentsService.getProgressVideos(studentId, courseId);
   }
 
+  async getChildAIPracticeStats(parentId: number, studentId: number, weeks: number = 8) {
+    const children = await this.studentsService.findByParentId(parentId);
+    const hasAccess = children.some((c) => c.id === studentId);
+
+    if (!hasAccess) {
+      throw new NotFoundException('Student not found or not linked to this parent');
+    }
+
+    return this.studentsService.getAIPracticeWeeklyStats(studentId, weeks);
+  }
+
   async getPayments(parentId: number) {
     const payments = await this.paymentRepo.find({
       where: { parentId },

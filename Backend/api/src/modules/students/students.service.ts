@@ -389,5 +389,66 @@ export class StudentsService {
         : null,
     };
   }
+
+  async getAIPracticeWeeklyStats(studentId: number, weeks: number = 8) {
+    const since = new Date();
+    since.setDate(since.getDate() - weeks * 7);
+    since.setHours(0, 0, 0, 0);
+
+    const raw = await this.learningHistoryRepo
+      .createQueryBuilder('lh')
+      .select("DATE_TRUNC('week', lh.start_time)", 'week')
+      .addSelect('COUNT(*)', 'sessions')
+      .addSelect(
+        "COALESCE(SUM(EXTRACT(EPOCH FROM (lh.end_time - lh.start_time)) / 60), 0)",
+        'minutes',
+      )
+      .where('lh.student_id = :studentId', { studentId })
+      .andWhere('lh.activity_type = :type', { type: 'ai_practice' })
+      .andWhere('lh.start_time >= :since', { since })
+      .andWhere('lh.end_time IS NOT NULL')
+      .groupBy("DATE_TRUNC('week', lh.start_time)")
+      .orderBy('week', 'ASC')
+      .getRawMany();
+
+    // Build complete week array (fill missing weeks with 0)
+    const result: { week: string; weekLabel: string; sessions: number; minutes: number }[] = [];
+    const now = new Date();
+
+    for (let i = weeks - 1; i >= 0; i--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - i * 7);
+      // Align to Monday
+      const day = weekStart.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      weekStart.setDate(weekStart.getDate() + diff);
+      weekStart.setHours(0, 0, 0, 0);
+
+      const match = raw.find((r) => {
+        const rWeek = new Date(r.week);
+        return (
+          rWeek.getFullYear() === weekStart.getFullYear() &&
+          rWeek.getMonth() === weekStart.getMonth() &&
+          rWeek.getDate() === weekStart.getDate()
+        );
+      });
+
+      const dd = String(weekStart.getDate()).padStart(2, '0');
+      const mm = String(weekStart.getMonth() + 1).padStart(2, '0');
+
+      result.push({
+        week: weekStart.toISOString(),
+        weekLabel: `${dd}/${mm}`,
+        sessions: match ? parseInt(match.sessions, 10) : 0,
+        minutes: match ? Math.round(parseFloat(match.minutes)) : 0,
+      });
+    }
+
+    // Totals
+    const totalSessions = result.reduce((s, r) => s + r.sessions, 0);
+    const totalMinutes = result.reduce((s, r) => s + r.minutes, 0);
+
+    return { weeklyData: result, totalSessions, totalMinutes };
+  }
 }
 

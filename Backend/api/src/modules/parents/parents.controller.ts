@@ -49,5 +49,18 @@ export class ParentsController {
   getPayments(@Param('id', ParseIntPipe) id: number) {
     return this.parentsService.getPayments(id);
   }
+
+  @Get(':id/children/:studentId/ai-practice-stats')
+  getChildAIPracticeStats(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Query('weeks') weeks?: string,
+  ) {
+    return this.parentsService.getChildAIPracticeStats(
+      id,
+      studentId,
+      weeks ? parseInt(weeks, 10) : 8,
+    );
+  }
 }
 
