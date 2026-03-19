@@ -42,14 +42,13 @@ export interface LearningHistoryItem {
     id: number;
     moduleNumber: number;
     title: string;
-  };
+  } | null;
   aiFeedback: {
     feedbackText: string;
-    pronunciationNotes: string | null;
-    grammarNotes: string | null;
-    fluencyNotes: string | null;
-    vocabularyNotes: string | null;
-    overallScore: number | null;
+    speechToText: string | null;
+    responseDuration: number | null;
+    pauseDetection: Record<string, unknown> | null;
+    sessionLength: number | null;
   } | null;
   teacherFeedback: {
     feedbackText: string;

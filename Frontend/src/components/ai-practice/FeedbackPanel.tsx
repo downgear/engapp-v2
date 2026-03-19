@@ -1,6 +1,6 @@
 import { Topic, FeedbackData } from "@/pages/AIPracticeDemo";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Home, CheckCircle2, AlertCircle, TrendingUp, Star, Mic, BookText, Brain, Zap, Link2, MessageSquare } from "lucide-react";
+import { RefreshCw, Home, CheckCircle2, AlertCircle, Mic, Clock3, Timer, PauseCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FeedbackPanelProps {
@@ -92,20 +92,6 @@ const renderStructuredItem = (item: StructuredFeedbackItem): React.ReactNode => 
 
 export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: FeedbackPanelProps) => {
   const { t, language } = useLanguage();
-  
-  const getScoreColor = (score: number) => {
-    if (score >= 7.5) return "text-green-600";
-    if (score >= 6.0) return "text-primary";
-    if (score >= 5.0) return "text-secondary";
-    return "text-destructive";
-  };
-
-  const getProgressColor = (score: number) => {
-    if (score >= 7.5) return "bg-green-500";
-    if (score >= 6.0) return "bg-primary";
-    if (score >= 5.0) return "bg-secondary";
-    return "bg-destructive";
-  };
 
   // Check if insufficient data
   if (feedback.insufficientData) {
@@ -170,163 +156,61 @@ export const FeedbackPanel = ({ feedback, topic, onTryAgain, onNewTopic }: Feedb
     );
   }
 
-  const scores = [
-    { label: t("aiPractice.pronunciation"), score: feedback.pronunciation, icon: Mic, color: "text-blue-600" },
-    { label: t("aiPractice.grammar"), score: feedback.grammar, icon: BookText, color: "text-purple-600" },
-    { label: t("aiPractice.vocabulary"), score: feedback.vocabulary, icon: Brain, color: "text-orange-600" },
-    { label: t("aiPractice.fluency"), score: feedback.fluency, icon: Zap, color: "text-yellow-600" },
-    { label: language === "vi" ? "Tính mạch lạc" : "Coherence", score: feedback.coherence, icon: MessageSquare, color: "text-green-600" },
-    { label: language === "vi" ? "Tính liên kết" : "Cohesion", score: feedback.cohesion, icon: Link2, color: "text-cyan-600" },
-  ];
+  const sessionTurns = Math.max(0, Math.round(feedback.session_length || 0));
 
   return (
     <div className="space-y-6">
-      {/* Overall Score Card */}
+      {/* Motivation Card */}
       <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-8 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background/80 mb-4">
-          <Star className="w-4 h-4 text-accent" />
+          <CheckCircle2 className="w-4 h-4 text-accent" />
           <span className="text-sm font-medium">{language === "vi" ? topic.titleVi : topic.titleEn}</span>
         </div>
-        <h2 className="text-lg text-muted-foreground mb-2">{t("aiPractice.overallScore")}</h2>
-        <div className={`text-6xl font-display font-bold mb-2 ${getScoreColor(feedback.overall)}`}>
-          {feedback.overall.toFixed(1)}
-        </div>
-        <p className="text-muted-foreground">{t("aiPractice.outOf9")}</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">
+          {language === "vi" ? "Bạn đã làm rất tốt!" : "You did a great job!"}
+        </h2>
+        <p className="text-muted-foreground">
+          {language === "vi"
+            ? "Mục tiêu của AI là giúp bạn nói lâu hơn, đều hơn và tự tin hơn mỗi ngày."
+            : "The AI goal is to help you speak longer, more consistently, and more confidently each day."}
+        </p>
       </div>
 
-      {/* Detailed Scores */}
+      {/* Speaking Analytics */}
       <div className="bg-card rounded-2xl border border-border p-6">
         <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
-          {t("aiPractice.detailedAnalysis")}
+          <Clock3 className="w-5 h-5 text-primary" />
+          {language === "vi" ? "Phân tích buổi nói" : "Session Analytics"}
         </h3>
-        <div className="space-y-4">
-          {scores.map((item) => (
-            <div key={item.label} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-foreground">{item.label}</span>
-                <span className={`text-sm font-bold ${getScoreColor(item.score)}`}>
-                  {item.score.toFixed(1)}
-                </span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${getProgressColor(item.score)}`}
-                  style={{ width: `${(item.score / 9) * 100}%` }}
-                />
-              </div>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="rounded-xl border border-border p-4 bg-muted/20">
+            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Timer className="w-3.5 h-3.5" />{language === "vi" ? "Session length" : "Session length"}</p>
+            <p className="text-2xl font-bold text-foreground">{sessionTurns} {language === "vi" ? "lượt" : "turns"}</p>
+          </div>
+          <div className="rounded-xl border border-border p-4 bg-muted/20">
+            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><Mic className="w-3.5 h-3.5" />{language === "vi" ? "Response duration" : "Response duration"}</p>
+            <p className="text-2xl font-bold text-foreground">{(feedback.response_duration || 0).toFixed(1)}s</p>
+          </div>
+          <div className="rounded-xl border border-border p-4 bg-muted/20">
+            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><PauseCircle className="w-3.5 h-3.5" />{language === "vi" ? "Pause detection" : "Pause detection"}</p>
+            <p className="text-2xl font-bold text-foreground">{feedback.pause_detection?.pause_count ?? 0}</p>
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground mb-2">
+          {language === "vi"
+            ? "Session = tổng số lượt nói qua lại; Response duration = thời lượng trung bình cho 1 câu nói."
+            : "Session = total back-and-forth speaking turns; Response duration = average duration per sentence."}
+        </p>
+        {feedback.pause_detection?.summary && (
+          <p className="text-sm text-muted-foreground">{feedback.pause_detection.summary}</p>
+        )}
+        {feedback.speech_to_text && (
+          <div className="mt-4 rounded-xl border border-border p-4 bg-background/60">
+            <p className="text-xs font-medium text-muted-foreground mb-2">{language === "vi" ? "Speech to text" : "Speech to text"}</p>
+            <p className="text-sm text-foreground leading-relaxed">{feedback.speech_to_text}</p>
+          </div>
+        )}
       </div>
-
-      {/* Detailed Issues - Pronunciation */}
-      {(feedback.pronunciationIssues?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Mic className="w-5 h-5 text-blue-600" />
-            Lỗi phát âm cần cải thiện
-          </h3>
-          <ul className="space-y-3">
-            {feedback.pronunciationIssues?.map((issue, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(issue)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Detailed Issues - Grammar */}
-      {(feedback.grammarIssues?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <BookText className="w-5 h-5 text-purple-600" />
-            Lỗi ngữ pháp cần sửa
-          </h3>
-          <ul className="space-y-3">
-            {feedback.grammarIssues?.map((issue, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(issue)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Detailed Notes - Vocabulary */}
-      {(feedback.vocabularyNotes?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-orange-600" />
-            Ghi chú về từ vựng
-          </h3>
-          <ul className="space-y-3">
-            {feedback.vocabularyNotes?.map((note, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Detailed Notes - Fluency */}
-      {(feedback.fluencyNotes?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-600" />
-            Ghi chú về độ lưu loát
-          </h3>
-          <ul className="space-y-3">
-            {feedback.fluencyNotes?.map((note, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Detailed Notes - Coherence */}
-      {(feedback.coherenceNotes?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-green-600" />
-            Đánh giá tính mạch lạc
-          </h3>
-          <ul className="space-y-3">
-            {feedback.coherenceNotes?.map((note, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Detailed Notes - Cohesion */}
-      {(feedback.cohesionNotes?.length ?? 0) > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-cyan-600" />
-            Đánh giá tính liên kết
-          </h3>
-          <ul className="space-y-3">
-            {feedback.cohesionNotes?.map((note, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 mt-2 flex-shrink-0" />
-                <div className="text-muted-foreground flex-1">{renderFeedbackItem(note)}</div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Highlights */}
       <div className="bg-card rounded-2xl border border-border p-6">

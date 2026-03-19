@@ -1,4 +1,4 @@
-import { IsIn, IsNumber, IsOptional, IsString, ValidateNested, IsDateString } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsString, ValidateNested, IsDateString, IsObject } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ActivityType } from '../../../entities';
 
@@ -9,23 +9,19 @@ class AiFeedbackDto {
 
   @IsOptional()
   @IsString()
-  pronunciationNotes?: string;
-
-  @IsOptional()
-  @IsString()
-  grammarNotes?: string;
-
-  @IsOptional()
-  @IsString()
-  fluencyNotes?: string;
-
-  @IsOptional()
-  @IsString()
-  vocabularyNotes?: string;
+  speechToText?: string;
 
   @IsOptional()
   @IsNumber()
-  overallScore?: number;
+  responseDuration?: number;
+
+  @IsOptional()
+  @IsObject()
+  pauseDetection?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsNumber()
+  sessionLength?: number;
 }
 
 export class CreateLearningHistoryDto {

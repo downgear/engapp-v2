@@ -110,20 +110,6 @@ const Login = () => {
             </CardFooter>
           </form>
         </Card>
-
-        {/* Demo accounts */}
-        <Card className="mt-4 border-border/30 bg-muted/30">
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm font-medium">{language === "vi" ? "Tài khoản demo" : "Demo Accounts"}</CardTitle>
-          </CardHeader>
-          <CardContent className="py-2 space-y-2 text-xs text-muted-foreground">
-            <p><strong>{language === "vi" ? "Học sinh" : "Student"}:</strong> lap.luucs@hcmut.edu.vn</p>
-            <p><strong>{language === "vi" ? "Phụ huynh" : "Parent"}:</strong> phuhuynhlap@gmail.com</p>
-            <p><strong>{language === "vi" ? "Giáo viên" : "Teacher"}:</strong> luuchilap@gmail.com</p>
-            <p><strong>Admin:</strong> admin@lingriser.com</p>
-            <p className="text-xs opacity-70 mt-2">{language === "vi" ? "Mật khẩu mặc định: 123456" : "Default password: 123456"}</p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

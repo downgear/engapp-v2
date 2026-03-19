@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
 import type { Enrollment, LearningHistoryItem, Booking } from "@/types";
 import { 
-  BookOpen, Calendar, Video, MessageSquare, Star, 
+  BookOpen, Calendar, Video, MessageSquare, Star,
   ChevronRight, ChevronDown, Clock, User, LogOut,
   Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users,
   Target, Link2, Play, Square
@@ -27,23 +27,24 @@ const getActivityConfig = (lang: string) => ({
   video_call: { icon: Video, label: lang === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher Class", color: "text-purple-500 bg-purple-50" },
 });
 
+const getFallbackActivityConfig = (lang: string) => ({
+  icon: BookText,
+  label: lang === "vi" ? "Hoạt động học tập" : "Learning Activity",
+  color: "text-slate-500 bg-slate-50",
+});
+
 interface ParsedFeedback {
-  overall: number;
-  pronunciation: number;
-  grammar: number;
-  vocabulary: number;
-  fluency: number;
-  coherence: number;
-  cohesion: number;
+  speech_to_text?: string;
+  response_duration?: number;
+  pause_detection?: {
+    has_pause?: boolean;
+    pause_count?: number;
+    pause_turns?: number[];
+    summary?: string;
+  };
+  session_length?: number;
   suggestions: string[];
   highlights: string[];
-  // Detailed fields
-  pronunciationIssues?: string[];
-  grammarIssues?: string[];
-  vocabularyNotes?: string[];
-  fluencyNotes?: string[];
-  coherenceNotes?: string[];
-  cohesionNotes?: string[];
 }
 
 const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | null => {
@@ -211,15 +212,35 @@ const StudentDashboard = () => {
 
   const fetchData = useCallback(async () => {
     if (!user) return;
+
+    setIsLoading(true);
+
     try {
-      const [enrollmentData, historyData, bookingsData] = await Promise.all([
+      const [enrollmentResult, historyResult, bookingsResult] = await Promise.allSettled([
         api.getStudentEnrollment(user.profileId),
         api.getStudentLearningHistory(user.profileId),
         api.getStudentBookings(user.profileId),
       ]);
-      setEnrollment(enrollmentData);
-      setLearningHistory(historyData);
-      setUpcomingBookings(bookingsData.filter(b => b.status === "confirmed"));
+
+      if (enrollmentResult.status === "fulfilled") {
+        setEnrollment(enrollmentResult.value);
+      } else {
+        console.error("Failed to fetch enrollment:", enrollmentResult.reason);
+      }
+
+      if (historyResult.status === "fulfilled") {
+        setLearningHistory(historyResult.value);
+      } else {
+        console.error("Failed to fetch learning history:", historyResult.reason);
+        setLearningHistory([]);
+      }
+
+      if (bookingsResult.status === "fulfilled") {
+        setUpcomingBookings(bookingsResult.value.filter((b) => b.status === "confirmed"));
+      } else {
+        console.error("Failed to fetch bookings:", bookingsResult.reason);
+        setUpcomingBookings([]);
+      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -523,11 +544,14 @@ const StudentDashboard = () => {
                 {learningHistory.length > 0 ? (
                   <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
                     {learningHistory.slice(0, 10).map((item) => {
-                      const config = activityConfig[item.activityType];
+                      const config = activityConfig[item.activityType] || getFallbackActivityConfig(language);
                       const Icon = config.icon;
                       const isExpanded = expandedItems.has(item.id);
                       const parsedFeedback = parseFeedbackText(item.aiFeedback?.feedbackText);
-                      const hasAiFeedback = !!parsedFeedback || !!item.aiFeedback?.overallScore;
+                      const hasAiFeedback =
+                        item.activityType === "ai_practice" ||
+                        !!parsedFeedback ||
+                        !!item.aiFeedback?.speechToText;
                       const hasTeacherFeedback = !!item.teacherFeedback?.feedbackText;
                       const hasFeedback = hasAiFeedback || hasTeacherFeedback;
                       
@@ -548,12 +572,6 @@ const StudentDashboard = () => {
                                   {format(parseISO(item.startTime), "dd/MM HH:mm")}
                                 </p>
                               </div>
-                              {item.aiFeedback?.overallScore && (
-                                <Badge variant="secondary" className="text-xs shrink-0">
-                                  <Star className="h-3 w-3 mr-0.5" />
-                                  {item.aiFeedback.overallScore}
-                                </Badge>
-                              )}
                               {hasTeacherFeedback && (
                                 <Badge variant="outline" className="text-xs shrink-0 border-purple-300 text-purple-600">
                                   <MessageSquare className="h-3 w-3 mr-0.5" />
@@ -571,100 +589,29 @@ const StudentDashboard = () => {
                           {parsedFeedback && (
                             <CollapsibleContent>
                               <div className="ml-8 mt-1 mb-2 p-3 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-100/50 dark:border-green-900/30 space-y-3">
-                                {/* Score breakdown */}
+                                {/* Speaking analytics summary */}
                                 <div className="grid grid-cols-3 gap-2 text-xs">
-                                  <div className="flex items-center gap-1.5">
-                                    <Mic className="h-3 w-3 text-blue-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Phát âm:" : "Pronunciation:"}</span>
-                                    <span className="font-medium">{parsedFeedback.pronunciation}/10</span>
+                                  <div>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Session:" : "Session:"}</span>{" "}
+                                    <span className="font-medium">
+                                      {Math.round(parsedFeedback.session_length || 0)} {language === "vi" ? "lượt" : "turns"}
+                                    </span>
                                   </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <BookText className="h-3 w-3 text-purple-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Ngữ pháp:" : "Grammar:"}</span>
-                                    <span className="font-medium">{parsedFeedback.grammar}/10</span>
+                                  <div>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Response:" : "Response:"}</span>{" "}
+                                    <span className="font-medium">{(parsedFeedback.response_duration || 0).toFixed(1)}s</span>
                                   </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <Brain className="h-3 w-3 text-orange-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Từ vựng:" : "Vocabulary:"}</span>
-                                    <span className="font-medium">{parsedFeedback.vocabulary}/10</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <Zap className="h-3 w-3 text-yellow-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Lưu loát:" : "Fluency:"}</span>
-                                    <span className="font-medium">{parsedFeedback.fluency}/10</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <Target className="h-3 w-3 text-cyan-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Mạch lạc:" : "Coherence:"}</span>
-                                    <span className="font-medium">{parsedFeedback.coherence}/10</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <Link2 className="h-3 w-3 text-pink-500" />
-                                    <span className="text-muted-foreground">{language === "vi" ? "Liên kết:" : "Cohesion:"}</span>
-                                    <span className="font-medium">{parsedFeedback.cohesion}/10</span>
+                                  <div>
+                                    <span className="text-muted-foreground">{language === "vi" ? "Pause:" : "Pause:"}</span>{" "}
+                                    <span className="font-medium">{parsedFeedback.pause_detection?.pause_count || 0}</span>
                                   </div>
                                 </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {language === "vi"
+                                    ? "Session = tổng số lượt nói qua lại; Response = thời lượng trung bình cho 1 câu nói."
+                                    : "Session = total back-and-forth speaking turns; Response = average duration per sentence."}
+                                </p>
 
-                                {/* Pronunciation Issues - Collapsible */}
-                                <FeedbackSection
-                                  icon={<Mic className="h-3 w-3" />}
-                                  title={language === "vi" ? "Lỗi phát âm" : "Pronunciation Issues"}
-                                  items={parsedFeedback.pronunciationIssues || []}
-                                  colorClass="text-blue-700 dark:text-blue-400"
-                                  bulletColor="text-blue-500"
-                                  language={language}
-                                />
-
-                                {/* Grammar Issues - Collapsible */}
-                                <FeedbackSection
-                                  icon={<BookText className="h-3 w-3" />}
-                                  title={language === "vi" ? "Lỗi ngữ pháp" : "Grammar Issues"}
-                                  items={parsedFeedback.grammarIssues || []}
-                                  colorClass="text-purple-700 dark:text-purple-400"
-                                  bulletColor="text-purple-500"
-                                  language={language}
-                                />
-
-                                {/* Vocabulary Notes - Collapsible */}
-                                <FeedbackSection
-                                  icon={<Brain className="h-3 w-3" />}
-                                  title={language === "vi" ? "Ghi chú từ vựng" : "Vocabulary Notes"}
-                                  items={parsedFeedback.vocabularyNotes || []}
-                                  colorClass="text-orange-700 dark:text-orange-400"
-                                  bulletColor="text-orange-500"
-                                  language={language}
-                                />
-
-                                {/* Fluency Notes - Collapsible */}
-                                <FeedbackSection
-                                  icon={<Zap className="h-3 w-3" />}
-                                  title={language === "vi" ? "Ghi chú lưu loát" : "Fluency Notes"}
-                                  items={parsedFeedback.fluencyNotes || []}
-                                  colorClass="text-yellow-700 dark:text-yellow-400"
-                                  bulletColor="text-yellow-500"
-                                  language={language}
-                                />
-
-                                {/* Coherence Notes - Collapsible */}
-                                <FeedbackSection
-                                  icon={<Target className="h-3 w-3" />}
-                                  title={language === "vi" ? "Tính mạch lạc" : "Coherence"}
-                                  items={parsedFeedback.coherenceNotes || []}
-                                  colorClass="text-cyan-700 dark:text-cyan-400"
-                                  bulletColor="text-cyan-500"
-                                  language={language}
-                                />
-
-                                {/* Cohesion Notes - Collapsible */}
-                                <FeedbackSection
-                                  icon={<Link2 className="h-3 w-3" />}
-                                  title={language === "vi" ? "Tính liên kết" : "Cohesion"}
-                                  items={parsedFeedback.cohesionNotes || []}
-                                  colorClass="text-pink-700 dark:text-pink-400"
-                                  bulletColor="text-pink-500"
-                                  language={language}
-                                />
-                                
                                 {/* Highlights - Collapsible */}
                                 <FeedbackSection
                                   icon={<Star className="h-3 w-3" />}
@@ -684,6 +631,18 @@ const StudentDashboard = () => {
                                   bulletColor="text-amber-500"
                                   language={language}
                                 />
+                              </div>
+                            </CollapsibleContent>
+                          )}
+
+                          {!parsedFeedback && item.activityType === "ai_practice" && (
+                            <CollapsibleContent>
+                              <div className="ml-8 mt-1 mb-2 p-3 rounded-lg border border-amber-200/60 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-800/40">
+                                <p className="text-xs text-amber-700 dark:text-amber-300">
+                                  {language === "vi"
+                                    ? "Buổi luyện tập này chưa có dữ liệu phân tích chi tiết do lỗi đồng bộ trước đó. Các buổi mới sẽ hiển thị bình thường."
+                                    : "This practice session has no detailed analytics due to a previous sync error. New sessions will display normally."}
+                                </p>
                               </div>
                             </CollapsibleContent>
                           )}

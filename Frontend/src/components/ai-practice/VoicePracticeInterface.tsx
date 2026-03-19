@@ -13,6 +13,7 @@ import { toast } from "sonner";
 interface TranscriptEntry {
   role: "user" | "agent";
   text: string;
+  words?: Array<{ word: string; start: number; end: number }>;
 }
 
 interface VoicePracticeInterfaceProps {
@@ -193,6 +194,15 @@ export const VoicePracticeInterface = ({ topic, level, onComplete, speakingGoals
 
         const transcribeData = await transcribeResponse.json();
         const userText = (transcribeData?.text || "").trim();
+        const words = Array.isArray(transcribeData?.words)
+          ? transcribeData.words
+              .map((w: { word?: unknown; start?: unknown; end?: unknown }) => ({
+                word: typeof w?.word === "string" ? w.word : "",
+                start: typeof w?.start === "number" ? w.start : 0,
+                end: typeof w?.end === "number" ? w.end : 0,
+              }))
+              .filter((w: { word: string; start: number; end: number }) => w.word.length > 0)
+          : [];
         if (!userText) {
           throw new Error(t("aiPractice.voice.connectionFailed"));
         }
@@ -203,7 +213,14 @@ export const VoicePracticeInterface = ({ topic, level, onComplete, speakingGoals
         setMessages(nextMessages);
         messagesRef.current = nextMessages;
 
-        setTranscript((prev) => [...prev, { role: "user", text: userText }]);
+        setTranscript((prev) => [
+          ...prev,
+          {
+            role: "user",
+            text: userText,
+            words: words.length > 0 ? words : undefined,
+          },
+        ]);
         setCurrentCaption(userText);
         setCaptionSpeaker("user");
 

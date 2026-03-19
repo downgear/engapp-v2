@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsOptional, ValidateNested, IsIn } from 'class-validator';
+import { IsString, IsArray, IsOptional, ValidateNested, IsIn, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ChatMessageDto {
@@ -33,7 +33,9 @@ export class ChatRequestDto {
 
 export class FeedbackRequestDto {
   @IsArray()
-  transcript: Array<{ role: string; text: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => FeedbackTranscriptEntryDto)
+  transcript: FeedbackTranscriptEntryDto[];
 
   @IsString()
   topic: string;
@@ -44,6 +46,31 @@ export class FeedbackRequestDto {
   @IsString()
   @IsOptional()
   language?: string;
+}
+
+export class TranscriptWordDto {
+  @IsString()
+  word: string;
+
+  @IsNumber()
+  start: number;
+
+  @IsNumber()
+  end: number;
+}
+
+export class FeedbackTranscriptEntryDto {
+  @IsString()
+  role: string;
+
+  @IsString()
+  text: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TranscriptWordDto)
+  @IsOptional()
+  words?: TranscriptWordDto[];
 }
 
 export class TtsRequestDto {

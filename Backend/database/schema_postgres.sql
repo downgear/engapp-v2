@@ -174,11 +174,10 @@ CREATE TABLE ai_feedback (
     id SERIAL PRIMARY KEY,
     learning_history_id INTEGER NOT NULL,
     feedback_text TEXT NOT NULL,
-    pronunciation_notes TEXT, -- Specific pronunciation issues
-    grammar_notes TEXT, -- Grammar issues
-    fluency_notes TEXT, -- Fluency observations
-    vocabulary_notes TEXT, -- Vocabulary suggestions
-    overall_score REAL, -- 0-10 scale
+    speech_to_text TEXT, -- Transcribed student speech in the session
+    response_duration REAL, -- Avg response duration (seconds)
+    pause_detection JSONB, -- Pause analytics object
+    session_length REAL, -- Estimated session length (seconds)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (learning_history_id) REFERENCES learning_history(id) ON DELETE CASCADE
 );

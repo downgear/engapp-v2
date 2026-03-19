@@ -10,6 +10,7 @@ import { toast } from "sonner";
 interface TranscriptEntry {
   role: "user" | "agent";
   text: string;
+  words?: Array<{ word: string; start: number; end: number }>;
 }
 
 interface ChatPracticeInterfaceProps {

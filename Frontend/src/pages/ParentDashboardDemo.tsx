@@ -17,19 +17,17 @@ import { vi } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ParsedFeedback {
-  overall: number;
-  pronunciation: number;
-  grammar: number;
-  vocabulary: number;
-  fluency: number;
-  coherence: number;
+  speech_to_text?: string;
+  response_duration?: number;
+  pause_detection?: {
+    has_pause?: boolean;
+    pause_count?: number;
+    pause_turns?: number[];
+    summary?: string;
+  };
+  session_length?: number;
   suggestions: string[];
   highlights: string[];
-  // New detailed fields
-  pronunciationIssues?: string[];
-  grammarIssues?: string[];
-  vocabularyNotes?: string[];
-  fluencyNotes?: string[];
 }
 
 const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | null => {
@@ -60,7 +58,7 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
   const formattedDate = format(date, "dd/MM/yyyy", { locale: language === "vi" ? vi : undefined });
   const formattedTime = format(date, "HH:mm", { locale: language === "vi" ? vi : undefined });
   const parsedFeedback = parseFeedbackText(item.aiFeedback?.feedbackText);
-  const hasFeedback = !!parsedFeedback || !!item.aiFeedback?.overallScore;
+  const hasFeedback = !!parsedFeedback || !!item.aiFeedback?.speechToText;
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -74,12 +72,6 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
               <p className="font-medium text-sm text-foreground truncate">
                 {config.label} - Module {item.module.moduleNumber}
               </p>
-              {item.aiFeedback?.overallScore && (
-                <Badge variant="secondary" className="text-xs shrink-0">
-                  <Star className="h-3 w-3 mr-1" />
-                  {item.aiFeedback.overallScore}
-                </Badge>
-              )}
             </div>
             <p className="text-xs text-muted-foreground truncate mt-0.5">
               {item.module.title}
@@ -102,98 +94,22 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
       {parsedFeedback && (
         <CollapsibleContent>
           <div className="ml-11 mr-3 mt-1 mb-2 p-3 bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-100/50 dark:border-green-900/30 space-y-3">
-            {/* Score breakdown */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-1.5">
-                <Mic className="h-3 w-3 text-blue-500" />
-                <span className="text-muted-foreground">{language === "vi" ? "Phát âm:" : "Pronunciation:"}</span>
-                <span className="font-medium">{parsedFeedback.pronunciation}/10</span>
+            {/* Speaking analytics summary */}
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">{language === "vi" ? "Session:" : "Session:"}</span>{" "}
+                <span className="font-medium">{Math.round(parsedFeedback.session_length || 0)}s</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <BookText className="h-3 w-3 text-purple-500" />
-                <span className="text-muted-foreground">{language === "vi" ? "Ngữ pháp:" : "Grammar:"}</span>
-                <span className="font-medium">{parsedFeedback.grammar}/10</span>
+              <div>
+                <span className="text-muted-foreground">{language === "vi" ? "Response:" : "Response:"}</span>{" "}
+                <span className="font-medium">{(parsedFeedback.response_duration || 0).toFixed(1)}s</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Brain className="h-3 w-3 text-orange-500" />
-                <span className="text-muted-foreground">{language === "vi" ? "Từ vựng:" : "Vocabulary:"}</span>
-                <span className="font-medium">{parsedFeedback.vocabulary}/10</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Zap className="h-3 w-3 text-yellow-500" />
-                <span className="text-muted-foreground">{language === "vi" ? "Lưu loát:" : "Fluency:"}</span>
-                <span className="font-medium">{parsedFeedback.fluency}/10</span>
+              <div>
+                <span className="text-muted-foreground">{language === "vi" ? "Pause:" : "Pause:"}</span>{" "}
+                <span className="font-medium">{parsedFeedback.pause_detection?.pause_count || 0}</span>
               </div>
             </div>
 
-            {/* Pronunciation Issues - Detailed */}
-            {parsedFeedback.pronunciationIssues?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1">
-                  <Mic className="h-3 w-3" /> {language === "vi" ? "Lỗi phát âm" : "Pronunciation Issues"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {parsedFeedback.pronunciationIssues.map((issue, i) => (
-                    <li key={i} className="flex items-start gap-1">
-                      <span className="text-blue-500 mt-0.5">•</span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Grammar Issues - Detailed */}
-            {parsedFeedback.grammarIssues?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1 flex items-center gap-1">
-                  <BookText className="h-3 w-3" /> {language === "vi" ? "Lỗi ngữ pháp" : "Grammar Issues"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {parsedFeedback.grammarIssues.map((issue, i) => (
-                    <li key={i} className="flex items-start gap-1">
-                      <span className="text-purple-500 mt-0.5">•</span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Vocabulary Notes - Detailed */}
-            {parsedFeedback.vocabularyNotes?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1">
-                  <Brain className="h-3 w-3" /> {language === "vi" ? "Ghi chú từ vựng" : "Vocabulary Notes"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {parsedFeedback.vocabularyNotes.map((note, i) => (
-                    <li key={i} className="flex items-start gap-1">
-                      <span className="text-orange-500 mt-0.5">•</span>
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Fluency Notes - Detailed */}
-            {parsedFeedback.fluencyNotes?.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400 mb-1 flex items-center gap-1">
-                  <Zap className="h-3 w-3" /> {language === "vi" ? "Ghi chú lưu loát" : "Fluency Notes"}
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {parsedFeedback.fluencyNotes.map((note, i) => (
-                    <li key={i} className="flex items-start gap-1">
-                      <span className="text-yellow-500 mt-0.5">•</span>
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
             {/* Highlights */}
             {parsedFeedback.highlights?.length > 0 && (
               <div>

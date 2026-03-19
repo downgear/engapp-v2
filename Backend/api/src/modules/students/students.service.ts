@@ -29,6 +29,22 @@ export class StudentsService {
     private accountLinkRepo: Repository<AccountLink>,
   ) {}
 
+  private parseAiFeedbackText(feedbackText: string | null | undefined) {
+    if (!feedbackText) return null;
+    const trimmed = feedbackText.trim();
+    if (!trimmed.startsWith('{')) return null;
+    try {
+      return JSON.parse(trimmed) as {
+        speech_to_text?: string;
+        response_duration?: number;
+        pause_detection?: Record<string, unknown>;
+        session_length?: number;
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async findAll() {
     const students = await this.studentRepo
       .createQueryBuilder('student')
@@ -146,20 +162,25 @@ export class StudentsService {
       endTime: h.endTime,
       status: h.status,
       bookingId: h.bookingId || null,
-      module: {
-        id: h.module.id,
-        moduleNumber: h.module.moduleNumber,
-        title: h.module.title,
-      },
-      aiFeedback: h.aiFeedbacks?.[0]
+      module: h.module
         ? {
-            feedbackText: h.aiFeedbacks[0].feedbackText,
-            pronunciationNotes: h.aiFeedbacks[0].pronunciationNotes,
-            grammarNotes: h.aiFeedbacks[0].grammarNotes,
-            fluencyNotes: h.aiFeedbacks[0].fluencyNotes,
-            vocabularyNotes: h.aiFeedbacks[0].vocabularyNotes,
-            overallScore: h.aiFeedbacks[0].overallScore,
+            id: h.module.id,
+            moduleNumber: h.module.moduleNumber,
+            title: h.module.title,
           }
+        : null,
+      aiFeedback: h.aiFeedbacks?.[0]
+        ? (() => {
+            const base = h.aiFeedbacks[0];
+            const parsed = this.parseAiFeedbackText(base.feedbackText);
+            return {
+              feedbackText: base.feedbackText,
+              speechToText: parsed?.speech_to_text ?? null,
+              responseDuration: parsed?.response_duration ?? null,
+              pauseDetection: parsed?.pause_detection ?? null,
+              sessionLength: parsed?.session_length ?? null,
+            };
+          })()
         : null,
       teacherFeedback: h.teacherFeedbacks?.[0]
         ? {
@@ -203,28 +224,39 @@ export class StudentsService {
     const startTime = dto.startTime ? new Date(dto.startTime) : new Date();
     const endTime = dto.endTime ? new Date(dto.endTime) : startTime;
 
-    const history = this.learningHistoryRepo.create({
-      studentId,
-      moduleId,
-      activityType: dto.activityType || ActivityType.AI_PRACTICE,
-      startTime,
-      endTime,
-      status: LearningStatus.COMPLETED,
+    await this.learningHistoryRepo.manager.transaction(async (manager) => {
+      const historyRepo = manager.getRepository(LearningHistory);
+      const aiFeedbackRepo = manager.getRepository(AiFeedback);
+
+      const history = historyRepo.create({
+        studentId,
+        moduleId,
+        activityType: dto.activityType || ActivityType.AI_PRACTICE,
+        startTime,
+        endTime,
+        status: LearningStatus.COMPLETED,
+      });
+
+      const saved = await historyRepo.save(history);
+
+      if (dto.aiFeedback) {
+        const feedback = aiFeedbackRepo.create();
+        feedback.learningHistory = saved;
+        if (dto.aiFeedback.feedbackText) {
+          feedback.feedbackText = dto.aiFeedback.feedbackText;
+        } else {
+          feedback.feedbackText = JSON.stringify({
+            speech_to_text: dto.aiFeedback.speechToText ?? '',
+            response_duration: dto.aiFeedback.responseDuration ?? 0,
+            pause_detection: dto.aiFeedback.pauseDetection ?? null,
+            session_length: dto.aiFeedback.sessionLength ?? 0,
+            suggestions: [],
+            highlights: [],
+          });
+        }
+        await aiFeedbackRepo.save(feedback);
+      }
     });
-
-    const saved = await this.learningHistoryRepo.save(history);
-
-    if (dto.aiFeedback) {
-      const feedback = this.aiFeedbackRepo.create();
-      feedback.learningHistory = saved;
-      feedback.feedbackText = dto.aiFeedback.feedbackText || '';
-      feedback.pronunciationNotes = dto.aiFeedback.pronunciationNotes ?? null;
-      feedback.grammarNotes = dto.aiFeedback.grammarNotes ?? null;
-      feedback.fluencyNotes = dto.aiFeedback.fluencyNotes ?? null;
-      feedback.vocabularyNotes = dto.aiFeedback.vocabularyNotes ?? null;
-      feedback.overallScore = dto.aiFeedback.overallScore ?? null;
-      await this.aiFeedbackRepo.save(feedback);
-    }
 
     return this.getLearningHistory(studentId);
   }
@@ -444,11 +476,53 @@ export class StudentsService {
       });
     }
 
-    // Totals
-    const totalSessions = result.reduce((s, r) => s + r.sessions, 0);
-    const totalMinutes = result.reduce((s, r) => s + r.minutes, 0);
+    // Current week totals (latest point in the weekly timeline)
+    const currentWeek = result[result.length - 1] || { sessions: 0, minutes: 0 };
+    const totalSessions = currentWeek.sessions;
+    const totalMinutes = currentWeek.minutes;
 
-    return { weeklyData: result, totalSessions, totalMinutes };
+    // Streak (consecutive practice days, ending on latest practice day)
+    const rawPracticeDays = await this.learningHistoryRepo
+      .createQueryBuilder('lh')
+      .select("DATE(lh.start_time)", 'day')
+      .where('lh.student_id = :studentId', { studentId })
+      .andWhere('lh.activity_type = :type', { type: 'ai_practice' })
+      .andWhere('lh.end_time IS NOT NULL')
+      .groupBy("DATE(lh.start_time)")
+      .orderBy('day', 'DESC')
+      .getRawMany();
+
+    let currentStreakDays = 0;
+    if (rawPracticeDays.length > 0) {
+      const practiceDaySet = new Set(
+        rawPracticeDays.map((r) => {
+          const d = new Date(r.day);
+          d.setHours(0, 0, 0, 0);
+          return d.toISOString().slice(0, 10);
+        }),
+      );
+
+      let cursor = new Date(rawPracticeDays[0].day);
+      cursor.setHours(0, 0, 0, 0);
+
+      while (practiceDaySet.has(cursor.toISOString().slice(0, 10))) {
+        currentStreakDays += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      }
+    }
+
+    const recommendedDailyMinutesMin = 10;
+    const recommendedDailyMinutesMax = 15;
+
+    return {
+      weeklyData: result,
+      totalSessions,
+      totalMinutes,
+      completedPracticeRounds: totalSessions,
+      currentStreakDays,
+      recommendedDailyMinutesMin,
+      recommendedDailyMinutesMax,
+    };
   }
 }
 

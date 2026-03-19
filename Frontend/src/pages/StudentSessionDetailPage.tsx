@@ -20,7 +20,6 @@ import {
   User,
   BookOpen,
   History,
-  Star,
   ChevronDown,
   MessageSquare,
   AlertCircle,
@@ -143,12 +142,12 @@ const StudentSessionDetailPage = () => {
     }
   };
 
-  const getScoreColor = (score: number | null) => {
-    if (!score) return "text-muted-foreground";
-    if (score >= 8) return "text-green-500";
-    if (score >= 6) return "text-yellow-500";
-    return "text-red-500";
-  };
+  const aiPracticeHistory = learningHistory.filter((h) => h.activityType === "ai_practice");
+  const totalPracticeSeconds = aiPracticeHistory.reduce(
+    (sum, h) => sum + (h.aiFeedback?.sessionLength || 0),
+    0,
+  );
+  const practiceMinutes = Math.floor(totalPracticeSeconds / 60);
 
   if (authLoading || isLoading) {
     return (
@@ -309,27 +308,20 @@ const StudentSessionDetailPage = () => {
                 </div>
                 <div className="p-4 bg-muted/30 rounded-xl text-center">
                   <p className="text-3xl font-bold text-green-500">
-                    {learningHistory.filter((h) => h.aiFeedback?.overallScore && h.aiFeedback.overallScore >= 7).length}
+                    {aiPracticeHistory.length}
                   </p>
-                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Điểm cao (≥7)" : "High Score (≥7)"}</p>
+                  <p className="text-sm text-muted-foreground">{language === "vi" ? "Lượt AI Practice" : "AI Practice Sessions"}</p>
                 </div>
               </div>
 
               <div className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                  <span className="font-medium">{language === "vi" ? "Điểm trung bình" : "Average Score"}</span>
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                  <span className="font-medium">{language === "vi" ? "Tổng thời lượng AI Practice" : "Total AI Practice Time"}</span>
                 </div>
                 <p className="text-3xl font-bold">
-                  {learningHistory.filter((h) => h.aiFeedback?.overallScore).length > 0
-                    ? (
-                        learningHistory
-                          .filter((h) => h.aiFeedback?.overallScore)
-                          .reduce((acc, h) => acc + (h.aiFeedback?.overallScore || 0), 0) /
-                        learningHistory.filter((h) => h.aiFeedback?.overallScore).length
-                      ).toFixed(1)
-                    : "N/A"}
-                  <span className="text-lg text-muted-foreground">/10</span>
+                  {practiceMinutes}
+                  <span className="text-lg text-muted-foreground"> {language === "vi" ? "phút" : "min"}</span>
                 </p>
               </div>
 
@@ -387,14 +379,6 @@ const StudentSessionDetailPage = () => {
                             {item.module?.title} • {format(parseISO(item.startTime), language === "vi" ? "dd/MM/yyyy 'lúc' HH:mm" : "dd/MM/yyyy 'at' HH:mm")}
                           </p>
                         </div>
-                        {item.aiFeedback?.overallScore && (
-                          <div className="flex items-center gap-1">
-                            <Star className={`h-4 w-4 ${getScoreColor(item.aiFeedback.overallScore)}`} />
-                            <span className={`font-bold ${getScoreColor(item.aiFeedback.overallScore)}`}>
-                              {item.aiFeedback.overallScore}
-                            </span>
-                          </div>
-                        )}
                         <ChevronDown
                           className={`h-4 w-4 text-muted-foreground transition-transform ${
                             expandedItems.has(item.id) ? "rotate-180" : ""

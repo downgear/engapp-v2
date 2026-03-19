@@ -123,287 +123,107 @@ Keep the suggestions appropriate for the student's level.`;
   }
 
   async generateFeedback(dto: FeedbackRequestDto): Promise<object> {
-    // Count user messages (student turns)
-    const userMessages = dto.transcript.filter((t) => t.role === 'user');
-    
-    // Check if student spoke enough (need at least 3 turns for meaningful assessment)
-    if (userMessages.length < 3) {
-      return {
-        overall: 0,
-        pronunciation: 0,
-        grammar: 0,
-        vocabulary: 0,
-        fluency: 0,
-        coherence: 0,
-        cohesion: 0,
-        insufficientData: true,
-        pronunciationErrors: [], // No errors gathered - insufficient data
-        pronunciationIssues: ['Bạn cần luyện tập thêm (tối thiểu 3 lượt hội thoại) để có đủ dữ liệu đánh giá chính xác.'],
-        grammarIssues: ['Chưa đủ dữ liệu để đánh giá ngữ pháp. Hãy nói nhiều hơn!'],
-        vocabularyNotes: ['Cần nhiều hội thoại hơn để đánh giá vốn từ vựng của bạn.'],
-        fluencyNotes: ['Cần thêm dữ liệu để đánh giá độ trưu loát.'],
-        coherenceNotes: ['Cần thêm dữ liệu để đánh giá tính mạch lạc.'],
-        cohesionNotes: ['Cần thêm dữ liệu để đánh giá tính liên kết.'],
-        suggestions: ['Tiếp tục luyện tập và trả lời đầy đủ hơn trong các buổi sau', 'Cố gắng nói ít nhất 2-3 câu mỗi lượt'],
-        highlights: ['Bạn đã bắt đầu luyện tập - đó là bước đầu tiên quan trọng!'],
-      };
-    }
+    const userTurns = dto.transcript
+      .filter((t) => t.role === 'user')
+      .map((t, idx) => ({
+        index: idx + 1,
+        text: (t.text || '').trim(),
+        words: (t.words || [])
+          .filter((w) => typeof w.start === 'number' && typeof w.end === 'number' && !!w.word)
+          .sort((a, b) => a.start - b.start),
+      }))
+      .filter((t) => t.text.length > 0 || t.words.length > 0);
 
-    // Check for empty/very short responses (hesitation/unclear speech)
-    const shortOrEmptyResponses = userMessages.filter((msg) => !msg.text || msg.text.trim().length < 5);
-    const hasHesitation = shortOrEmptyResponses.length > 0;
+    // Lightweight speaking analytics without score grading
+    const estimateDurationSec = (text: string) => {
+      const words = text ? text.split(/\s+/).length : 0;
+      // Average speaking speed estimate: ~2.2 words/sec
+      return words > 0 ? Math.max(2, Math.round(words / 2.2)) : 0;
+    };
 
-    const transcriptText = dto.transcript
-      .map((t) => `${t.role === 'user' ? 'Student' : 'AI'}: ${t.text || '[No clear speech detected - possible hesitation or unclear pronunciation]'}`)
-      .join('\n');
+    const pauseThresholdSec = 0.5;
+    let totalPauseCount = 0;
+    const pauseTurns = new Set<number>();
 
-    const prompt = `You are an expert English language assessor following IELTS Speaking Band Descriptors. Analyze this practice conversation step-by-step.
+    const speechTurns: string[] = [];
+    const perTurnDurations = userTurns.map((turn) => {
+      if (!turn.words.length) {
+        speechTurns.push(turn.text);
+        return estimateDurationSec(turn.text);
+      }
 
-Topic: ${dto.topic}
-Level: ${dto.level}
+      const spokenParts: string[] = [];
+      let turnPauseCount = 0;
 
-Conversation:
-${transcriptText}
+      turn.words.forEach((word, wordIndex) => {
+        if (wordIndex > 0) {
+          const prev = turn.words[wordIndex - 1];
+          const gap = word.start - prev.end;
+          if (gap > pauseThresholdSec) {
+            // Add hesitation markers to reflect real pauses in speech-to-text output.
+            spokenParts.push('uhmmm');
+            turnPauseCount += 1;
+          }
+        }
+        spokenParts.push(word.word.trim());
+      });
 
-${hasHesitation ? `CRITICAL: Student had ${shortOrEmptyResponses.length} turn(s) with no clear speech detected (empty or very short text). This indicates hesitation, unclear pronunciation, or speech-to-text failure. DO NOT GUESS what they said - evaluate these moments as hesitation/fluency issues.\n` : ''}
+      if (turnPauseCount > 0) {
+        totalPauseCount += turnPauseCount;
+        pauseTurns.add(turn.index);
+      }
 
-ASSESSMENT PROCESS (Follow this order strictly):
+      const spokenText = spokenParts.join(' ').replace(/\s+/g, ' ').trim();
+      speechTurns.push(spokenText || turn.text);
 
-STEP 1: ANALYZE ERRORS FIRST (Before giving scores)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CRITICAL: For EACH criterion below, you MUST provide AT LEAST 3 specific observations/comments. If there aren't enough errors, also note what was done well.
-
-1.1 PRONUNCIATION ANALYSIS (Minimum 3 observations):
-CRITICAL: The transcription is VERBATIM - mispronounced words are transcribed exactly as spoken WITHOUT corrections.
-- Look for MISSING ENDING SOUNDS: words like "goin" (should be "going"), "tha" (should be "that"), "wor" (should be "work")
-- Look for SOUND SUBSTITUTIONS: "wok" instead of "work", "tree" instead of "three", "berry" instead of "very"
-- Look for VOWEL ERRORS: "bed" instead of "bad", "ship" instead of "sheep"
-- Look for CONSONANT CLUSTER ERRORS: "streen" instead of "street", "fren" instead of "friend"
-- Identify specific mispronounced words with IPA notation and quote them EXACTLY from transcription
-- Note word stress errors with examples (e.g., "comfortable" stressed on wrong syllable)
-- Point out intonation issues (rising/falling patterns)
-${hasHesitation ? '- Note unclear speech/hesitation moments: "In turn X, no clear speech was detected - this suggests pronunciation difficulties or hesitation"' : ''}
-- Comment on consonant/vowel accuracy based on the verbatim transcription
-- Note rhythm and connected speech
-- Be VERY SPECIFIC - quote the EXACT words from transcription that show pronunciation errors
-
-1.2 GRAMMAR ANALYSIS (Minimum 3 observations):
-- Quote exact sentences with errors and explain what's wrong
-- Provide corrections with explanations
-- Note patterns of errors (e.g., consistent tense mistakes, subject-verb agreement)
-- Comment on sentence structure complexity
-- Note article usage (a/an/the)
-- Assess word order and syntax
-
-1.3 VOCABULARY ANALYSIS (Minimum 3 observations):
-- Assess range and appropriateness for topic and level
-- Note repetition or limited vocabulary with examples
-- Suggest better alternatives with context
-- Comment on collocation usage
-- Note idiomatic expressions (or lack thereof)
-- Assess precision of word choice
-
-1.4 FLUENCY ANALYSIS (Minimum 3 observations):
-- Note hesitation patterns, pauses, self-corrections with specific examples
-${hasHesitation ? '- CRITICAL: "In turn(s) X, no clear speech was detected - this is a major fluency issue indicating hesitation or inability to express thoughts"' : ''}
-- Comment on speaking pace (too fast/slow/appropriate)
-- Note use of fillers (um, uh, well) - appropriate or excessive?
-- Assess self-correction frequency and effectiveness
-- Comment on natural flow and rhythm
-- Note ability to maintain speech without long pauses
-
-1.5 COHERENCE ANALYSIS (Minimum 3 observations):
-**Coherence = Logic & Relevance (Tính mạch lạc)**
-- Does student stay on topic? Give specific examples
-- Are ideas logically organized? Comment on structure
-- Do responses directly answer questions? Note any off-topic moments
-- Is there clear progression of ideas? Assess development
-- Can listener follow the train of thought easily?
-- Are ideas relevant to the topic and context?
-
-1.6 COHESION ANALYSIS (Minimum 3 observations):
-**Cohesion = Linking & Flow (Tính liên kết)**
-- Use of linking words (however, therefore, because, although, etc.) - give examples
-- Pronoun references (he, she, it, this, that) - are they clear and correct?
-- Use of discourse markers (well, you know, I mean, actually) - appropriate?
-- Sentence-to-sentence connections - smooth or abrupt?
-- Use of conjunctions (and, but, so, because) - variety or repetition?
-- Paragraph-level organization and transitions
-
-STEP 2: SCORING (After analysis)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Based on your detailed error analysis above, assign scores 1-10:
-- 1-3: Serious issues preventing communication
-- 4-5: Multiple errors, basic communication possible
-- 6-7: Some errors, but generally clear communication
-- 8-9: Minor errors, good proficiency
-- 10: Near-native level
-
-CRITICAL RULES:
-1. If student had unclear speech moments (no text detected), fluency ≤ 5 and pronunciation ≤ 6
-2. Provide SPECIFIC EXAMPLES from conversation - quote actual words/sentences
-3. Each array (pronunciationIssues, grammarIssues, etc.) MUST have AT LEAST 3 items
-4. Be encouraging but honest
-5. Analysis MUST come before scores in your thinking
-6. If there aren't enough errors, also include positive observations
-
-Respond in JSON format (ALL TEXT IN VIETNAMESE ONLY, except for English words in pronunciationErrors):
-{
-  "overall": <score 1-10>,
-  "pronunciation": <score 1-10>,
-  "grammar": <score 1-10>,
-  "vocabulary": <score 1-10>,
-  "fluency": <score 1-10>,
-  "coherence": <score 1-10>,
-  "cohesion": <score 1-10>,
-  "pronunciationErrors": [
-    {
-      "spoken": "goin",
-      "expected": "going",
-      "errorType": "missing_ending",
-      "explanation": "Thiếu âm cuối '-ing', chỉ nói 'goin'"
-    },
-    {
-      "spoken": "wok",
-      "expected": "work", 
-      "errorType": "sound_substitution",
-      "explanation": "Thay thế âm /ɜː/ bằng /ɒ/"
-    }
-  ],
-  "pronunciationIssues": ["Chi tiết 1 với từ được trích dẫn", "Chi tiết 2 với ví dụ cụ thể", "Chi tiết 3 về một khía cạnh khác"],
-  "grammarIssues": ["Trích dẫn câu cụ thể + giải thích + sửa", "Lỗi thứ 2 với ví dụ", "Lỗi thứ 3 hoặc điểm tốt"],
-  "vocabularyNotes": ["Phân tích 1 về từ vựng cụ thể", "Phân tích 2 về range/appropriateness", "Phân tích 3 về collocation/idioms"],
-  "fluencyNotes": ["Mô tả 1 về sự ngập ngừng/tự tin", "Mô tả 2 về pace/pauses", "Mô tả 3 về flow/self-correction"],
-  "coherenceNotes": ["Đánh giá 1: on-topic? logic?", "Đánh giá 2: trả lời đúng câu hỏi?", "Đánh giá 3: progression of ideas?"],
-  "cohesionNotes": ["Đánh giá 1: từ nối?", "Đánh giá 2: đại từ?", "Đánh giá 3: discourse markers/sentence connections?"],
-  "suggestions": ["Gợi ý CỤ THỂ 1 bằng tiếng Việt với ví dụ", "Gợi ý 2", "Gợi ý 3"],
-  "highlights": ["Điểm mạnh CỤ THỂ 1 bằng tiếng Việt", "Điểm mạnh 2", "Điểm mạnh 3"]
-}
-
-IMPORTANT for pronunciationErrors array:
-- errorType can be: "missing_ending", "sound_substitution", "vowel_error", "consonant_error", "word_stress", "other"
-- Include ALL pronunciation errors found in the conversation
-- "spoken" is the EXACT word from transcription
-- "expected" is what the word should be
-- This array gathers ALL pronunciation errors for detailed feedback`;
-
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2500,
-      temperature: 0.5,
-      response_format: { type: 'json_object' },
+      const firstWord = turn.words[0];
+      const lastWord = turn.words[turn.words.length - 1];
+      const measured = Math.max(0, Number((lastWord.end - firstWord.start).toFixed(1)));
+      return measured > 0 ? measured : estimateDurationSec(spokenText || turn.text);
     });
 
-    const content = response.choices[0]?.message?.content || '{}';
-    try {
-      const parsedFeedback = JSON.parse(content);
-      
-      // Ensure all arrays have at least 3 items, pad with generic messages if needed
-      const ensureMinItems = (arr: string[], defaultItems: string[]) => {
-        if (!arr || arr.length === 0) return defaultItems;
-        while (arr.length < 3) {
-          arr.push(defaultItems[arr.length % defaultItems.length] || defaultItems[0]);
-        }
-        return arr;
-      };
+    const allUserText = speechTurns.join(' ').trim();
+    const responseDuration =
+      perTurnDurations.length > 0
+        ? Number(
+            (
+              perTurnDurations.reduce((sum, v) => sum + v, 0) /
+              perTurnDurations.length
+            ).toFixed(1),
+          )
+        : 0;
 
-      const defaultPronunciation = [
-        'Cần luyện tập thêm để đánh giá chi tiết về phát âm',
-        'Hãy chú ý đến trọng âm và ngữ điệu',
-        'Luyện nghe và nhại lại để cải thiện'
-      ];
-      
-      const defaultGrammar = [
-        'Cần luyện tập thêm để đánh giá chi tiết về ngữ pháp',
-        'Hãy chú ý đến thì của động từ',
-        'Luyện tập cấu trúc câu phức tạp hơn'
-      ];
-      
-      const defaultVocabulary = [
-        'Cần luyện tập thêm để đánh giá từ vựng',
-        'Hãy mở rộng vốn từ vựng theo chủ đề',
-        'Sử dụng từ đồng nghĩa để tránh lặp lại'
-      ];
-      
-      const defaultFluency = [
-        'Cần luyện tập thêm để đánh giá độ lưu loát',
-        'Hãy giảm sự ngập ngừng và tạm dừng',
-        'Luyện tập nói tự nhiên và trôi chảy hơn'
-      ];
-      
-      const defaultCoherence = [
-        'Cần luyện tập thêm để đánh giá tính mạch lạc',
-        'Hãy đảm bảo trả lời đúng câu hỏi',
-        'Sắp xếp ý tưởng một cách logic'
-      ];
-      
-      const defaultCohesion = [
-        'Cần luyện tập thêm để đánh giá tính liên kết',
-        'Sử dụng từ nối để kết nối các ý',
-        'Sử dụng đại từ và từ thay thế một cách chính xác'
-      ];
+    const pauseDetection = {
+      has_pause: totalPauseCount > 0,
+      pause_count: totalPauseCount,
+      pause_turns: Array.from(pauseTurns),
+      summary:
+        totalPauseCount > 0
+          ? `Phát hiện ${totalPauseCount} khoảng ngập ngừng (khoảng cách > 0.5 giây giữa 2 từ).`
+          : 'Nhịp trả lời ổn định, học sinh duy trì hội thoại khá tốt.',
+    };
 
-      // Remove any English fields from parsed feedback
-      const { pronunciationIssuesEn, grammarIssuesEn, vocabularyNotesEn, fluencyNotesEn, coherenceNotesEn, cohesionNotesEn, suggestionsEn, highlightsEn, ...cleanFeedback } = parsedFeedback;
+    const sessionLength = dto.transcript.filter((t) => (t.text || '').trim().length > 0).length;
 
-      return {
-        ...cleanFeedback,
-        pronunciationErrors: parsedFeedback.pronunciationErrors || [], // Gathered pronunciation errors with details
-        pronunciationIssues: ensureMinItems(parsedFeedback.pronunciationIssues || [], defaultPronunciation),
-        grammarIssues: ensureMinItems(parsedFeedback.grammarIssues || [], defaultGrammar),
-        vocabularyNotes: ensureMinItems(parsedFeedback.vocabularyNotes || [], defaultVocabulary),
-        fluencyNotes: ensureMinItems(parsedFeedback.fluencyNotes || [], defaultFluency),
-        coherenceNotes: ensureMinItems(parsedFeedback.coherenceNotes || [], defaultCoherence),
-        cohesionNotes: ensureMinItems(parsedFeedback.cohesionNotes || [], defaultCohesion),
-        suggestions: parsedFeedback.suggestions || ['Tiếp tục luyện tập để cải thiện'],
-        highlights: parsedFeedback.highlights || ['Bạn đã hoàn thành buổi luyện tập'],
-      };
-    } catch {
-      return {
-        overall: 6,
-        pronunciation: 6,
-        grammar: 6,
-        vocabulary: 6,
-        fluency: 6,
-        coherence: 6,
-        cohesion: 6,
-        pronunciationErrors: [], // No errors gathered due to parsing failure
-        pronunciationIssues: [
-          'Cần luyện tập thêm để đánh giá chi tiết về phát âm',
-          'Hãy chú ý đến trọng âm và ngữ điệu',
-          'Luyện nghe và nhại lại để cải thiện'
-        ],
-        grammarIssues: [
-          'Cần luyện tập thêm để đánh giá chi tiết về ngữ pháp',
-          'Hãy chú ý đến thì của động từ',
-          'Luyện tập cấu trúc câu phức tạp hơn'
-        ],
-        vocabularyNotes: [
-          'Cần luyện tập thêm để đánh giá từ vựng',
-          'Hãy mở rộng vốn từ vựng theo chủ đề',
-          'Sử dụng từ đồng nghĩa để tránh lặp lại'
-        ],
-        fluencyNotes: [
-          'Cần luyện tập thêm để đánh giá độ lưu loát',
-          'Hãy giảm sự ngập ngừng và tạm dừng',
-          'Luyện tập nói tự nhiên và trôi chảy hơn'
-        ],
-        coherenceNotes: [
-          'Cần luyện tập thêm để đánh giá tính mạch lạc',
-          'Hãy đảm bảo trả lời đúng câu hỏi',
-          'Sắp xếp ý tưởng một cách logic'
-        ],
-        cohesionNotes: [
-          'Cần luyện tập thêm để đánh giá tính liên kết',
-          'Sử dụng từ nối để kết nối các ý',
-          'Sử dụng đại từ và từ thay thế một cách chính xác'
-        ],
-        suggestions: ['Tiếp tục luyện tập để cải thiện'],
-        highlights: ['Bạn đã hoàn thành buổi luyện tập'],
-      };
-    }
+    const shortPractice = userTurns.length < 3;
+
+    return {
+      speech_to_text: allUserText,
+      response_duration: responseDuration,
+      pause_detection: pauseDetection,
+      session_length: sessionLength,
+      insufficientData: shortPractice,
+      suggestions: [
+        'Mỗi lượt trả lời hãy cố gắng nói ít nhất 2-3 câu.',
+        'Duy trì luyện tập hằng ngày 10-15 phút để tăng phản xạ nói.',
+        'Khi bí ý, hãy dùng mẫu: "I think... because... for example..." để kéo dài câu trả lời.',
+      ],
+      highlights: [
+        'Bạn đã hoàn thành một buổi luyện speaking rất tốt.',
+        'Bạn có tinh thần chủ động nói tiếng Anh, đây là điểm quan trọng nhất.',
+        'Bạn đang tiến bộ dần về độ tự tin khi giao tiếp.',
+      ],
+    };
   }
 
   async transcribeAudio(buffer: Buffer, filename: string, mimetype?: string): Promise<{ 

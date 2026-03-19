@@ -16,21 +16,6 @@ export class AiFeedback {
   @Column({ name: 'feedback_text' })
   feedbackText: string;
 
-  @Column({ name: 'pronunciation_notes', type: 'text', nullable: true })
-  pronunciationNotes: string | null;
-
-  @Column({ name: 'grammar_notes', type: 'text', nullable: true })
-  grammarNotes: string | null;
-
-  @Column({ name: 'fluency_notes', type: 'text', nullable: true })
-  fluencyNotes: string | null;
-
-  @Column({ name: 'vocabulary_notes', type: 'text', nullable: true })
-  vocabularyNotes: string | null;
-
-  @Column({ name: 'overall_score', type: 'real', nullable: true })
-  overallScore: number | null;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

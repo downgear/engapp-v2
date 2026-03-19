@@ -27,28 +27,24 @@ export interface Topic {
 }
 
 export interface FeedbackData {
-  overall: number;
-  pronunciation: number;
-  grammar: number;
-  vocabulary: number;
-  fluency: number;
-  coherence: number;
-  cohesion: number;
+  speech_to_text: string;
+  response_duration: number;
+  pause_detection: {
+    has_pause: boolean;
+    pause_count: number;
+    pause_turns: number[];
+    summary: string;
+  };
+  session_length: number;
   suggestions: string[];
   highlights: string[];
   insufficientData?: boolean;
-  // Detailed feedback fields
-  pronunciationIssues?: string[];
-  grammarIssues?: string[];
-  vocabularyNotes?: string[];
-  fluencyNotes?: string[];
-  coherenceNotes?: string[];
-  cohesionNotes?: string[];
 }
 
 interface TranscriptEntry {
   role: "user" | "agent";
   text: string;
+  words?: Array<{ word: string; start: number; end: number }>;
 }
 
 // Removed "select-topic" step - topic is auto-selected from current module
@@ -203,7 +199,10 @@ const AIPracticeDemo = () => {
       endTime,
       aiFeedback: {
         feedbackText: JSON.stringify(feedbackToStore),
-        overallScore: feedbackToStore.overall,
+        speechToText: feedbackToStore.speech_to_text,
+        responseDuration: feedbackToStore.response_duration,
+        pauseDetection: feedbackToStore.pause_detection,
+        sessionLength: feedbackToStore.session_length,
       },
     });
     window.dispatchEvent(new Event("learning-history-updated"));
@@ -270,30 +269,32 @@ const AIPracticeDemo = () => {
   };
 
   const getDefaultFeedback = (): FeedbackData => ({
-    overall: 6.0,
-    pronunciation: 6.0,
-    grammar: 6.0,
-    vocabulary: 6.0,
-    fluency: 6.0,
-    coherence: 6.0,
-    cohesion: 6.0,
+    speech_to_text: "",
+    response_duration: 0,
+    pause_detection: {
+      has_pause: false,
+      pause_count: 0,
+      pause_turns: [],
+      summary: language === "vi" ? "Chưa có đủ dữ liệu để phân tích nhịp nói." : "Not enough data for pause analysis yet.",
+    },
+    session_length: 0,
     suggestions: language === "vi" ? [
-      "Thử luyện tập thêm để có nhiều dữ liệu đánh giá hơn",
-      "Cố gắng nói nhiều hơn trong các buổi thực hành",
-      "Mở rộng câu trả lời với nhiều chi tiết hơn",
+      "Hãy tiếp tục nói dài hơn ở mỗi lượt để AI hỗ trợ tốt hơn",
+      "Mục tiêu tốt: 10-15 phút luyện nói mỗi ngày",
+      "Thử mô hình trả lời: ý chính -> ví dụ -> kết luận ngắn",
     ] : [
-      "Try practicing more to get more evaluation data",
-      "Try speaking more during practice sessions",
-      "Expand your answers with more details",
+      "Keep speaking longer in each turn so AI can support you better",
+      "A good target is 10-15 minutes of speaking practice daily",
+      "Try the response pattern: main idea -> example -> short wrap-up",
     ],
     highlights: language === "vi" ? [
-      "Bạn đã hoàn thành buổi luyện tập",
-      "Bạn có sự dũng cảm để thực hành tiếng Anh",
-      "Tiếp tục cố gắng để tiến bộ hơn",
+      "Bạn đã hoàn thành buổi luyện tập rất tốt",
+      "Bạn đang xây dựng sự tự tin khi nói tiếng Anh",
+      "Duy trì đều đặn sẽ giúp bạn tiến bộ rất nhanh",
     ] : [
-      "You completed the practice session",
-      "You have the courage to practice English",
-      "Keep trying to improve",
+      "You completed this practice session very well",
+      "You are building confidence in speaking English",
+      "Consistency will help you improve quickly",
     ],
   });
 

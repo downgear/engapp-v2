@@ -92,11 +92,10 @@ export const api = {
       endTime?: string;
       aiFeedback?: {
         feedbackText?: string;
-        pronunciationNotes?: string | null;
-        grammarNotes?: string | null;
-        fluencyNotes?: string | null;
-        vocabularyNotes?: string | null;
-        overallScore?: number | null;
+        speechToText?: string;
+        responseDuration?: number;
+        pauseDetection?: Record<string, unknown>;
+        sessionLength?: number;
       };
     }
   ): Promise<LearningHistoryItem[]> {
