@@ -719,6 +719,52 @@ export const api = {
     });
   },
 
+  // ============ Modules (Admin) ============
+
+  async createModule(token: string, data: {
+    courseId: number;
+    moduleNumber: number;
+    title: string;
+    topic: string;
+    description?: string;
+    weekStartDate?: string;
+    weekEndDate?: string;
+    mondayContent?: ModuleContentData | null;
+    aiPracticeContent?: AIPracticeContentData | null;
+    teacherSessionContent?: TeacherSessionContentData | null;
+  }): Promise<ModuleResponse> {
+    return fetchApi('/programs/modules', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateModule(token: string, id: number, data: {
+    moduleNumber?: number;
+    title?: string;
+    topic?: string;
+    description?: string;
+    weekStartDate?: string;
+    weekEndDate?: string;
+    mondayContent?: ModuleContentData | null;
+    aiPracticeContent?: AIPracticeContentData | null;
+    teacherSessionContent?: TeacherSessionContentData | null;
+  }): Promise<ModuleResponse> {
+    return fetchApi(`/programs/modules/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteModule(token: string, id: number): Promise<{ success: boolean }> {
+    return fetchApi(`/programs/modules/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
   // ============ Student Cohort Enrollments ============
 
   async enrollInCohortCourse(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
@@ -827,6 +873,39 @@ export interface CohortResponse {
   courses: CohortCourseResponse[];
 }
 
+export interface ModuleContentData {
+  vocabulary?: string[];
+  grammar?: string;
+  activities?: string;
+  notes?: string;
+}
+
+export interface AIPracticeContentData {
+  topics?: string[];
+  exercises?: string;
+  notes?: string;
+}
+
+export interface TeacherSessionContentData {
+  goals?: string[];
+  focus?: string;
+  notes?: string;
+}
+
+export interface ModuleResponse {
+  id: number;
+  courseId?: number;
+  moduleNumber: number;
+  title: string;
+  topic: string;
+  description?: string;
+  weekStartDate?: string;
+  weekEndDate?: string;
+  mondayContent?: ModuleContentData | null;
+  aiPracticeContent?: AIPracticeContentData | null;
+  teacherSessionContent?: TeacherSessionContentData | null;
+}
+
 export interface CohortCourseResponse {
   id: number;
   courseId: number;
@@ -845,7 +924,7 @@ export interface CohortCourseResponse {
     name: string;
     email: string;
   } | null;
-  modules: { id: number; moduleNumber: number; title: string; topic: string }[];
+  modules: ModuleResponse[];
 }
 
 export interface TeachingCourse {
