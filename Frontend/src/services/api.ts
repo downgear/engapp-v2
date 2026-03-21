@@ -787,6 +787,12 @@ export const api = {
     });
   },
 
+  async getMyEnrollments(token: string, studentId: number): Promise<MyEnrollment[]> {
+    return fetchApi(`/programs/enrollments/${studentId}/formatted`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
   async markCohortEnrollmentPaid(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
     return fetchApi('/programs/enrollment/pay', {
       method: 'POST',
@@ -798,6 +804,71 @@ export const api = {
   async checkCohortEnrollmentPaid(token: string, studentId: number, cohortCourseId: number): Promise<{ paid: boolean }> {
     return fetchApi(`/programs/enrollment/check/${studentId}/${cohortCourseId}`, {
       headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async createStandaloneCourse(token: string, data: {
+    name: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    price?: number;
+    status?: string;
+  }): Promise<{ id: number; name: string }> {
+    return fetchApi('/programs/courses', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async getCohortCourseEnrollments(token: string, cohortCourseId: number): Promise<Array<{
+    enrollmentId: number;
+    studentId: number;
+    userId: number;
+    fullName: string;
+    email: string;
+    phone: string | null;
+    paid: boolean;
+    paidAt: string | null;
+    enrolledAt: string;
+  }>> {
+    return fetchApi(`/programs/cohort-courses/${cohortCourseId}/enrollments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async enrollStudentByUserId(token: string, userId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
+    return fetchApi('/programs/enroll/by-user', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ userId, cohortCourseId }),
+    });
+  },
+
+  async unenrollStudent(token: string, studentId: number, cohortCourseId: number): Promise<{ success: boolean }> {
+    return fetchApi(`/programs/enroll/${studentId}/${cohortCourseId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async bulkCreateAdminUsers(token: string, users: Array<{
+    email: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+    role: string;
+  }>): Promise<{
+    total: number;
+    succeeded: number;
+    failed: number;
+    results: Array<{ success: boolean; email: string; error?: string }>;
+  }> {
+    return fetchApi('/admin/users/bulk-create', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ users }),
     });
   },
 
@@ -856,6 +927,41 @@ export interface StudentCohortEnrollment {
   paidAt: string | null;
   enrolledAt: string;
   cohortCourse?: CohortCourseResponse;
+}
+
+export interface MyEnrollmentCourse {
+  id: number;
+  courseId: number;
+  name: string;
+  description: string;
+  level: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  price: number;
+  enrolledStudents: number;
+  maxStudents: number;
+  teacher: { id: number; name: string; email: string } | null;
+  cohortName?: string;
+  modules: {
+    id: number;
+    moduleNumber: number;
+    title: string;
+    topic?: string;
+    description?: string;
+    weekStartDate?: string;
+    weekEndDate?: string;
+  }[];
+}
+
+export interface MyEnrollment {
+  enrollmentId: number;
+  studentId: number;
+  cohortCourseId: number;
+  paid: boolean;
+  paidAt: string | null;
+  enrolledAt: string;
+  course: MyEnrollmentCourse;
 }
 
 export interface ProgramResponse {

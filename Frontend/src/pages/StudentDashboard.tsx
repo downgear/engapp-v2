@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
-import type { Enrollment, LearningHistoryItem, Booking } from "@/types";
+import type { MyEnrollment } from "@/services/api";
+import type { LearningHistoryItem, Booking } from "@/types";
 import { 
   BookOpen, Calendar, Video, MessageSquare, Star,
   ChevronRight, ChevronDown, Clock, User, LogOut,
   Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users,
-  Target, Link2, Play, Square
+  Target, Link2, Play, Square, CheckCircle2
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format, parseISO } from "date-fns";
@@ -185,14 +186,76 @@ const FeedbackSection = ({ icon, title, items, colorClass, bulletColor, language
   );
 };
 
+interface CourseRowProps {
+  enrollment: MyEnrollment;
+  language: string;
+  navigate: (path: string) => void;
+}
+
+const CourseRow = ({ enrollment, language, navigate }: CourseRowProps) => {
+  const { course, paid } = enrollment;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const totalModules = course.modules.length || 1;
+
+  const currentModuleNum = (() => {
+    for (const m of course.modules) {
+      if (!m.weekStartDate || !m.weekEndDate) continue;
+      const start = new Date(m.weekStartDate);
+      const end = new Date(m.weekEndDate);
+      end.setHours(23, 59, 59, 999);
+      if (today >= start && today <= end) return m.moduleNumber;
+    }
+    return 1;
+  })();
+
+  const progress = Math.round((currentModuleNum / totalModules) * 100);
+
+  return (
+    <div
+      className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+      onClick={() => navigate("/curriculum")}
+    >
+      <div className="p-2 rounded-lg bg-primary/10">
+        <GraduationCap className="h-5 w-5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <p className="font-medium text-foreground truncate">{course.name}</p>
+          <Badge className="bg-green-500 text-white shrink-0 text-[10px] py-0">
+            <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+            {language === "vi" ? "Đang học" : "Enrolled"}
+          </Badge>
+        </div>
+        {course.cohortName && (
+          <p className="text-xs text-muted-foreground mb-1.5">{course.cohortName}</p>
+        )}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all"
+              style={{ width: `${paid ? progress : (100 / totalModules)}%` }}
+            />
+          </div>
+          <span className="text-xs text-muted-foreground shrink-0">
+            {language === "vi" ? `Module ${currentModuleNum}/${totalModules}` : `Module ${currentModuleNum}/${totalModules}`}
+          </span>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </div>
+  );
+};
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { language } = useLanguage();
   
   const activityConfig = getActivityConfig(language);
   
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+  const [enrollments, setEnrollments] = useState<MyEnrollment[]>([]);
+  const [coursesExpanded, setCoursesExpanded] = useState(false);
   const [learningHistory, setLearningHistory] = useState<LearningHistoryItem[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -211,21 +274,21 @@ const StudentDashboard = () => {
   };
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!user || !accessToken) return;
 
     setIsLoading(true);
 
     try {
       const [enrollmentResult, historyResult, bookingsResult] = await Promise.allSettled([
-        api.getStudentEnrollment(user.profileId),
+        api.getMyEnrollments(accessToken, user.profileId),
         api.getStudentLearningHistory(user.profileId),
         api.getStudentBookings(user.profileId),
       ]);
 
       if (enrollmentResult.status === "fulfilled") {
-        setEnrollment(enrollmentResult.value);
+        setEnrollments(enrollmentResult.value);
       } else {
-        console.error("Failed to fetch enrollment:", enrollmentResult.reason);
+        console.error("Failed to fetch enrollments:", enrollmentResult.reason);
       }
 
       if (historyResult.status === "fulfilled") {
@@ -256,7 +319,7 @@ const StudentDashboard = () => {
       return;
     }
     fetchData();
-  }, [user, isAuthenticated, authLoading, navigate, fetchData]);
+  }, [user, accessToken, isAuthenticated, authLoading, navigate, fetchData]);
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -306,126 +369,60 @@ const StudentDashboard = () => {
               {language === "vi" ? "Tiếp tục hành trình học tiếng Anh của bạn" : "Continue your English learning journey"}
             </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            {language === "vi" ? "Đăng xuất" : "Sign Out"}
-          </Button>
         </div>
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Current Course */}
-            {enrollment && (
-              <Card className="border-border/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    {language === "vi" ? "Khoá học đang tham gia" : "Current Course"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <p className="font-medium text-foreground">{enrollment.course.name}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Module {enrollment.currentModuleNumber} / {enrollment.course.modules?.length || 8}
-                      </p>
-                    </div>
-                    <Badge variant="default">{language === "vi" ? "Đang học" : "In Progress"}</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{language === "vi" ? "Tiến độ" : "Progress"}</span>
-                      <span className="font-medium">
-                        {Math.round((enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100)}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${(enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Curriculum Card */}
-            {enrollment && (
-              <Card 
-                className="border-border/50 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
-                onClick={() => navigate("/curriculum")}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
+            {/* Current Courses — collapsible list */}
+            <Card className="border-border/50">
+              <Collapsible open={coursesExpanded} onOpenChange={setCoursesExpanded}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="pb-3 cursor-pointer hover:bg-muted/30 rounded-t-lg transition-colors select-none">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-primary" />
-                      {language === "vi" ? "Khoá học của tôi" : "My Course"}
+                      <BookOpen className="h-5 w-5 text-primary" />
+                      <span className="flex-1">
+                        {language === "vi" ? "Khoá học đang tham gia" : "My Courses"}
+                      </span>
+                      <Badge variant="secondary" className="text-xs font-normal mr-1">
+                        {enrollments.length}
+                      </Badge>
+                      {coursesExpanded
+                        ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                     </CardTitle>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      {language === "vi" ? "Thời lượng 8 tuần" : "8-week duration"}
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-4 gap-2">
-                    {(enrollment.course.modules || []).slice(0, 8).map((module) => {
-                      // Use week-based status
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const weekStart = new Date(module.weekStartDate);
-                      const weekEnd = new Date(module.weekEndDate);
-                      weekEnd.setHours(23, 59, 59, 999);
-                      
-                      const courseModules = enrollment.course.modules || [];
-                      const courseStarted = courseModules.length > 0 && today >= new Date(courseModules[0].weekStartDate);
-                      const isPaid = enrollment.paid; // Check if student has paid
-                      
-                      let status: 'current' | 'completed' | 'locked' | 'unlocked';
-                      
-                      // If NOT PAID: Only module 1 is unlocked
-                      if (!isPaid) {
-                        status = module.moduleNumber === 1 ? 'current' : 'locked';
-                      } 
-                      // If PAID: All modules are unlocked based on dates
-                      else if (today > weekEnd) {
-                        status = 'completed';
-                      } else if (today >= weekStart && today <= weekEnd) {
-                        status = 'current';
-                      } else {
-                        // Future module but paid - show as unlocked/waiting
-                        status = 'unlocked';
-                      }
-                      
-                      return (
-                        <div 
-                          key={module.id}
-                          className={`p-2 rounded-lg text-center text-xs font-medium transition-colors ${
-                            status === 'current'
-                              ? "bg-primary text-primary-foreground ring-2 ring-primary/20" 
-                              : status === 'completed'
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : status === 'unlocked'
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                              : "bg-muted text-muted-foreground opacity-60"
-                          }`}
-                        >
-                          <div className="font-bold">M{module.moduleNumber}</div>
-                          <div className="truncate text-[10px] mt-0.5 opacity-80">
-                            {status === 'current' ? (language === "vi" ? "Đang học" : "Current") : status === 'completed' ? (language === "vi" ? "Xong" : "Done") : status === 'unlocked' ? (language === "vi" ? "Sẵn sàng" : "Ready") : (language === "vi" ? "Khóa" : "Locked")}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardHeader>
+                </CollapsibleTrigger>
+
+                {/* Always show first course as preview */}
+                {enrollments.length === 0 ? (
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      {language === "vi" ? "Bạn chưa tham gia khoá học nào." : "You're not enrolled in any courses yet."}
+                    </p>
+                  </CardContent>
+                ) : (
+                  <>
+                    {/* First course always visible */}
+                    <CardContent className="pt-0 pb-3">
+                      <CourseRow enrollment={enrollments[0]} language={language} navigate={navigate} />
+                    </CardContent>
+
+                    {/* Remaining courses revealed on expand */}
+                    {enrollments.length > 1 && (
+                      <CollapsibleContent>
+                        <CardContent className="pt-0 space-y-2 border-t border-border/30">
+                          {enrollments.slice(1).map((e) => (
+                            <CourseRow key={e.enrollmentId} enrollment={e} language={language} navigate={navigate} />
+                          ))}
+                        </CardContent>
+                      </CollapsibleContent>
+                    )}
+                  </>
+                )}
+              </Collapsible>
+            </Card>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-3 gap-4">
@@ -456,10 +453,10 @@ const StudentDashboard = () => {
             </div>
 
             {/* Progress Videos - Before & After */}
-            {enrollment && (
+            {enrollments.length > 0 && (
               <StudentProgressVideos 
                 studentId={user!.profileId} 
-                courseId={enrollment.course.id} 
+                courseId={enrollments[0].course.courseId} 
               />
             )}
 

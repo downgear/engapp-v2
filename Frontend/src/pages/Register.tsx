@@ -11,11 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, AlertCircle, GraduationCap, User, Users, BookOpen } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const { language } = useLanguage();
+  const { toast } = useToast();
   
   const [role, setRole] = useState<UserRole>("student");
   const [formData, setFormData] = useState({
@@ -72,6 +74,13 @@ const Register = () => {
       }
 
       await register(registerData);
+      toast({
+        title: language === "vi" ? "Đăng ký thành công" : "Registration successful",
+        description:
+          language === "vi"
+            ? "Kiểm tra hộp thư email của bạn, cả hệ thống spam — hệ thống đã gửi thư xác nhận kèm thông tin đăng nhập (khi máy chủ SMTP đã được cấu hình)."
+            : "Check your inbox - spam email — we sent a confirmation email with your login details (when SMTP is configured on the server).",
+      });
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : language === "vi" ? "Đăng ký thất bại" : "Registration failed");

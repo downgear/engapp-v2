@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* TipTap placeholder support */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+
 @font-face {
   font-family: 'Monda';
   src: url('/fonts/monda.otf') format('opentype');

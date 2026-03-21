@@ -40,7 +40,10 @@ import {
   ChevronRight,
   Loader2,
   UserPlus,
-  ShieldCheck,
+  Upload,
+  Download,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -117,6 +120,12 @@ export const UserManagement = () => {
 
   // Role change loading state
   const [changingRoleUserId, setChangingRoleUserId] = useState<number | null>(null);
+
+  // Bulk import state
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkImportResults, setBulkImportResults] = useState<Array<{ success: boolean; email: string; error?: string }> | null>(null);
+  const [bulkPreview, setBulkPreview] = useState<Array<{ fullName: string; email: string; phone: string; password: string; role: string }>>([]);
 
   // Debounce search
   useEffect(() => {
@@ -248,6 +257,60 @@ export const UserManagement = () => {
     }
   };
 
+  // Parse CSV file for bulk import
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split(/\r?\n/).filter(line => line.trim());
+      // Skip header row
+      const rows = lines.slice(1);
+      const parsed = rows.map(row => {
+        const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        return {
+          fullName: cols[0] || '',
+          email: cols[1] || '',
+          phone: cols[2] || '',
+          password: cols[3] || '',
+          role: cols[4] || 'student',
+        };
+      }).filter(r => r.fullName && r.email);
+      setBulkPreview(parsed);
+      setBulkImportResults(null);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const downloadTemplate = () => {
+    const csv = 'Họ và tên,Email,Số điện thoại,Mật khẩu,Vai trò\nNguyễn Văn A,student@example.com,0912345678,password123,student\nTrần Thị B,parent@example.com,,password456,parent';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mau_tao_tai_khoan.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkImport = async () => {
+    if (!accessToken || bulkPreview.length === 0) return;
+    setBulkImporting(true);
+    try {
+      const result = await api.bulkCreateAdminUsers(accessToken, bulkPreview);
+      setBulkImportResults(result.results);
+      setBulkPreview([]);
+      toast.success(`Tạo thành công ${result.succeeded}/${result.total} tài khoản`);
+      fetchUsers();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+    } finally {
+      setBulkImporting(false);
+    }
+  };
+
   // Handle role change
   const handleRoleChange = async (userId: number, newRole: string) => {
     if (!accessToken) return;
@@ -274,10 +337,16 @@ export const UserManagement = () => {
             <Users className="h-5 w-5" />
             Quản lý người dùng
           </CardTitle>
-          <Button onClick={() => setCreateModalOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Tạo tài khoản
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setBulkImportOpen(true); setBulkPreview([]); setBulkImportResults(null); }}>
+              <Upload className="h-4 w-4 mr-2" />
+              Tạo hàng loạt
+            </Button>
+            <Button onClick={() => setCreateModalOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Tạo tài khoản
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -493,6 +562,108 @@ export const UserManagement = () => {
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Lưu thay đổi
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Import Modal */}
+        <Dialog open={bulkImportOpen} onOpenChange={setBulkImportOpen}>
+          <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Tạo tài khoản hàng loạt
+              </DialogTitle>
+              <DialogDescription>
+                Tải lên file CSV để tạo nhiều tài khoản cùng lúc
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Download template */}
+              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                <div>
+                  <p className="text-sm font-medium">File mẫu CSV</p>
+                  <p className="text-xs text-muted-foreground">Tải file mẫu, điền thông tin, rồi tải lên</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={downloadTemplate}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Tải mẫu
+                </Button>
+              </div>
+
+              {/* Upload CSV */}
+              <div>
+                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
+                  <div className="flex flex-col items-center justify-center">
+                    <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                    <p className="text-sm text-muted-foreground">Nhấn để chọn file CSV</p>
+                  </div>
+                  <input type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
+                </label>
+              </div>
+
+              {/* CSV format info */}
+              <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded-lg">
+                <p className="font-medium mb-1">Định dạng file CSV:</p>
+                <code>Họ và tên, Email, Số điện thoại, Mật khẩu, Vai trò</code>
+                <p className="mt-1">Vai trò: <code>student</code>, <code>parent</code>, <code>teacher</code></p>
+              </div>
+
+              {/* Preview */}
+              {bulkPreview.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Xem trước ({bulkPreview.length} tài khoản)</p>
+                  <div className="border rounded-md overflow-hidden max-h-48 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Họ tên</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Vai trò</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bulkPreview.map((row, i) => (
+                          <TableRow key={i}>
+                            <TableCell className="text-sm">{row.fullName}</TableCell>
+                            <TableCell className="text-sm">{row.email}</TableCell>
+                            <TableCell className="text-sm">
+                              <Badge variant="outline" className="text-xs">
+                                {row.role === 'student' ? 'Học sinh' : row.role === 'parent' ? 'Phụ huynh' : 'Giáo viên'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Results */}
+              {bulkImportResults && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Kết quả</p>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {bulkImportResults.map((r, i) => (
+                      <div key={i} className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded ${r.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                        {r.success ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <XCircle className="h-4 w-4 shrink-0" />}
+                        <span className="font-medium">{r.email}</span>
+                        {r.error && <span className="text-xs opacity-75">— {r.error}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkImportOpen(false)}>Đóng</Button>
+              {bulkPreview.length > 0 && (
+                <Button onClick={handleBulkImport} disabled={bulkImporting}>
+                  {bulkImporting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Tạo {bulkPreview.length} tài khoản
+                </Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
