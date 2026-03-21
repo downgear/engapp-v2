@@ -211,14 +211,14 @@ export const Navigation = () => {
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6" ref={dropdownRef}>
+          <div className="hidden md:flex items-center gap-2 lg:gap-3 xl:gap-6 flex-nowrap" ref={dropdownRef}>
             {navItems.map((item) => (
               <div key={item.label} className="relative">
                 {item.children ? (
                   <>
                     <button
                       onClick={() => handleDropdownToggle(item.label)}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-1.5 px-3 rounded-full border border-border/60 bg-background/70 hover:bg-background"
+                      className="flex items-center gap-1 text-xs lg:text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-2 px-2.5 lg:px-3 xl:py-2.5 xl:px-4 rounded-full border border-border/60 bg-background/70 hover:bg-background whitespace-nowrap"
                     >
                       {item.label}
                       <ChevronDown 
@@ -245,7 +245,7 @@ export const Navigation = () => {
                 ) : (
                   <a
                     href={item.href}
-                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-1.5 px-3 rounded-full border border-border/60 bg-background/70 hover:bg-background"
+                    className="text-xs lg:text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-2 px-2.5 lg:px-3 xl:py-2.5 xl:px-4 rounded-full border border-border/60 bg-background/70 hover:bg-background whitespace-nowrap"
                   >
                     {item.label}
                   </a>
@@ -253,7 +253,7 @@ export const Navigation = () => {
               </div>
             ))}
             {/* Language Toggle */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 lg:gap-2">
               <div className="rounded-full border border-border/60 bg-background/70 px-1.5 py-1">
                 <ThemeSwitcher />
               </div>
@@ -281,7 +281,7 @@ export const Navigation = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-2 pl-2 border-l border-border/50">
+            <div className="flex items-center gap-1 lg:gap-2 pl-2 border-l border-border/50">
               {isLoading ? null : isAuthenticated ? (
                 <>
                   {/* Notification Bell */}
@@ -349,21 +349,21 @@ export const Navigation = () => {
                     </PopoverContent>
                   </Popover>
 
-                  <Button variant="ghost" className="rounded-full border border-border/60 bg-background/70 hover:bg-background" asChild>
+                  <Button variant="ghost" size="sm" className="rounded-full border border-border/60 bg-background/70 hover:bg-background whitespace-nowrap text-xs lg:text-sm px-2.5 lg:px-3" asChild>
                     <a href={dashboardHref}>
                       {user?.fullName || t("nav.parentDashboard")}
                     </a>
                   </Button>
-                  <Button variant="outline" className="rounded-full" onClick={logout}>
+                  <Button variant="outline" size="sm" className="rounded-full whitespace-nowrap text-xs lg:text-sm px-2.5 lg:px-3" onClick={logout}>
                     {language === "vi" ? "Đăng xuất" : "Log Out"}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" className="rounded-full border border-border/60 bg-background/70 hover:bg-background" asChild>
+                  <Button variant="ghost" size="sm" className="rounded-full border border-border/60 bg-background/70 hover:bg-background whitespace-nowrap text-xs lg:text-sm px-2.5 lg:px-3" asChild>
                     <a href="/login">{t("nav.login")}</a>
                   </Button>
-                  <Button className="rounded-full" asChild>
+                  <Button size="sm" className="rounded-full whitespace-nowrap text-xs lg:text-sm px-2.5 lg:px-3" asChild>
                     <a href="/register">{t("nav.register")}</a>
                   </Button>
                 </>
