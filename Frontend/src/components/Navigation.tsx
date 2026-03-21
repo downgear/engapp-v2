@@ -259,25 +259,27 @@ export const Navigation = () => {
               </div>
               <button
                 onClick={() => setLanguage("en")}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
+                className={`flex items-center px-3 py-1.5 rounded-full border transition-colors ${
                   language === "en"
                     ? "border-primary/30 bg-primary/10 hover:bg-primary/20"
                     : "border-border/50 hover:bg-muted/50"
                 }`}
+                aria-label="Switch language to English"
+                title="English"
               >
                 <img src={flagUk} alt="English" className="w-5 h-3.5 object-cover rounded-sm" />
-                <span className={`text-sm font-medium ${language === "en" ? "text-primary" : "text-foreground/70"}`}>EN</span>
               </button>
               <button
                 onClick={() => setLanguage("vi")}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
+                className={`flex items-center px-3 py-1.5 rounded-full border transition-colors ${
                   language === "vi"
                     ? "border-primary/30 bg-primary/10 hover:bg-primary/20"
                     : "border-border/50 hover:bg-muted/50"
                 }`}
+                aria-label="Chuyển ngôn ngữ sang Tiếng Việt"
+                title="Tiếng Việt"
               >
                 <img src={flagVn} alt="Tiếng Việt" className="w-5 h-3.5 object-cover rounded-sm" />
-                <span className={`text-sm font-medium ${language === "vi" ? "text-primary" : "text-foreground/70"}`}>VI</span>
               </button>
             </div>
 
@@ -378,25 +380,27 @@ export const Navigation = () => {
               <ThemeSwitcher compact />
               <button
                 onClick={() => setLanguage("en")}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs transition-colors ${
+                className={`flex items-center px-2 py-1 rounded-full border text-xs transition-colors ${
                   language === "en"
                     ? "border-primary/30 bg-primary/10"
                     : "border-border/50 hover:bg-muted/50"
                 }`}
+                aria-label="Switch language to English"
+                title="English"
               >
                 <img src={flagUk} alt="EN" className="w-4 h-3 object-cover rounded-sm" />
-                <span className={language === "en" ? "text-primary font-medium" : "text-foreground/70"}>EN</span>
               </button>
               <button
                 onClick={() => setLanguage("vi")}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs transition-colors ${
+                className={`flex items-center px-2 py-1 rounded-full border text-xs transition-colors ${
                   language === "vi"
                     ? "border-primary/30 bg-primary/10"
                     : "border-border/50 hover:bg-muted/50"
                 }`}
+                aria-label="Chuyển ngôn ngữ sang Tiếng Việt"
+                title="Tiếng Việt"
               >
                 <img src={flagVn} alt="VI" className="w-4 h-3 object-cover rounded-sm" />
-                <span className={language === "vi" ? "text-primary font-medium" : "text-foreground/70"}>VI</span>
               </button>
             </div>
             {/* Mobile Menu Button */}
