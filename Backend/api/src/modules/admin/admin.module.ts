@@ -8,9 +8,13 @@ import { LearningHistory } from '../../entities/learning-history.entity';
 import { LoginSession } from '../../entities/login-session.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Student, Parent, Teacher, LearningHistory, LoginSession])],
+  imports: [
+    TypeOrmModule.forFeature([User, Student, Parent, Teacher, LearningHistory, LoginSession]),
+    EmailModule,
+  ],
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],

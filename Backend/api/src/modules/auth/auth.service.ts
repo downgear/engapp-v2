@@ -5,6 +5,7 @@ import { Repository, In } from 'typeorm';
 import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus, LoginSession } from '../../entities';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { EmailService } from '../email/email.service';
 
 export interface JwtPayload {
   sub: number;
@@ -43,6 +44,7 @@ export class AuthService {
     @InjectRepository(LoginSession)
     private loginSessionRepo: Repository<LoginSession>,
     private jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -108,6 +110,14 @@ export class AuthService {
       default:
         throw new BadRequestException('Invalid role');
     }
+
+    // Notify user by email (same SMTP as admin-created accounts; skipped if SMTP not configured)
+    await this.emailService.sendSelfRegistrationEmail(
+      user.email,
+      user.fullName,
+      dto.password,
+      dto.role,
+    );
 
     // Generate JWT
     return this.generateAuthResponse(user, profileId);

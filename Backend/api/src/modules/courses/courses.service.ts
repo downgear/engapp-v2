@@ -117,6 +117,9 @@ export class CoursesService {
       learningOutcomes,
       weekStartDate: module.weekStartDate,
       weekEndDate: module.weekEndDate,
+      mondayContent: module.mondayContent ?? null,
+      aiPracticeContent: module.aiPracticeContent ?? null,
+      teacherSessionContent: module.teacherSessionContent ?? null,
     };
   }
 }

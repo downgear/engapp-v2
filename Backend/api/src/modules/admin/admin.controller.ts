@@ -101,4 +101,11 @@ export class AdminController {
   ) {
     return this.adminService.updateUserRole(id, data.role as UserRole);
   }
+
+  @Post('users/bulk-create')
+  bulkCreateUsers(
+    @Body() data: { users: Array<{ email: string; password: string; fullName: string; phone?: string; role: string }> },
+  ) {
+    return this.adminService.bulkCreateUsers(data.users);
+  }
 }

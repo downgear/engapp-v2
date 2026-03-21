@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IsString, IsOptional, IsBoolean, IsNumber, IsEnum } from 'class-validator';
-import { Program, Cohort, CohortCourse, Course, StudentCohortEnrollment, Teacher, User } from '../../entities';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsEnum, IsArray } from 'class-validator';
+import { Program, Cohort, CohortCourse, Course, StudentCohortEnrollment, Teacher, User, Student } from '../../entities';
+import { Module as CourseModule } from '../../entities/module.entity';
 import { CohortStatus } from '../../entities/cohort.entity';
 import { CourseLevel } from '../../entities/cohort-course.entity';
+import { CourseStatus } from '../../entities/course.entity';
 
 // DTOs (using classes with class-validator decorators)
 export class CreateProgramDto {
@@ -113,6 +115,125 @@ export class UpdateCohortCourseDto {
   enrolledStudents?: number;
 }
 
+export class CreateModuleDto {
+  @IsNumber()
+  courseId: number;
+
+  @IsNumber()
+  moduleNumber: number;
+
+  @IsString()
+  title: string;
+
+  @IsString()
+  topic: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  weekStartDate?: string;
+
+  @IsOptional()
+  @IsString()
+  weekEndDate?: string;
+
+  @IsOptional()
+  mondayContent?: {
+    vocabulary?: string[];
+    grammar?: string;
+    activities?: string;
+    notes?: string;
+  };
+
+  @IsOptional()
+  aiPracticeContent?: {
+    topics?: string[];
+    exercises?: string;
+    notes?: string;
+  };
+
+  @IsOptional()
+  teacherSessionContent?: {
+    goals?: string[];
+    focus?: string;
+    notes?: string;
+  };
+}
+
+export class UpdateModuleDto {
+  @IsOptional()
+  @IsNumber()
+  moduleNumber?: number;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  topic?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  weekStartDate?: string;
+
+  @IsOptional()
+  @IsString()
+  weekEndDate?: string;
+
+  @IsOptional()
+  mondayContent?: {
+    vocabulary?: string[];
+    grammar?: string;
+    activities?: string;
+    notes?: string;
+  } | null;
+
+  @IsOptional()
+  aiPracticeContent?: {
+    topics?: string[];
+    exercises?: string;
+    notes?: string;
+  } | null;
+
+  @IsOptional()
+  teacherSessionContent?: {
+    goals?: string[];
+    focus?: string;
+    notes?: string;
+  } | null;
+}
+
+export class CreateCourseDto {
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  startDate: string;
+
+  @IsString()
+  endDate: string;
+
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+
+  @IsOptional()
+  @IsEnum(CourseStatus)
+  status?: CourseStatus;
+}
+
 @Injectable()
 export class ProgramsService {
   private readonly logger = new Logger(ProgramsService.name);
@@ -126,12 +247,16 @@ export class ProgramsService {
     private cohortCourseRepository: Repository<CohortCourse>,
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    @InjectRepository(CourseModule)
+    private moduleRepository: Repository<CourseModule>,
     @InjectRepository(StudentCohortEnrollment)
     private enrollmentRepository: Repository<StudentCohortEnrollment>,
     @InjectRepository(Teacher)
     private teacherRepository: Repository<Teacher>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Student)
+    private studentRepository: Repository<Student>,
   ) {}
 
   // ==================== PROGRAMS ====================
@@ -339,6 +464,69 @@ export class ProgramsService {
     this.logger.log(`Deleted cohort course (ID: ${id})`);
   }
 
+  // ==================== MODULES ====================
+
+  async findModuleById(id: number): Promise<CourseModule> {
+    const module = await this.moduleRepository.findOne({ where: { id } });
+    if (!module) {
+      throw new NotFoundException(`Module with ID ${id} not found`);
+    }
+    return module;
+  }
+
+  async createModule(dto: CreateModuleDto): Promise<CourseModule> {
+    const course = await this.courseRepository.findOne({ where: { id: dto.courseId } });
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${dto.courseId} not found`);
+    }
+
+    const existing = await this.moduleRepository.findOne({
+      where: { courseId: dto.courseId, moduleNumber: dto.moduleNumber },
+    });
+    if (existing) {
+      throw new ConflictException(`Module ${dto.moduleNumber} already exists in this course`);
+    }
+
+    const newModule = new CourseModule();
+    newModule.courseId = dto.courseId;
+    newModule.moduleNumber = dto.moduleNumber;
+    newModule.title = dto.title;
+    newModule.topic = dto.topic;
+    newModule.description = dto.description ?? null;
+    newModule.weekStartDate = dto.weekStartDate ?? null;
+    newModule.weekEndDate = dto.weekEndDate ?? null;
+    newModule.mondayContent = dto.mondayContent ?? null;
+    newModule.aiPracticeContent = dto.aiPracticeContent ?? null;
+    newModule.teacherSessionContent = dto.teacherSessionContent ?? null;
+    const saved = await this.moduleRepository.save(newModule);
+    this.logger.log(`Created module ${saved.moduleNumber}: ${saved.title} for course ${dto.courseId}`);
+    return saved;
+  }
+
+  async updateModule(id: number, dto: UpdateModuleDto): Promise<CourseModule> {
+    const module = await this.findModuleById(id);
+
+    if (dto.moduleNumber !== undefined && dto.moduleNumber !== module.moduleNumber) {
+      const existing = await this.moduleRepository.findOne({
+        where: { courseId: module.courseId, moduleNumber: dto.moduleNumber },
+      });
+      if (existing) {
+        throw new ConflictException(`Module ${dto.moduleNumber} already exists in this course`);
+      }
+    }
+
+    Object.assign(module, dto);
+    const updated = await this.moduleRepository.save(module);
+    this.logger.log(`Updated module ${updated.id}: ${updated.title}`);
+    return updated;
+  }
+
+  async deleteModule(id: number): Promise<void> {
+    const module = await this.findModuleById(id);
+    await this.moduleRepository.remove(module);
+    this.logger.log(`Deleted module ${id}`);
+  }
+
   // ==================== PUBLIC API (for students) ====================
 
   async getAllProgramsForPublic() {
@@ -383,6 +571,12 @@ export class ProgramsService {
               moduleNumber: m.moduleNumber,
               title: m.title,
               topic: m.topic,
+              description: m.description,
+              weekStartDate: m.weekStartDate,
+              weekEndDate: m.weekEndDate,
+              mondayContent: m.mondayContent,
+              aiPracticeContent: m.aiPracticeContent,
+              teacherSessionContent: m.teacherSessionContent,
             })) || [],
           };
         }),
@@ -453,5 +647,162 @@ export class ProgramsService {
       where: { studentId, cohortCourseId },
     });
     return enrollment?.paid || false;
+  }
+
+  // ==================== CREATE STANDALONE COURSE ====================
+
+  async createStandaloneCourse(dto: CreateCourseDto): Promise<Course> {
+    const today = dto.startDate || new Date().toISOString().split('T')[0];
+    const course = this.courseRepository.create({
+      name: dto.name,
+      description: dto.description || '',
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      registrationOpenDate: today,
+      registrationCloseDate: today,
+      price: dto.price || 0,
+      status: (dto.status as CourseStatus) || CourseStatus.UPCOMING,
+      classDay: 'monday',
+      classStartTime: '08:00',
+      classEndTime: '09:30',
+    });
+    const saved = await this.courseRepository.save(course);
+    this.logger.log(`Created standalone course: ${saved.name} (ID: ${saved.id})`);
+    return saved;
+  }
+
+  // ==================== COHORT COURSE ENROLLMENTS (admin view) ====================
+
+  async getCohortCourseEnrollments(cohortCourseId: number) {
+    const enrollments = await this.enrollmentRepository.find({
+      where: { cohortCourseId },
+    });
+
+    const results: Array<{
+      enrollmentId: number;
+      studentId: number;
+      userId: number;
+      fullName: string;
+      email: string;
+      phone: string | null;
+      paid: boolean;
+      paidAt: Date | null;
+      enrolledAt: Date;
+    }> = [];
+
+    for (const enrollment of enrollments) {
+      const student = await this.studentRepository.findOne({
+        where: { id: enrollment.studentId },
+      });
+      if (!student) continue;
+      const user = await this.userRepository.findOne({
+        where: { id: student.userId },
+      });
+      if (!user) continue;
+      results.push({
+        enrollmentId: enrollment.id,
+        studentId: enrollment.studentId,
+        userId: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        paid: enrollment.paid,
+        paidAt: enrollment.paidAt,
+        enrolledAt: enrollment.enrolledAt,
+      });
+    }
+    return results;
+  }
+
+  async enrollStudentByUserId(userId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
+    const student = await this.studentRepository.findOne({ where: { userId } });
+    if (!student) {
+      throw new NotFoundException(`Student profile not found for user ID ${userId}`);
+    }
+    // Enroll and immediately mark as paid (admin-initiated enrollments are fully authorized)
+    const enrollment = await this.enrollStudent(student.id, cohortCourseId);
+    if (!enrollment.paid) {
+      enrollment.paid = true;
+      enrollment.paidAt = new Date();
+      await this.enrollmentRepository.save(enrollment);
+    }
+    return enrollment;
+  }
+
+  async getStudentEnrollmentsFormatted(studentId: number) {
+    const enrollments = await this.enrollmentRepository.find({
+      where: { studentId },
+      relations: [
+        'cohortCourse',
+        'cohortCourse.course',
+        'cohortCourse.course.modules',
+        'cohortCourse.cohort',
+        'cohortCourse.teacher',
+        'cohortCourse.teacher.user',
+      ],
+    });
+
+    return enrollments
+      .filter(e => e.cohortCourse != null && e.cohortCourse.course != null)
+      .map(e => {
+        const cc = e.cohortCourse;
+        let teacherInfo: { id: number; name: string; email: string } | null = null;
+        if (cc.teacher?.user && !cc.teacher.user.isLocked) {
+          teacherInfo = {
+            id: cc.teacher.id,
+            name: cc.teacher.user.fullName,
+            email: cc.teacher.user.email,
+          };
+        }
+        return {
+          enrollmentId: e.id,
+          studentId: e.studentId,
+          cohortCourseId: e.cohortCourseId,
+          paid: e.paid,
+          paidAt: e.paidAt,
+          enrolledAt: e.enrolledAt,
+          course: {
+            id: cc.id,
+            courseId: cc.courseId,
+            name: cc.displayName || cc.course?.name || 'Unnamed Course',
+            description: cc.description || cc.course?.description || '',
+            level: cc.level,
+            status: cc.course?.status,
+            startDate: cc.course?.startDate,
+            endDate: cc.course?.endDate,
+            price: cc.course?.price ?? 0,
+            enrolledStudents: cc.enrolledStudents,
+            maxStudents: cc.maxStudents,
+            teacher: teacherInfo,
+            cohortName: cc.cohort?.name,
+            modules: (cc.course?.modules ?? [])
+              .map(m => ({
+                id: m.id,
+                moduleNumber: m.moduleNumber,
+                title: m.title,
+                topic: m.topic,
+                description: m.description,
+                weekStartDate: m.weekStartDate,
+                weekEndDate: m.weekEndDate,
+                mondayContent: m.mondayContent,
+                aiPracticeContent: m.aiPracticeContent,
+                teacherSessionContent: m.teacherSessionContent,
+              }))
+              .sort((a, b) => a.moduleNumber - b.moduleNumber),
+          },
+        };
+      });
+  }
+
+  async unenrollStudent(studentId: number, cohortCourseId: number): Promise<void> {
+    const enrollment = await this.enrollmentRepository.findOne({
+      where: { studentId, cohortCourseId },
+    });
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+    await this.enrollmentRepository.remove(enrollment);
+    await this.cohortCourseRepository.decrement({ id: cohortCourseId }, 'enrolledStudents', 1);
+    this.logger.log(`Student ${studentId} unenrolled from cohort course ${cohortCourseId}`);
   }
 }

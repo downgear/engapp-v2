@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ProgramsService, CreateProgramDto, UpdateProgramDto, CreateCohortDto, UpdateCohortDto, CreateCohortCourseDto, UpdateCohortCourseDto } from './programs.service';
+import { ProgramsService, CreateProgramDto, UpdateProgramDto, CreateCohortDto, UpdateCohortDto, CreateCohortCourseDto, UpdateCohortCourseDto, CreateModuleDto, UpdateModuleDto, CreateCourseDto } from './programs.service';
 
 @Controller('programs')
 export class ProgramsController {
@@ -100,6 +100,38 @@ export class ProgramsController {
     return { success: true, message: 'Cohort course deleted' };
   }
 
+  // ==================== ADMIN ENDPOINTS (Standalone Courses) ====================
+
+  @Post('courses')
+  @UseGuards(JwtAuthGuard)
+  async createCourse(@Body() dto: CreateCourseDto) {
+    return this.programsService.createStandaloneCourse(dto);
+  }
+
+  // ==================== ADMIN ENDPOINTS (Modules) ====================
+
+  @Post('modules')
+  @UseGuards(JwtAuthGuard)
+  async createModule(@Body() dto: CreateModuleDto) {
+    return this.programsService.createModule(dto);
+  }
+
+  @Put('modules/:id')
+  @UseGuards(JwtAuthGuard)
+  async updateModule(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateModuleDto,
+  ) {
+    return this.programsService.updateModule(id, dto);
+  }
+
+  @Delete('modules/:id')
+  @UseGuards(JwtAuthGuard)
+  async deleteModule(@Param('id', ParseIntPipe) id: number) {
+    await this.programsService.deleteModule(id);
+    return { success: true, message: 'Module deleted' };
+  }
+
   // ==================== STUDENT ENROLLMENT ENDPOINTS ====================
 
   @Post('enroll')
@@ -123,6 +155,12 @@ export class ProgramsController {
     return this.programsService.getStudentEnrollments(studentId);
   }
 
+  @Get('enrollments/:studentId/formatted')
+  @UseGuards(JwtAuthGuard)
+  async getStudentEnrollmentsFormatted(@Param('studentId', ParseIntPipe) studentId: number) {
+    return this.programsService.getStudentEnrollmentsFormatted(studentId);
+  }
+
   @Post('enrollment/pay')
   @UseGuards(JwtAuthGuard)
   async markEnrollmentAsPaid(@Body() body: { studentId: number; cohortCourseId: number }) {
@@ -137,5 +175,27 @@ export class ProgramsController {
   ) {
     const paid = await this.programsService.checkEnrollmentPaid(studentId, cohortCourseId);
     return { paid };
+  }
+
+  @Get('cohort-courses/:id/enrollments')
+  @UseGuards(JwtAuthGuard)
+  async getCohortCourseEnrollments(@Param('id', ParseIntPipe) id: number) {
+    return this.programsService.getCohortCourseEnrollments(id);
+  }
+
+  @Post('enroll/by-user')
+  @UseGuards(JwtAuthGuard)
+  async enrollStudentByUserId(@Body() body: { userId: number; cohortCourseId: number }) {
+    return this.programsService.enrollStudentByUserId(body.userId, body.cohortCourseId);
+  }
+
+  @Delete('enroll/:studentId/:cohortCourseId')
+  @UseGuards(JwtAuthGuard)
+  async unenrollStudent(
+    @Param('studentId', ParseIntPipe) studentId: number,
+    @Param('cohortCourseId', ParseIntPipe) cohortCourseId: number,
+  ) {
+    await this.programsService.unenrollStudent(studentId, cohortCourseId);
+    return { success: true, message: 'Student unenrolled' };
   }
 }

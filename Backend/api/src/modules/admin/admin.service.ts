@@ -7,6 +7,7 @@ import { Parent } from '../../entities/parent.entity';
 import { Teacher, TeacherType } from '../../entities/teacher.entity';
 import { LearningHistory, ActivityType } from '../../entities/learning-history.entity';
 import { LoginSession } from '../../entities/login-session.entity';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AdminService {
@@ -23,6 +24,7 @@ export class AdminService {
     private readonly learningHistoryRepository: Repository<LearningHistory>,
     @InjectRepository(LoginSession)
     private readonly loginSessionRepository: Repository<LoginSession>,
+    private readonly emailService: EmailService,
   ) {}
 
   // ==================== USER STATISTICS ====================
@@ -258,7 +260,56 @@ export class AdminService {
         break;
     }
 
+    // Send welcome email (non-blocking)
+    this.emailService.sendWelcomeEmail(data.email, data.fullName, data.password, data.role).catch(() => {});
+
     return this.getUserById(user.id);
+  }
+
+  // ==================== BULK CREATE USERS ====================
+
+  async bulkCreateUsers(users: Array<{
+    email: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+    role: string;
+  }>) {
+    const results: Array<{ success: boolean; email: string; error?: string; user?: any }> = [];
+
+    for (const userData of users) {
+      try {
+        const role = userData.role as UserRole;
+        if (!Object.values(UserRole).includes(role) || role === UserRole.ADMIN) {
+          results.push({ success: false, email: userData.email, error: 'Invalid role' });
+          continue;
+        }
+
+        const existingEmail = await this.userRepository.findOne({ where: { email: userData.email } });
+        if (existingEmail) {
+          results.push({ success: false, email: userData.email, error: 'Email đã được sử dụng' });
+          continue;
+        }
+
+        const user = await this.createUser({
+          email: userData.email,
+          password: userData.password,
+          fullName: userData.fullName,
+          phone: userData.phone,
+          role,
+        });
+        results.push({ success: true, email: userData.email, user });
+      } catch (err) {
+        results.push({ success: false, email: userData.email, error: err instanceof Error ? err.message : 'Unknown error' });
+      }
+    }
+
+    return {
+      total: users.length,
+      succeeded: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length,
+      results,
+    };
   }
 
   // ==================== UPDATE USER ROLE ====================

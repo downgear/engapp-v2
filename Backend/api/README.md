@@ -18,13 +18,30 @@ npm install
 
 ## Environment Variables
 
-Tạo file `.env` trong thư mục `Backend/api/`:
+Tạo file `.env` trong thư mục `Backend/api/` (có thể copy từ mẫu):
+
+```bash
+cp .env.example .env
+```
+
+Các biến quan trọng:
 
 ```env
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 JWT_SECRET=your-jwt-secret
+FRONTEND_URL=http://localhost:8080
+
+# Gửi email (đăng ký, tạo user admin) — xem chi tiết Gmail: docs/SMTP-GMAIL.md
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your@gmail.com
+SMTP_PASS=your-app-password-16-chars
+
 OPENAI_API_KEY=sk-your-openai-key  # Optional: cho AI Practice
 ```
+
+File **`.env.example`** trong cùng thư mục có đầy đủ placeholder. **SMTP với Gmail:** bật 2FA → tạo [App Password](https://myaccount.google.com/apppasswords) → dán vào `SMTP_PASS` (không dùng mật khẩu đăng nhập web).
 
 ## Chạy API
 
