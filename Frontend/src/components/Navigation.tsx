@@ -195,8 +195,8 @@ export const Navigation = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-background/80 backdrop-blur-sm border-b border-border/50"
-          : "bg-transparent border-b border-transparent"
+          ? "bg-white/95 dark:bg-background/95 backdrop-blur-md border-b border-border/70 shadow-sm"
+          : "bg-white/90 dark:bg-background/90 backdrop-blur-md border-b border-border/60 shadow-sm"
       }`}
     >
       <div className="container mx-auto px-4 md:px-6">
@@ -218,7 +218,7 @@ export const Navigation = () => {
                   <>
                     <button
                       onClick={() => handleDropdownToggle(item.label)}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors py-2"
+                      className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-1.5 px-3 rounded-full border border-border/60 bg-background/70 hover:bg-background"
                     >
                       {item.label}
                       <ChevronDown 
@@ -245,7 +245,7 @@ export const Navigation = () => {
                 ) : (
                   <a
                     href={item.href}
-                    className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
+                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-1.5 px-3 rounded-full border border-border/60 bg-background/70 hover:bg-background"
                   >
                     {item.label}
                   </a>
@@ -254,7 +254,9 @@ export const Navigation = () => {
             ))}
             {/* Language Toggle */}
             <div className="hidden sm:flex items-center gap-2">
-              <ThemeSwitcher />
+              <div className="rounded-full border border-border/60 bg-background/70 px-1.5 py-1">
+                <ThemeSwitcher />
+              </div>
               <button
                 onClick={() => setLanguage("en")}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
@@ -347,21 +349,21 @@ export const Navigation = () => {
                     </PopoverContent>
                   </Popover>
 
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" className="rounded-full border border-border/60 bg-background/70 hover:bg-background" asChild>
                     <a href={dashboardHref}>
                       {user?.fullName || t("nav.parentDashboard")}
                     </a>
                   </Button>
-                  <Button variant="outline" onClick={logout}>
+                  <Button variant="outline" className="rounded-full" onClick={logout}>
                     {language === "vi" ? "Đăng xuất" : "Log Out"}
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" className="rounded-full border border-border/60 bg-background/70 hover:bg-background" asChild>
                     <a href="/login">{t("nav.login")}</a>
                   </Button>
-                  <Button asChild>
+                  <Button className="rounded-full" asChild>
                     <a href="/register">{t("nav.register")}</a>
                   </Button>
                 </>

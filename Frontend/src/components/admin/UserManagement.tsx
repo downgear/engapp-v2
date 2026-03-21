@@ -40,8 +40,8 @@ import {
   ChevronRight,
   Loader2,
   UserPlus,
-  Upload,
-  Download,
+  Plus,
+  Trash2,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -126,6 +126,13 @@ export const UserManagement = () => {
   const [bulkImporting, setBulkImporting] = useState(false);
   const [bulkImportResults, setBulkImportResults] = useState<Array<{ success: boolean; email: string; error?: string }> | null>(null);
   const [bulkPreview, setBulkPreview] = useState<Array<{ fullName: string; email: string; phone: string; password: string; role: string }>>([]);
+  const [bulkDraft, setBulkDraft] = useState<{ fullName: string; email: string; phone: string; password: string; role: string }>({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "student",
+  });
 
   // Debounce search
   useEffect(() => {
@@ -257,42 +264,18 @@ export const UserManagement = () => {
     }
   };
 
-  // Parse CSV file for bulk import
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split(/\r?\n/).filter(line => line.trim());
-      // Skip header row
-      const rows = lines.slice(1);
-      const parsed = rows.map(row => {
-        const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        return {
-          fullName: cols[0] || '',
-          email: cols[1] || '',
-          phone: cols[2] || '',
-          password: cols[3] || '',
-          role: cols[4] || 'student',
-        };
-      }).filter(r => r.fullName && r.email);
-      setBulkPreview(parsed);
-      setBulkImportResults(null);
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+  const handleAddBulkRow = () => {
+    if (!bulkDraft.fullName || !bulkDraft.email || !bulkDraft.password) {
+      toast.error("Vui lòng điền họ tên, email và mật khẩu");
+      return;
+    }
+    setBulkPreview((prev) => [...prev, { ...bulkDraft, phone: bulkDraft.phone || "" }]);
+    setBulkDraft({ fullName: "", email: "", phone: "", password: "", role: "student" });
+    setBulkImportResults(null);
   };
 
-  const downloadTemplate = () => {
-    const csv = 'Họ và tên,Email,Số điện thoại,Mật khẩu,Vai trò\nNguyễn Văn A,student@example.com,0912345678,password123,student\nTrần Thị B,parent@example.com,,password456,parent';
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'mau_tao_tai_khoan.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleRemoveBulkRow = (index: number) => {
+    setBulkPreview((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleBulkImport = async () => {
@@ -339,7 +322,7 @@ export const UserManagement = () => {
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => { setBulkImportOpen(true); setBulkPreview([]); setBulkImportResults(null); }}>
-              <Upload className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Tạo hàng loạt
             </Button>
             <Button onClick={() => setCreateModalOpen(true)}>
@@ -571,42 +554,77 @@ export const UserManagement = () => {
           <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
+                <Users className="h-5 w-5" />
                 Tạo tài khoản hàng loạt
               </DialogTitle>
               <DialogDescription>
-                Tải lên file CSV để tạo nhiều tài khoản cùng lúc
+                Thêm từng người dùng trong cùng form, sau đó tạo tất cả cùng lúc
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              {/* Download template */}
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div>
-                  <p className="text-sm font-medium">File mẫu CSV</p>
-                  <p className="text-xs text-muted-foreground">Tải file mẫu, điền thông tin, rồi tải lên</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={downloadTemplate}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Tải mẫu
-                </Button>
-              </div>
-
-              {/* Upload CSV */}
-              <div>
-                <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
-                  <div className="flex flex-col items-center justify-center">
-                    <Upload className="h-6 w-6 text-muted-foreground mb-1" />
-                    <p className="text-sm text-muted-foreground">Nhấn để chọn file CSV</p>
+              {/* Inline add form */}
+              <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+                <p className="text-sm font-medium">Thêm người dùng</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="bulk-fullName">Họ và tên *</Label>
+                    <Input
+                      id="bulk-fullName"
+                      value={bulkDraft.fullName}
+                      onChange={(e) => setBulkDraft((prev) => ({ ...prev, fullName: e.target.value }))}
+                      placeholder="Nguyễn Văn A"
+                    />
                   </div>
-                  <input type="file" accept=".csv" className="hidden" onChange={handleCsvUpload} />
-                </label>
-              </div>
-
-              {/* CSV format info */}
-              <div className="text-xs text-muted-foreground p-3 bg-muted/20 rounded-lg">
-                <p className="font-medium mb-1">Định dạng file CSV:</p>
-                <code>Họ và tên, Email, Số điện thoại, Mật khẩu, Vai trò</code>
-                <p className="mt-1">Vai trò: <code>student</code>, <code>parent</code>, <code>teacher</code></p>
+                  <div className="space-y-1">
+                    <Label htmlFor="bulk-email">Email *</Label>
+                    <Input
+                      id="bulk-email"
+                      type="email"
+                      value={bulkDraft.email}
+                      onChange={(e) => setBulkDraft((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bulk-phone">Số điện thoại</Label>
+                    <Input
+                      id="bulk-phone"
+                      value={bulkDraft.phone}
+                      onChange={(e) => setBulkDraft((prev) => ({ ...prev, phone: e.target.value }))}
+                      placeholder="0912345678"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="bulk-password">Mật khẩu *</Label>
+                    <Input
+                      id="bulk-password"
+                      type="password"
+                      value={bulkDraft.password}
+                      onChange={(e) => setBulkDraft((prev) => ({ ...prev, password: e.target.value }))}
+                      placeholder="Tối thiểu 6 ký tự"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="bulk-role">Vai trò</Label>
+                  <Select
+                    value={bulkDraft.role}
+                    onValueChange={(val) => setBulkDraft((prev) => ({ ...prev, role: val }))}
+                  >
+                    <SelectTrigger id="bulk-role" className="w-full md:w-[240px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Học sinh</SelectItem>
+                      <SelectItem value="parent">Phụ huynh</SelectItem>
+                      <SelectItem value="teacher">Giáo viên</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="button" variant="outline" onClick={handleAddBulkRow}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add user
+                </Button>
               </div>
 
               {/* Preview */}
@@ -620,6 +638,7 @@ export const UserManagement = () => {
                           <TableHead>Họ tên</TableHead>
                           <TableHead>Email</TableHead>
                           <TableHead>Vai trò</TableHead>
+                          <TableHead className="w-[90px] text-right">Xoá</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -631,6 +650,11 @@ export const UserManagement = () => {
                               <Badge variant="outline" className="text-xs">
                                 {row.role === 'student' ? 'Học sinh' : row.role === 'parent' ? 'Phụ huynh' : 'Giáo viên'}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button type="button" variant="ghost" size="sm" onClick={() => handleRemoveBulkRow(i)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -661,7 +685,7 @@ export const UserManagement = () => {
               {bulkPreview.length > 0 && (
                 <Button onClick={handleBulkImport} disabled={bulkImporting}>
                   {bulkImporting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Tạo {bulkPreview.length} tài khoản
+                  Add tất cả user ({bulkPreview.length})
                 </Button>
               )}
             </DialogFooter>
