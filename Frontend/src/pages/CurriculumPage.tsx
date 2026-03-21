@@ -20,6 +20,7 @@ interface ModuleItem {
   moduleNumber: number;
   title: string;
   topic?: string;
+  imageUrl?: string | null;
   weekStartDate?: string;
   weekEndDate?: string;
 }
@@ -346,6 +347,19 @@ const CurriculumPage = () => {
                   className="overflow-hidden transition-all cursor-pointer hover:shadow-lg hover:border-primary/50 hover:-translate-y-1 border-green-500/40 bg-green-50/20 dark:bg-green-950/10"
                   onClick={() => setSelectedEnrollment(enrollment)}
                 >
+                  <div className="h-36 w-full overflow-hidden">
+                    {course.imageUrl ? (
+                      <img
+                        src={course.imageUrl}
+                        alt={course.name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20 flex items-center justify-center">
+                        <GraduationCap className="h-12 w-12 text-primary/40" />
+                      </div>
+                    )}
+                  </div>
                   <CardContent className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-3">

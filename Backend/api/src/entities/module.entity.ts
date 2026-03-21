@@ -25,6 +25,9 @@ export class Module {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
+  @Column({ name: 'image_url', type: 'text', nullable: true })
+  imageUrl: string | null;
+
   @Column({ name: 'learning_outcomes', type: 'text', nullable: true })
   learningOutcomes: string | null;
 
@@ -40,6 +43,7 @@ export class Module {
     grammar?: string;
     activities?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
 
   @Column({ name: 'ai_practice_content', type: 'jsonb', nullable: true })
@@ -47,6 +51,7 @@ export class Module {
     topics?: string[];
     exercises?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
 
   @Column({ name: 'teacher_session_content', type: 'jsonb', nullable: true })
@@ -54,6 +59,7 @@ export class Module {
     goals?: string[];
     focus?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
 
   @CreateDateColumn({ name: 'created_at' })

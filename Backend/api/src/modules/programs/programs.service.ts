@@ -146,6 +146,7 @@ export class CreateModuleDto {
     grammar?: string;
     activities?: string;
     notes?: string;
+    imageUrl?: string;
   };
 
   @IsOptional()
@@ -153,6 +154,7 @@ export class CreateModuleDto {
     topics?: string[];
     exercises?: string;
     notes?: string;
+    imageUrl?: string;
   };
 
   @IsOptional()
@@ -160,7 +162,12 @@ export class CreateModuleDto {
     goals?: string[];
     focus?: string;
     notes?: string;
+    imageUrl?: string;
   };
+  
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
 
 export class UpdateModuleDto {
@@ -194,6 +201,7 @@ export class UpdateModuleDto {
     grammar?: string;
     activities?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
 
   @IsOptional()
@@ -201,6 +209,7 @@ export class UpdateModuleDto {
     topics?: string[];
     exercises?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
 
   @IsOptional()
@@ -208,7 +217,12 @@ export class UpdateModuleDto {
     goals?: string[];
     focus?: string;
     notes?: string;
+    imageUrl?: string;
   } | null;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | null;
 }
 
 export class CreateCourseDto {
@@ -232,6 +246,10 @@ export class CreateCourseDto {
   @IsOptional()
   @IsEnum(CourseStatus)
   status?: CourseStatus;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
 }
 
 @Injectable()
@@ -493,6 +511,7 @@ export class ProgramsService {
     newModule.title = dto.title;
     newModule.topic = dto.topic;
     newModule.description = dto.description ?? null;
+    newModule.imageUrl = dto.imageUrl ?? null;
     newModule.weekStartDate = dto.weekStartDate ?? null;
     newModule.weekEndDate = dto.weekEndDate ?? null;
     newModule.mondayContent = dto.mondayContent ?? null;
@@ -562,6 +581,7 @@ export class ProgramsService {
             startDate: cc.course?.startDate,
             endDate: cc.course?.endDate,
             price: cc.course?.price,
+            imageUrl: cc.course?.imageUrl,
             enrolledStudents: cc.enrolledStudents,
             maxStudents: cc.maxStudents,
             teacherId: cc.teacherId,
@@ -572,6 +592,7 @@ export class ProgramsService {
               title: m.title,
               topic: m.topic,
               description: m.description,
+              imageUrl: m.imageUrl,
               weekStartDate: m.weekStartDate,
               weekEndDate: m.weekEndDate,
               mondayContent: m.mondayContent,
@@ -649,6 +670,27 @@ export class ProgramsService {
     return enrollment?.paid || false;
   }
 
+  // ==================== UPDATE STANDALONE COURSE ====================
+
+  async updateCourse(id: number, dto: Partial<Pick<CreateCourseDto, 'name' | 'description' | 'startDate' | 'endDate' | 'price' | 'status' | 'imageUrl'>>): Promise<Course> {
+    const course = await this.courseRepository.findOne({ where: { id } });
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${id} not found`);
+    }
+    Object.assign(course, {
+      ...(dto.name !== undefined && { name: dto.name }),
+      ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.startDate !== undefined && { startDate: dto.startDate }),
+      ...(dto.endDate !== undefined && { endDate: dto.endDate }),
+      ...(dto.price !== undefined && { price: dto.price }),
+      ...(dto.status !== undefined && { status: dto.status as CourseStatus }),
+      ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl || null }),
+    });
+    const updated = await this.courseRepository.save(course);
+    this.logger.log(`Updated course: ${updated.name} (ID: ${updated.id})`);
+    return updated;
+  }
+
   // ==================== CREATE STANDALONE COURSE ====================
 
   async createStandaloneCourse(dto: CreateCourseDto): Promise<Course> {
@@ -661,6 +703,7 @@ export class ProgramsService {
       registrationOpenDate: today,
       registrationCloseDate: today,
       price: dto.price || 0,
+      imageUrl: dto.imageUrl || null,
       status: (dto.status as CourseStatus) || CourseStatus.UPCOMING,
       classDay: 'monday',
       classStartTime: '08:00',
@@ -771,6 +814,7 @@ export class ProgramsService {
             startDate: cc.course?.startDate,
             endDate: cc.course?.endDate,
             price: cc.course?.price ?? 0,
+            imageUrl: cc.course?.imageUrl ?? null,
             enrolledStudents: cc.enrolledStudents,
             maxStudents: cc.maxStudents,
             teacher: teacherInfo,
@@ -782,6 +826,7 @@ export class ProgramsService {
                 title: m.title,
                 topic: m.topic,
                 description: m.description,
+                imageUrl: m.imageUrl,
                 weekStartDate: m.weekStartDate,
                 weekEndDate: m.weekEndDate,
                 mondayContent: m.mondayContent,

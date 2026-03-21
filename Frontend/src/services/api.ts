@@ -23,13 +23,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options || {};
+  const isFormData = typeof FormData !== 'undefined' && restOptions.body instanceof FormData;
   
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...restOptions,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(optionHeaders as Record<string, string>),
-    },
+    headers: isFormData
+      ? ({ ...(optionHeaders as Record<string, string>) })
+      : ({
+          'Content-Type': 'application/json',
+          ...(optionHeaders as Record<string, string>),
+        }),
   });
 
   if (!response.ok) {
@@ -731,6 +734,7 @@ export const api = {
     title: string;
     topic: string;
     description?: string;
+    imageUrl?: string;
     weekStartDate?: string;
     weekEndDate?: string;
     mondayContent?: ModuleContentData | null;
@@ -749,6 +753,7 @@ export const api = {
     title?: string;
     topic?: string;
     description?: string;
+    imageUrl?: string | null;
     weekStartDate?: string;
     weekEndDate?: string;
     mondayContent?: ModuleContentData | null;
@@ -818,9 +823,26 @@ export const api = {
     endDate: string;
     price?: number;
     status?: string;
+    imageUrl?: string;
   }): Promise<{ id: number; name: string }> {
     return fetchApi('/programs/courses', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateCourse(token: string, courseId: number, data: {
+    name?: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    price?: number;
+    status?: string;
+    imageUrl?: string | null;
+  }): Promise<{ id: number; name: string }> {
+    return fetchApi(`/programs/courses/${courseId}`, {
+      method: 'PUT',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify(data),
     });
@@ -854,6 +876,17 @@ export const api = {
     return fetchApi(`/programs/enroll/${studentId}/${cohortCourseId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  async uploadProgramImage(token: string, file: File, folder = 'lingriser/images'): Promise<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+    return fetchApi('/programs/upload-image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
   },
 
@@ -942,6 +975,7 @@ export interface MyEnrollmentCourse {
   status?: string;
   startDate?: string;
   endDate?: string;
+  imageUrl?: string | null;
   price: number;
   enrolledStudents: number;
   maxStudents: number;
@@ -953,8 +987,12 @@ export interface MyEnrollmentCourse {
     title: string;
     topic?: string;
     description?: string;
+    imageUrl?: string | null;
     weekStartDate?: string;
     weekEndDate?: string;
+    mondayContent?: ModuleContentData | null;
+    aiPracticeContent?: AIPracticeContentData | null;
+    teacherSessionContent?: TeacherSessionContentData | null;
   }[];
 }
 
@@ -988,18 +1026,21 @@ export interface ModuleContentData {
   grammar?: string;
   activities?: string;
   notes?: string;
+  imageUrl?: string;
 }
 
 export interface AIPracticeContentData {
   topics?: string[];
   exercises?: string;
   notes?: string;
+  imageUrl?: string;
 }
 
 export interface TeacherSessionContentData {
   goals?: string[];
   focus?: string;
   notes?: string;
+  imageUrl?: string;
 }
 
 export interface ModuleResponse {
@@ -1009,6 +1050,7 @@ export interface ModuleResponse {
   title: string;
   topic: string;
   description?: string;
+  imageUrl?: string | null;
   weekStartDate?: string;
   weekEndDate?: string;
   mondayContent?: ModuleContentData | null;
@@ -1025,6 +1067,7 @@ export interface CohortCourseResponse {
   status: string;
   startDate: string;
   endDate: string;
+  imageUrl?: string | null;
   price: number;
   enrolledStudents: number;
   maxStudents: number;

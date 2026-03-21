@@ -1,0 +1,5 @@
+ALTER TABLE courses
+ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+ALTER TABLE modules
+ADD COLUMN IF NOT EXISTS image_url TEXT;

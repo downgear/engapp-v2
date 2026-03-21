@@ -19,6 +19,9 @@ export class Course {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ name: 'image_url', type: 'text', nullable: true })
+  imageUrl: string | null;
+
   @Column({ name: 'start_date', type: 'date' })
   startDate: string;
 

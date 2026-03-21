@@ -16,6 +16,7 @@ import {
 
 interface ModuleContent {
   notes?: string | null;
+  imageUrl?: string | null;
   vocabulary?: string[];
   grammar?: string;
   activities?: string;
@@ -31,6 +32,7 @@ interface Module {
   title: string;
   topic?: string;
   description?: string;
+  imageUrl?: string | null;
   weekStartDate?: string;
   weekEndDate?: string;
   mondayContent?: ModuleContent | null;
@@ -179,6 +181,11 @@ const ModuleDetailPage = () => {
                 )}
               </div>
             </div>
+            {module.imageUrl && (
+              <div className="mt-4 overflow-hidden rounded-lg border">
+                <img src={module.imageUrl} alt={module.title} className="h-56 w-full object-cover" />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -222,6 +229,11 @@ const ModuleDetailPage = () => {
                       </p>
                     </div>
                   </div>
+                  {module.mondayContent?.imageUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border">
+                      <img src={module.mondayContent.imageUrl} alt="Monday content" className="h-48 w-full object-cover" />
+                    </div>
+                  )}
 
                   {mondayHtml ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none
@@ -279,6 +291,11 @@ const ModuleDetailPage = () => {
                       </p>
                     </div>
                   </div>
+                  {module.aiPracticeContent?.imageUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border">
+                      <img src={module.aiPracticeContent.imageUrl} alt="AI practice content" className="h-48 w-full object-cover" />
+                    </div>
+                  )}
 
                   {aiHtml ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none
@@ -347,6 +364,11 @@ const ModuleDetailPage = () => {
                       </p>
                     </div>
                   </div>
+                  {module.teacherSessionContent?.imageUrl && (
+                    <div className="mb-4 overflow-hidden rounded-lg border">
+                      <img src={module.teacherSessionContent.imageUrl} alt="Teacher session content" className="h-48 w-full object-cover" />
+                    </div>
+                  )}
 
                   {teacherHtml ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none

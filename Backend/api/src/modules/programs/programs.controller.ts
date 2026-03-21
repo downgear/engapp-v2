@@ -1,10 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ProgramsService, CreateProgramDto, UpdateProgramDto, CreateCohortDto, UpdateCohortDto, CreateCohortCourseDto, UpdateCohortCourseDto, CreateModuleDto, UpdateModuleDto, CreateCourseDto } from './programs.service';
+import { ProgramS3Service } from './s3.service';
 
 @Controller('programs')
 export class ProgramsController {
-  constructor(private readonly programsService: ProgramsService) {}
+  constructor(
+    private readonly programsService: ProgramsService,
+    private readonly programS3Service: ProgramS3Service,
+  ) {}
 
   // ==================== PUBLIC ENDPOINTS ====================
 
@@ -106,6 +111,32 @@ export class ProgramsController {
   @UseGuards(JwtAuthGuard)
   async createCourse(@Body() dto: CreateCourseDto) {
     return this.programsService.createStandaloneCourse(dto);
+  }
+
+  @Put('courses/:id')
+  @UseGuards(JwtAuthGuard)
+  async updateCourse(@Param('id', ParseIntPipe) id: number, @Body() dto: Partial<CreateCourseDto>) {
+    return this.programsService.updateCourse(id, dto);
+  }
+
+  @Post('upload-image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('image', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!file.mimetype.startsWith('image/')) {
+        return cb(new BadRequestException('Only image files are allowed'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('folder') folder?: string,
+  ) {
+    if (!file) throw new BadRequestException('Image file is required');
+    const imageUrl = await this.programS3Service.uploadImage(file, folder || 'lingriser/images');
+    return { imageUrl };
   }
 
   // ==================== ADMIN ENDPOINTS (Modules) ====================

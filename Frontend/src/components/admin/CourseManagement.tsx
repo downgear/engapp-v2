@@ -72,6 +72,9 @@ import {
   UserPlus,
   UserMinus,
   Search,
+  Upload,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -79,6 +82,66 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse, ModuleResponse } from "@/services/api";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
+
+// ── Reusable image preview / upload widget ────────────────────────────────
+interface ImageUploadPreviewProps {
+  value: string;
+  onChange: (url: string) => void;
+  onFileChange: (file: File) => void;
+  disabled?: boolean;
+  label?: string;
+}
+const ImageUploadPreview = ({ value, onChange, onFileChange, disabled, label }: ImageUploadPreviewProps) => (
+  <div className="space-y-2">
+    {label && <Label>{label}</Label>}
+    {value ? (
+      <div className="relative group rounded-lg overflow-hidden border border-border">
+        <img src={value} alt="preview" className="w-full h-40 object-cover" />
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <label className={cn("cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-white text-foreground shadow hover:bg-white/90", disabled && "pointer-events-none opacity-50")}>
+            <Upload className="h-3.5 w-3.5" />
+            Đổi ảnh
+            <input
+              type="file"
+              accept="image/*"
+              disabled={disabled}
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFileChange(f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-red-500 text-white shadow hover:bg-red-600"
+          >
+            <X className="h-3.5 w-3.5" />
+            Xóa
+          </button>
+        </div>
+      </div>
+    ) : (
+      <label className={cn("flex flex-col items-center justify-center gap-2 h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/40 transition-colors text-muted-foreground", disabled && "pointer-events-none opacity-50")}>
+        <ImageIcon className="h-7 w-7" />
+        <span className="text-sm font-medium">Nhấn để tải ảnh lên</span>
+        <input
+          type="file"
+          accept="image/*"
+          disabled={disabled}
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onFileChange(f);
+            e.currentTarget.value = "";
+          }}
+        />
+      </label>
+    )}
+  </div>
+);
 
 // Teacher type for selection
 interface TeacherOption {
@@ -211,9 +274,13 @@ export const CourseManagement = () => {
     description: "",
     weekStartDate: "",
     weekEndDate: "",
+    imageUrl: "",
     mondayContent: "",
+    mondayImageUrl: "",
     aiContent: "",
+    aiImageUrl: "",
     teacherContent: "",
+    teacherImageUrl: "",
   });
 
   // Student enrollment dialog
@@ -237,9 +304,11 @@ export const CourseManagement = () => {
     startDate: "",
     endDate: "",
     price: 0,
+    imageUrl: "",
     maxStudents: 20,
     teacherId: null as number | null,
   });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Fetch programs from API and keep selectedCourse in sync
   const fetchPrograms = useCallback(async () => {
@@ -429,12 +498,37 @@ export const CourseManagement = () => {
     }
   };
 
+  const uploadProgramImage = async (
+    file: File,
+    apply: (url: string) => void,
+    folder = "lingriser/images",
+  ) => {
+    if (!accessToken) return;
+    try {
+      setIsUploadingImage(true);
+      const { imageUrl } = await api.uploadProgramImage(accessToken, file, folder);
+      apply(imageUrl);
+      toast({
+        title: language === "vi" ? "Tải ảnh thành công" : "Image uploaded",
+        description: language === "vi" ? "Ảnh đã được lưu lên S3" : "Image saved to S3",
+      });
+    } catch (error) {
+      toast({
+        title: language === "vi" ? "Lỗi tải ảnh" : "Upload failed",
+        description: error instanceof Error ? error.message : (language === "vi" ? "Không thể tải ảnh" : "Could not upload image"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   // ==================== Course CRUD ====================
   const openAddCourse = (programId: number, cohortId: number) => {
     setSelectedProgramId(programId);
     setSelectedCohortId(cohortId);
     setEditingCourse(null);
-    setCourseForm({ name: "", description: "", level: "basic", status: "upcoming", startDate: "", endDate: "", price: 0, maxStudents: 20, teacherId: null });
+    setCourseForm({ name: "", description: "", level: "basic", status: "upcoming", startDate: "", endDate: "", price: 0, imageUrl: "", maxStudents: 20, teacherId: null });
     setCourseDialogOpen(true);
   };
 
@@ -450,6 +544,7 @@ export const CourseManagement = () => {
       startDate: course.startDate,
       endDate: course.endDate,
       price: course.price,
+      imageUrl: (course as any).imageUrl || "",
       maxStudents: course.maxStudents,
       teacherId: course.teacherId || null,
     });
@@ -465,13 +560,25 @@ export const CourseManagement = () => {
     setIsSaving(true);
     try {
       if (editingCourse) {
-        await api.updateCohortCourse(accessToken, editingCourse.course.id, {
-          level: courseForm.level,
-          displayName: courseForm.name,
-          description: courseForm.description,
-          maxStudents: courseForm.maxStudents,
-          teacherId: courseForm.teacherId,
-        });
+        await Promise.all([
+          api.updateCohortCourse(accessToken, editingCourse.course.id, {
+            level: courseForm.level,
+            displayName: courseForm.name,
+            description: courseForm.description,
+            maxStudents: courseForm.maxStudents,
+            teacherId: courseForm.teacherId,
+          }),
+          // Also persist imageUrl, dates, price, status to the underlying Course entity
+          api.updateCourse(accessToken, editingCourse.course.courseId, {
+            name: courseForm.name,
+            description: courseForm.description,
+            startDate: courseForm.startDate || undefined,
+            endDate: courseForm.endDate || undefined,
+            price: courseForm.price,
+            status: courseForm.status,
+            imageUrl: courseForm.imageUrl || null,
+          }),
+        ]);
         toast({ title: language === "vi" ? "Thành công" : "Success", description: language === "vi" ? "Đã cập nhật khóa học" : "Course updated" });
         await refetchAndSync();
       } else if (selectedCohortId) {
@@ -482,6 +589,7 @@ export const CourseManagement = () => {
           startDate: courseForm.startDate || new Date().toISOString().split("T")[0],
           endDate: courseForm.endDate || new Date().toISOString().split("T")[0],
           price: courseForm.price,
+          imageUrl: courseForm.imageUrl || undefined,
           status: courseForm.status,
         });
         const newCohortCourse = await api.createCohortCourse(accessToken, {
@@ -522,7 +630,7 @@ export const CourseManagement = () => {
   const openAddModule = (courseId: number, existingModuleCount: number) => {
     setModuleTargetCourseId(courseId);
     setEditingModule(null);
-    setModuleForm({ moduleNumber: existingModuleCount + 1, title: "", topic: "", description: "", weekStartDate: "", weekEndDate: "", mondayContent: "", aiContent: "", teacherContent: "" });
+    setModuleForm({ moduleNumber: existingModuleCount + 1, title: "", topic: "", description: "", weekStartDate: "", weekEndDate: "", imageUrl: "", mondayContent: "", mondayImageUrl: "", aiContent: "", aiImageUrl: "", teacherContent: "", teacherImageUrl: "" });
     setModuleDialogOpen(true);
   };
 
@@ -536,9 +644,13 @@ export const CourseManagement = () => {
       description: module.description || "",
       weekStartDate: module.weekStartDate || "",
       weekEndDate: module.weekEndDate || "",
+      imageUrl: (module as any).imageUrl || "",
       mondayContent: legacyMondayToHtml(module.mondayContent),
+      mondayImageUrl: (module.mondayContent as any)?.imageUrl || "",
       aiContent: legacyAiToHtml(module.aiPracticeContent),
+      aiImageUrl: (module.aiPracticeContent as any)?.imageUrl || "",
       teacherContent: legacyTeacherToHtml(module.teacherSessionContent),
+      teacherImageUrl: (module.teacherSessionContent as any)?.imageUrl || "",
     });
     setModuleDialogOpen(true);
   };
@@ -556,9 +668,9 @@ export const CourseManagement = () => {
     if (!accessToken) return;
     setIsSaving(true);
     try {
-      const mondayContent = moduleForm.mondayContent ? { notes: moduleForm.mondayContent } : null;
-      const aiPracticeContent = moduleForm.aiContent ? { notes: moduleForm.aiContent } : null;
-      const teacherSessionContent = moduleForm.teacherContent ? { notes: moduleForm.teacherContent } : null;
+      const mondayContent = moduleForm.mondayContent || moduleForm.mondayImageUrl ? { notes: moduleForm.mondayContent, imageUrl: moduleForm.mondayImageUrl || undefined } : null;
+      const aiPracticeContent = moduleForm.aiContent || moduleForm.aiImageUrl ? { notes: moduleForm.aiContent, imageUrl: moduleForm.aiImageUrl || undefined } : null;
+      const teacherSessionContent = moduleForm.teacherContent || moduleForm.teacherImageUrl ? { notes: moduleForm.teacherContent, imageUrl: moduleForm.teacherImageUrl || undefined } : null;
 
       if (editingModule) {
         await api.updateModule(accessToken, editingModule.module.id, {
@@ -566,6 +678,7 @@ export const CourseManagement = () => {
           title: moduleForm.title,
           topic: moduleForm.topic,
           description: moduleForm.description || undefined,
+          imageUrl: moduleForm.imageUrl || undefined,
           weekStartDate: moduleForm.weekStartDate || undefined,
           weekEndDate: moduleForm.weekEndDate || undefined,
           mondayContent,
@@ -580,6 +693,7 @@ export const CourseManagement = () => {
           title: moduleForm.title,
           topic: moduleForm.topic,
           description: moduleForm.description || undefined,
+          imageUrl: moduleForm.imageUrl || undefined,
           weekStartDate: moduleForm.weekStartDate || undefined,
           weekEndDate: moduleForm.weekEndDate || undefined,
           mondayContent,
@@ -1081,6 +1195,13 @@ export const CourseManagement = () => {
               <Label>{language === "vi" ? "Mô tả" : "Description"}</Label>
               <Textarea value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} rows={2} />
             </div>
+            <ImageUploadPreview
+              label={language === "vi" ? "Ảnh khóa học" : "Course image"}
+              value={courseForm.imageUrl}
+              onChange={(url) => setCourseForm((prev) => ({ ...prev, imageUrl: url }))}
+              onFileChange={(file) => uploadProgramImage(file, (url) => setCourseForm((prev) => ({ ...prev, imageUrl: url })), "lingriser/course-images")}
+              disabled={isUploadingImage}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{language === "vi" ? "Ngày bắt đầu *" : "Start Date *"}</Label>
@@ -1207,6 +1328,13 @@ export const CourseManagement = () => {
                 <Label>{language === "vi" ? "Mô tả" : "Description"}</Label>
                 <Textarea value={moduleForm.description} onChange={(e) => setModuleForm({ ...moduleForm, description: e.target.value })} rows={2} />
               </div>
+              <ImageUploadPreview
+                label={language === "vi" ? "Ảnh module" : "Module image"}
+                value={moduleForm.imageUrl}
+                onChange={(url) => setModuleForm((prev) => ({ ...prev, imageUrl: url }))}
+                onFileChange={(file) => uploadProgramImage(file, (url) => setModuleForm((prev) => ({ ...prev, imageUrl: url })), "lingriser/module-images")}
+                disabled={isUploadingImage}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{language === "vi" ? "Ngày bắt đầu tuần" : "Week Start Date"}</Label>
@@ -1234,6 +1362,13 @@ export const CourseManagement = () => {
                 placeholder={language === "vi" ? "Soạn nội dung buổi học Thứ Hai: từ vựng, ngữ pháp, hoạt động lớp học..." : "Write Monday lesson content: vocabulary, grammar, class activities..."}
                 minHeight="200px"
               />
+              <ImageUploadPreview
+                label={language === "vi" ? "Ảnh Thứ Hai" : "Monday image"}
+                value={moduleForm.mondayImageUrl}
+                onChange={(url) => setModuleForm((prev) => ({ ...prev, mondayImageUrl: url }))}
+                onFileChange={(file) => uploadProgramImage(file, (url) => setModuleForm((prev) => ({ ...prev, mondayImageUrl: url })), "lingriser/module-days")}
+                disabled={isUploadingImage}
+              />
             </TabsContent>
 
             {/* Tab 3: Tue–Thu — AI Practice */}
@@ -1251,6 +1386,13 @@ export const CourseManagement = () => {
                 placeholder={language === "vi" ? "Soạn nội dung luyện AI: chủ đề hội thoại, bài tập phát âm, từ vựng cần ôn..." : "Write AI practice content: conversation topics, pronunciation exercises, vocabulary to review..."}
                 minHeight="200px"
               />
+              <ImageUploadPreview
+                label={language === "vi" ? "Ảnh Thứ Ba–Thứ Năm" : "Tue–Thu image"}
+                value={moduleForm.aiImageUrl}
+                onChange={(url) => setModuleForm((prev) => ({ ...prev, aiImageUrl: url }))}
+                onFileChange={(file) => uploadProgramImage(file, (url) => setModuleForm((prev) => ({ ...prev, aiImageUrl: url })), "lingriser/module-days")}
+                disabled={isUploadingImage}
+              />
             </TabsContent>
 
             {/* Tab 4: Fri–Sun — Foreign Teacher Session */}
@@ -1267,6 +1409,13 @@ export const CourseManagement = () => {
                 onChange={(html) => setModuleForm({ ...moduleForm, teacherContent: html })}
                 placeholder={language === "vi" ? "Soạn nội dung buổi học với GV nước ngoài: mục tiêu, trọng tâm, ghi chú cho giáo viên..." : "Write foreign teacher session content: goals, focus areas, notes for teacher..."}
                 minHeight="200px"
+              />
+              <ImageUploadPreview
+                label={language === "vi" ? "Ảnh Thứ Sáu/Cuối tuần" : "Fri/Weekend image"}
+                value={moduleForm.teacherImageUrl}
+                onChange={(url) => setModuleForm((prev) => ({ ...prev, teacherImageUrl: url }))}
+                onFileChange={(file) => uploadProgramImage(file, (url) => setModuleForm((prev) => ({ ...prev, teacherImageUrl: url })), "lingriser/module-days")}
+                disabled={isUploadingImage}
               />
             </TabsContent>
           </Tabs>
