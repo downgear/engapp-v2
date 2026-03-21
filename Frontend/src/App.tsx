@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -33,12 +34,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Routes>
               {/* ========== PUBLIC ROUTES ========== */}
               {/* Accessible by everyone, no authentication required */}
               <Route path="/" element={<Index />} />
@@ -155,11 +157,12 @@ const App = () => (
               
               {/* ========== CATCH-ALL ========== */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-            {/* Chat Widget for all authenticated users (except admin) */}
-            <ChatWidget />
-          </BrowserRouter>
-        </TooltipProvider>
+              </Routes>
+              {/* Chat Widget for all authenticated users (except admin) */}
+              <ChatWidget />
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
       </LanguageProvider>
     </AuthProvider>
   </QueryClientProvider>

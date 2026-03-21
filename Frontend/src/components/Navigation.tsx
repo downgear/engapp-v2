@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { api } from "@/services/api";
 import type { Notification } from "@/types";
 import { formatDistanceToNow } from "date-fns";
@@ -253,6 +254,7 @@ export const Navigation = () => {
             ))}
             {/* Language Toggle */}
             <div className="hidden sm:flex items-center gap-2">
+              <ThemeSwitcher />
               <button
                 onClick={() => setLanguage("en")}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors ${
@@ -371,6 +373,7 @@ export const Navigation = () => {
           <div className="flex items-center gap-2">
             {/* Mobile Language Toggle */}
             <div className="flex sm:hidden items-center gap-1">
+              <ThemeSwitcher compact />
               <button
                 onClick={() => setLanguage("en")}
                 className={`flex items-center gap-1 px-2 py-1 rounded-full border text-xs transition-colors ${
@@ -454,6 +457,9 @@ export const Navigation = () => {
                     ))}
                   </div>
                   <div className="border-t border-border/50 p-4 space-y-3">
+                    <div className="flex justify-start">
+                      <ThemeSwitcher compact onThemeChanged={handleMobileLinkClick} />
+                    </div>
                     {isLoading ? null : isAuthenticated ? (
                       <>
                         {/* Mobile Notifications */}

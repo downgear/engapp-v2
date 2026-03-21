@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Parent, User, Payment } from '../../entities';
 import { StudentsService } from '../students/students.service';
+import { ProgramsService } from '../programs/programs.service';
 
 @Injectable()
 export class ParentsService {
@@ -14,6 +15,7 @@ export class ParentsService {
     @InjectRepository(Payment)
     private paymentRepo: Repository<Payment>,
     private studentsService: StudentsService,
+    private programsService: ProgramsService,
   ) {}
 
   async findOne(id: number) {
@@ -46,15 +48,66 @@ export class ParentsService {
   }
 
   async getChildEnrollment(parentId: number, studentId: number) {
-    // Verify parent has access to this student
     const children = await this.studentsService.findByParentId(parentId);
     const hasAccess = children.some((c) => c.id === studentId);
-
     if (!hasAccess) {
       throw new NotFoundException('Student not found or not linked to this parent');
     }
 
+    // Use the new StudentCohortEnrollment system first; fall back to old Enrollment table
+    const cohortEnrollments = await this.programsService.getStudentEnrollmentsFormatted(studentId);
+    if (cohortEnrollments.length > 0) {
+      // Return the most recently enrolled course shaped like the legacy Enrollment response
+      const latest = cohortEnrollments[cohortEnrollments.length - 1];
+      const currentModuleNumber = this.computeCurrentModuleNumber(latest.course.modules);
+      return {
+        id: latest.enrollmentId,
+        status: latest.paid ? 'active' : 'pending',
+        enrolledAt: latest.enrolledAt,
+        currentModuleNumber,
+        paid: latest.paid,
+        paidAt: latest.paidAt,
+        course: {
+          id: latest.course.id,
+          name: latest.course.name,
+          startDate: latest.course.startDate || '',
+          endDate: latest.course.endDate || '',
+          status: latest.course.status || 'upcoming',
+          modules: latest.course.modules,
+        },
+      };
+    }
+
+    // Fallback: legacy enrollment table
     return this.studentsService.getEnrollment(studentId);
+  }
+
+  async getChildEnrollments(parentId: number, studentId: number) {
+    const children = await this.studentsService.findByParentId(parentId);
+    const hasAccess = children.some((c) => c.id === studentId);
+    if (!hasAccess) {
+      throw new NotFoundException('Student not found or not linked to this parent');
+    }
+    return this.programsService.getStudentEnrollmentsFormatted(studentId);
+  }
+
+  /** Determine which module is currently active based on week dates. */
+  private computeCurrentModuleNumber(modules: { moduleNumber: number; weekStartDate?: string | null; weekEndDate?: string | null }[]): number {
+    if (!modules.length) return 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const m of modules) {
+      if (!m.weekStartDate || !m.weekEndDate) continue;
+      const start = new Date(m.weekStartDate);
+      const end = new Date(m.weekEndDate);
+      end.setHours(23, 59, 59, 999);
+      if (today >= start && today <= end) return m.moduleNumber;
+    }
+    // Before course starts → module 1; after course ends → last module
+    const sorted = [...modules].sort((a, b) => a.moduleNumber - b.moduleNumber);
+    const first = sorted[0];
+    if (first.weekStartDate && today < new Date(first.weekStartDate)) return 1;
+    return sorted[sorted.length - 1].moduleNumber;
   }
 
   async getChildProgressVideos(parentId: number, studentId: number, courseId: number) {

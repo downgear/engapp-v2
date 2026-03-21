@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import FloatingEffects from "@/components/FloatingEffects";
 import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +22,6 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { StudentProgressVideos } from "@/components/student-dashboard/StudentProgressVideos";
 import { AIPracticeWeeklyChart } from "@/components/AIPracticeWeeklyChart";
-
 const getActivityConfig = (lang: string) => ({
   in_person_class: { icon: BookOpen, label: lang === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Class", color: "text-blue-500 bg-blue-50" },
   ai_practice: { icon: MessageSquare, label: lang === "vi" ? "Luyện tập AI" : "AI Practice", color: "text-green-500 bg-green-50" },
@@ -336,7 +336,7 @@ const StudentDashboard = () => {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background transition-colors duration-500">
         <Navigation />
         <main className="container mx-auto px-4 md:px-6 pt-28 pb-16">
           <Skeleton className="h-10 w-64 mb-4" />
@@ -351,12 +351,13 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors duration-500">
+      <FloatingEffects intensity="subtle" />
       <Navigation />
 
       <main className="container mx-auto px-4 md:px-6 pt-28 pb-16">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-5 mb-8">
           <div>
             <Badge variant="secondary" className="mb-4">
               <User className="h-3 w-3 mr-1" />
@@ -369,6 +370,7 @@ const StudentDashboard = () => {
               {language === "vi" ? "Tiếp tục hành trình học tiếng Anh của bạn" : "Continue your English learning journey"}
             </p>
           </div>
+
         </div>
 
         {/* Main Grid */}

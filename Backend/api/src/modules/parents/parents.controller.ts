@@ -36,6 +36,14 @@ export class ParentsController {
     return this.parentsService.getChildEnrollment(id, studentId);
   }
 
+  @Get(':id/children/:studentId/enrollments')
+  getChildEnrollments(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('studentId', ParseIntPipe) studentId: number,
+  ) {
+    return this.parentsService.getChildEnrollments(id, studentId);
+  }
+
   @Get(':id/children/:studentId/progress-videos')
   getChildProgressVideos(
     @Param('id', ParseIntPipe) id: number,

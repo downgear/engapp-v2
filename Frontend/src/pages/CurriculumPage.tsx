@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/services/api";
 import type { MyEnrollment } from "@/services/api";
+import FloatingEffects from "@/components/FloatingEffects";
 import {
   BookOpen, ChevronRight, CheckCircle2, Clock,
   ArrowLeft, Target, Users, GraduationCap, Calendar,
@@ -97,6 +98,7 @@ const CurriculumPage = () => {
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <FloatingEffects intensity="subtle" />
         <Navigation />
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           <Skeleton className="h-10 w-64 mb-6" />
@@ -132,6 +134,7 @@ const CurriculumPage = () => {
 
     return (
       <div className="min-h-screen bg-background">
+        <FloatingEffects intensity="subtle" />
         <Navigation />
         <main className="container mx-auto px-4 pt-28 pb-8 max-w-6xl">
           {/* Header */}
@@ -301,6 +304,7 @@ const CurriculumPage = () => {
   // ── Course list view ─────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
+      <FloatingEffects intensity="subtle" />
       <Navigation />
       <main className="container mx-auto px-4 pt-28 pb-8 max-w-6xl">
         <div className="flex items-center gap-4 mb-8">

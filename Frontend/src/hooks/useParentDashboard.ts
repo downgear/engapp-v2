@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/services/api";
+import type { MyEnrollment } from "@/services/api";
 import type { Child, ProgressVideos, LearningHistoryItem, Enrollment } from "@/types";
 
 // Default parent ID for demo
@@ -136,7 +137,7 @@ export function useLearningHistory(
 }
 
 /**
- * Hook to fetch enrollment for a specific child
+ * Hook to fetch enrollment for a specific child (legacy single-enrollment shape, used for LearningFlowCard)
  */
 export function useEnrollment(
   studentId: number | null,
@@ -169,4 +170,46 @@ export function useEnrollment(
   }, [fetchEnrollment]);
 
   return { enrollment, isLoading, error, refetch: fetchEnrollment };
+}
+
+interface UseEnrollmentsResult {
+  enrollments: MyEnrollment[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+/**
+ * Hook to fetch ALL enrollments for a specific child from the new cohort system
+ */
+export function useEnrollments(
+  studentId: number | null,
+  parentId: number = DEMO_PARENT_ID
+): UseEnrollmentsResult {
+  const [enrollments, setEnrollments] = useState<MyEnrollment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchEnrollments = useCallback(async () => {
+    if (!studentId) {
+      setEnrollments([]);
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.getChildEnrollments(parentId, studentId);
+      setEnrollments(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to fetch enrollments"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [studentId, parentId]);
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [fetchEnrollments]);
+
+  return { enrollments, isLoading, error, refetch: fetchEnrollments };
 }

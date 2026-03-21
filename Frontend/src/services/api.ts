@@ -56,6 +56,10 @@ export const api = {
     return fetchApi<Enrollment>(`/parents/${parentId}/children/${studentId}/enrollment`);
   },
 
+  async getChildEnrollments(parentId: number, studentId: number): Promise<MyEnrollment[]> {
+    return fetchApi<MyEnrollment[]>(`/parents/${parentId}/children/${studentId}/enrollments`);
+  },
+
   async getChildProgressVideos(parentId: number, studentId: number, courseId: number): Promise<ProgressVideos> {
     return fetchApi<ProgressVideos>(`/parents/${parentId}/children/${studentId}/progress-videos?courseId=${courseId}`);
   },

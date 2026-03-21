@@ -10,10 +10,12 @@ import { RealResults } from "@/components/RealResults";
 import { Pricing } from "@/components/Pricing";
 import { FAQ } from "@/components/FAQ";
 import { CTA } from "@/components/CTA";
+import FloatingEffects from "@/components/FloatingEffects";
 
 const Index = () => {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen relative">
+      <FloatingEffects intensity="full" />
       <Navigation />
       <Hero />
       <Evidence />

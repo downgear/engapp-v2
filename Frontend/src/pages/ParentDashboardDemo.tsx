@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import FloatingEffects from "@/components/FloatingEffects";
 import { Navigation } from "@/components/Navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +10,9 @@ import { LearningFlowCard } from "@/components/parent-dashboard/LearningFlowCard
 import { AIPracticeWeeklyChart } from "@/components/AIPracticeWeeklyChart";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useChildren, useProgressVideos, useLearningHistory, useEnrollment } from "@/hooks/useParentDashboard";
+import { useChildren, useProgressVideos, useLearningHistory, useEnrollment, useEnrollments } from "@/hooks/useParentDashboard";
 import type { LearningHistoryItem } from "@/types";
-import { History, AlertCircle, BookOpen, MessageSquare, Video, Calendar, Star, ChevronRight, ChevronDown, Mic, BookText, Brain, Zap, Lightbulb } from "lucide-react";
+import { History, AlertCircle, BookOpen, MessageSquare, Video, Calendar, Star, ChevronRight, ChevronDown, BookText, Brain, Zap, Lightbulb, GraduationCap, CheckCircle2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -198,6 +199,7 @@ const ParentDashboardDemo = () => {
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   
   const { enrollment } = useEnrollment(selectedChildId, parentId ?? 1);
+  const { enrollments } = useEnrollments(selectedChildId, parentId ?? 1);
   const courseId = enrollment?.course?.id || 1;
   
   const { progressVideos, isLoading: isLoadingVideos } = useProgressVideos(selectedChildId, courseId, parentId ?? 1);
@@ -230,6 +232,7 @@ const ParentDashboardDemo = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <FloatingEffects intensity="subtle" />
       <Navigation />
 
       <main className="container mx-auto px-4 md:px-6 pt-28 pb-16">
@@ -361,39 +364,71 @@ const ParentDashboardDemo = () => {
             )}
           </CollapsibleSection>
 
-          {/* Enrollment Info Section - Collapsible */}
-          {enrollment && (
-            <CollapsibleSection
-              title={language === "vi" ? "Khoá Học Đang Tham Gia" : "Current Enrollment"}
-              icon={<BookOpen className="h-5 w-5 text-primary" />}
-              defaultOpen={true}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{enrollment.course.name}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {language === "vi" ? "Đang học" : "Currently on"} Module {enrollment.currentModuleNumber} / {enrollment.course.modules?.length || 8}
-                  </p>
-                </div>
-                <Badge variant={enrollment.status === 'active' ? 'default' : 'secondary'}>
-                  {enrollment.status === 'active' ? (language === "vi" ? 'Đang học' : 'Active') : enrollment.status}
-                </Badge>
+          {/* Enrolled Courses Section */}
+          <CollapsibleSection
+            title={language === "vi" ? "Khoá Học Đang Tham Gia" : "Enrolled Courses"}
+            icon={<BookOpen className="h-5 w-5 text-primary" />}
+            defaultOpen={true}
+          >
+            {enrollments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <GraduationCap className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground">
+                  {language === "vi" ? "Học sinh chưa được đăng ký khoá học nào." : "Student is not enrolled in any courses yet."}
+                </p>
               </div>
-              {/* Progress bar */}
-              <div className="mt-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>{language === "vi" ? "Tiến độ" : "Progress"}</span>
-                  <span>{Math.round((enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100)}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${(enrollment.currentModuleNumber / (enrollment.course.modules?.length || 8)) * 100}%` }}
-                  />
-                </div>
+            ) : (
+              <div className="space-y-4">
+                {enrollments.map((e) => {
+                  const totalModules = e.course.modules.length || 1;
+                  const currentModule = (() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    for (const m of e.course.modules) {
+                      if (!m.weekStartDate || !m.weekEndDate) continue;
+                      const start = new Date(m.weekStartDate);
+                      const end = new Date(m.weekEndDate);
+                      end.setHours(23, 59, 59, 999);
+                      if (today >= start && today <= end) return m.moduleNumber;
+                    }
+                    return e.course.modules[0]?.moduleNumber ?? 1;
+                  })();
+                  const progress = Math.round((currentModule / totalModules) * 100);
+                  return (
+                    <div key={e.enrollmentId} className="border border-border/50 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">{e.course.name}</p>
+                          {e.course.cohortName && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{e.course.cohortName}</p>
+                          )}
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {language === "vi" ? "Đang học" : "Currently on"} Module {currentModule} / {totalModules}
+                          </p>
+                        </div>
+                        <Badge className="bg-green-500 text-white shrink-0 ml-2">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          {language === "vi" ? "Đang học" : "Active"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>{language === "vi" ? "Tiến độ" : "Progress"}</span>
+                          <span>{progress}%</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </CollapsibleSection>
-          )}
+            )}
+          </CollapsibleSection>
         </div>
 
         {/* Demo Note */}
