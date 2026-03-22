@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   BookOpen, Calendar, Video, Users, Clock, 
-  CheckCircle, LogOut, ChevronRight, Link2, Link2Off, Loader2,
+  CheckCircle, ChevronRight, Link2, Link2Off, Loader2,
   Play, Square, Star, GraduationCap
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -39,7 +39,7 @@ interface TeacherBooking {
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
-  const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const { language } = useLanguage();
   
   const [bookings, setBookings] = useState<TeacherBooking[]>([]);
@@ -133,11 +133,6 @@ const TeacherDashboard = () => {
     fetchData();
   }, [user, accessToken, isAuthenticated, authLoading, navigate]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   const handleConnectGoogle = () => {
     if (!accessToken) return;
     if (!googleReady) {
@@ -206,10 +201,6 @@ const TeacherDashboard = () => {
               {language === "vi" ? "Quản lý lịch dạy và theo dõi học sinh" : "Manage your schedule and track students"}
             </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            {language === "vi" ? "Đăng xuất" : "Sign Out"}
-          </Button>
         </div>
 
         {/* Stats */}

@@ -13,7 +13,7 @@ import type { MyEnrollment } from "@/services/api";
 import type { LearningHistoryItem, Booking } from "@/types";
 import { 
   BookOpen, Calendar, Video, MessageSquare, Star,
-  ChevronRight, ChevronDown, Clock, User, LogOut,
+  ChevronRight, ChevronDown, Clock, User,
   Mic, BookText, Zap, Brain, Lightbulb, GraduationCap, Users,
   Target, Link2, Play, Square, CheckCircle2
 } from "lucide-react";
@@ -249,7 +249,7 @@ const CourseRow = ({ enrollment, language, navigate }: CourseRowProps) => {
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const { user, accessToken, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const { language } = useLanguage();
   
   const activityConfig = getActivityConfig(language);
@@ -328,11 +328,6 @@ const StudentDashboard = () => {
     window.addEventListener("learning-history-updated", handleUpdate);
     return () => window.removeEventListener("learning-history-updated", handleUpdate);
   }, [fetchData]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
 
   if (authLoading || isLoading) {
     return (

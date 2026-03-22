@@ -11,7 +11,6 @@ import {
   GraduationCap, 
   UserCheck, 
   BookOpen, 
-  LogOut,
   Shield,
   BarChart3,
   MessageSquare,
@@ -67,7 +66,7 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 };
 
 const AdminDashboard = () => {
-  const { user, accessToken, logout } = useAuth();
+  const { user, accessToken } = useAuth();
   const { language } = useLanguage();
   const roleLabels = getRoleLabels(language);
   const [userStats, setUserStats] = useState<UserStatistics | null>(null);
@@ -129,10 +128,6 @@ const AdminDashboard = () => {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={logout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            {language === "vi" ? "Đăng xuất" : "Log out"}
-          </Button>
         </div>
 
         {/* Error state */}
