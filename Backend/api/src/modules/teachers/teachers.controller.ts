@@ -16,6 +16,11 @@ export class TeachersController {
     return this.teachersService.findVideoCallTeachers();
   }
 
+  @Get('mentors')
+  findMentors() {
+    return this.teachersService.findMentors();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.teachersService.findOne(id);

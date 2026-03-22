@@ -56,10 +56,20 @@ export class BookingsService {
       throw new BadRequestException('This teacher is not available for video calls');
     }
 
-    // Validate module exists
-    const module = await this.moduleRepo.findOne({ where: { id: dto.moduleId } });
+    // Validate module exists (optional — booking can exist without a specific module)
+    let module: import('../../entities/module.entity').Module | null = null;
+    if (dto.moduleId) {
+      module = await this.moduleRepo.findOne({ where: { id: dto.moduleId } });
+      if (!module) {
+        // Fall back gracefully: find the first available module
+        module = await this.moduleRepo.findOne({ order: { id: 'ASC' } });
+      }
+    }
     if (!module) {
-      throw new NotFoundException('Module not found');
+      module = await this.moduleRepo.findOne({ order: { id: 'ASC' } });
+    }
+    if (!module) {
+      throw new NotFoundException('No module found in the system. Please contact admin.');
     }
 
     // Check if slot is available
@@ -80,7 +90,7 @@ export class BookingsService {
     const booking = this.bookingRepo.create({
       studentId: dto.studentId,
       teacherId: dto.teacherId,
-      moduleId: dto.moduleId,
+      moduleId: module.id,
       bookingDate: dto.bookingDate,
       slotStartTime: dto.slotStartTime,
       slotEndTime: this.addHour(dto.slotStartTime),
@@ -110,7 +120,7 @@ export class BookingsService {
           teacherId: dto.teacherId,
           studentName: studentWithUser?.user?.fullName || 'Student',
           teacherName: teacherWithUser?.user?.fullName || 'Teacher',
-          moduleTitle: module.title,
+          moduleTitle: module?.title || 'English Session',
           bookingDate: dto.bookingDate,
           startTime: dto.slotStartTime,
           endTime: this.addHour(dto.slotStartTime),

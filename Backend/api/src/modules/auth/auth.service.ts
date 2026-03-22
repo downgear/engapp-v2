@@ -98,6 +98,7 @@ export class AuthService {
         break;
 
       case UserRole.TEACHER:
+      case UserRole.MENTOR: {
         const teacher = this.teacherRepo.create({
           userId: user.id,
           teacherType: dto.teacherType || TeacherType.VIDEO_CALL,
@@ -106,6 +107,7 @@ export class AuthService {
         await this.teacherRepo.save(teacher);
         profileId = teacher.id;
         break;
+      }
 
       default:
         throw new BadRequestException('Invalid role');

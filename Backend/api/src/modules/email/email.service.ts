@@ -56,15 +56,22 @@ export class EmailService {
 
   private async dispatchHtml(to: string, subject: string, html: string): Promise<void> {
     if (this.mode === 'resend' && this.resend) {
-      const { error } = await this.resend.emails.send({
-        from: this.getResendFrom(),
+      const from = this.getResendFrom();
+      this.logger.log(`Resend: sending from=${from} to=${to}`);
+      const { data, error } = await this.resend.emails.send({
+        from,
         to: [to],
         subject,
         html,
       });
       if (error) {
-        throw new Error(typeof error === 'object' && error && 'message' in error ? String((error as { message: string }).message) : String(error));
+        const msg = typeof error === 'object' && error && 'message' in error
+          ? String((error as { message: string }).message)
+          : JSON.stringify(error);
+        this.logger.error(`Resend error (from=${from} to=${to}): ${msg}`);
+        throw new Error(msg);
       }
+      this.logger.log(`Resend: delivered id=${data?.id}`);
       return;
     }
 
@@ -89,6 +96,7 @@ export class EmailService {
       student: 'Học sinh',
       parent: 'Phụ huynh',
       teacher: 'Giáo viên',
+      mentor: 'Mentor (Giáo viên nước ngoài)',
     };
 
     const html = `
@@ -124,6 +132,7 @@ export class EmailService {
       student: 'Học sinh',
       parent: 'Phụ huynh',
       teacher: 'Giáo viên',
+      mentor: 'Mentor (Giáo viên nước ngoài)',
     };
 
     const html = `

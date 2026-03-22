@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsNotEmpty, Matches } from 'class-validator';
+import { IsNumber, IsString, IsNotEmpty, IsOptional, Matches } from 'class-validator';
 
 export class CreateBookingDto {
   @IsNumber()
@@ -7,8 +7,9 @@ export class CreateBookingDto {
   @IsNumber()
   teacherId: number;
 
+  @IsOptional()
   @IsNumber()
-  moduleId: number;
+  moduleId?: number;
 
   @IsString()
   @IsNotEmpty()

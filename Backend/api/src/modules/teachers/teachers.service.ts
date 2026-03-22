@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Teacher, User, Booking, TeacherType, CohortCourse, Course, Cohort } from '../../entities';
+import { Teacher, User, Booking, TeacherType, CohortCourse, Course, Cohort, UserRole } from '../../entities';
 
 @Injectable()
 export class TeachersService {
@@ -40,6 +40,16 @@ export class TeachersService {
 
   async findVideoCallTeachers() {
     return this.findAll(TeacherType.VIDEO_CALL);
+  }
+
+  async findMentors() {
+    const teachers = await this.teacherRepo
+      .createQueryBuilder('teacher')
+      .leftJoinAndSelect('teacher.user', 'user')
+      .where('user.role = :role', { role: UserRole.MENTOR })
+      .andWhere('user.is_locked = :isLocked', { isLocked: false })
+      .getMany();
+    return Promise.all(teachers.map((t) => this.formatTeacher(t)));
   }
 
   async findOne(id: number) {

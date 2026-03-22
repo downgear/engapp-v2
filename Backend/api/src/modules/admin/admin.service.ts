@@ -35,6 +35,7 @@ export class AdminService {
         { role: UserRole.STUDENT },
         { role: UserRole.PARENT },
         { role: UserRole.TEACHER },
+        { role: UserRole.MENTOR },
       ],
     });
 
@@ -48,6 +49,10 @@ export class AdminService {
 
     const teacherCount = await this.userRepository.count({
       where: { role: UserRole.TEACHER },
+    });
+
+    const mentorCount = await this.userRepository.count({
+      where: { role: UserRole.MENTOR },
     });
 
     const breakdown = [
@@ -65,6 +70,11 @@ export class AdminService {
         role: 'teacher',
         count: teacherCount,
         percentage: total > 0 ? Math.round((teacherCount / total) * 100 * 10) / 10 : 0,
+      },
+      {
+        role: 'mentor',
+        count: mentorCount,
+        percentage: total > 0 ? Math.round((mentorCount / total) * 100 * 10) / 10 : 0,
       },
     ];
 
@@ -255,13 +265,15 @@ export class AdminService {
         await this.parentRepository.save(parent);
         break;
       case UserRole.TEACHER:
+      case UserRole.MENTOR: {
         const teacher = this.teacherRepository.create({ userId: user.id, teacherType: TeacherType.VIDEO_CALL });
         await this.teacherRepository.save(teacher);
         break;
+      }
     }
 
-    // Send welcome email (non-blocking)
-    this.emailService.sendWelcomeEmail(data.email, data.fullName, data.password, data.role).catch(() => {});
+    // Send welcome email — must be awaited so Vercel doesn't cut it off before dispatch
+    await this.emailService.sendWelcomeEmail(data.email, data.fullName, data.password, data.role);
 
     return this.getUserById(user.id);
   }
@@ -342,24 +354,29 @@ export class AdminService {
         await this.parentRepository.delete({ userId: user.id });
         break;
       case UserRole.TEACHER:
+      case UserRole.MENTOR:
         await this.teacherRepository.delete({ userId: user.id });
         break;
     }
 
     // Create new role-specific profile
     switch (newRole) {
-      case UserRole.STUDENT:
+      case UserRole.STUDENT: {
         const student = this.studentRepository.create({ userId: user.id, cefrLevel: 'A1' });
         await this.studentRepository.save(student);
         break;
-      case UserRole.PARENT:
+      }
+      case UserRole.PARENT: {
         const parent = this.parentRepository.create({ userId: user.id });
         await this.parentRepository.save(parent);
         break;
+      }
       case UserRole.TEACHER:
+      case UserRole.MENTOR: {
         const teacher = this.teacherRepository.create({ userId: user.id, teacherType: TeacherType.VIDEO_CALL });
         await this.teacherRepository.save(teacher);
         break;
+      }
     }
 
     // Update user role

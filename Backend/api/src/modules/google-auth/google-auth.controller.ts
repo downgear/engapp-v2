@@ -18,7 +18,7 @@ export class GoogleAuthController {
    */
   @Post('exchange-code')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TEACHER)
+  @Roles(UserRole.TEACHER, UserRole.MENTOR)
   async exchangeCode(
     @CurrentUser('userId') userId: number,
     @Body('code') code: string,
@@ -51,7 +51,7 @@ export class GoogleAuthController {
    */
   @Get('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TEACHER)
+  @Roles(UserRole.TEACHER, UserRole.MENTOR)
   async getConnectionStatus(@CurrentUser('userId') userId: number) {
     const teacherId = await this.googleAuthService.getTeacherIdFromUserId(userId);
     return this.googleAuthService.isConnected(teacherId);
@@ -62,7 +62,7 @@ export class GoogleAuthController {
    */
   @Get('disconnect')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.TEACHER)
+  @Roles(UserRole.TEACHER, UserRole.MENTOR)
   async disconnect(@CurrentUser('userId') userId: number) {
     const teacherId = await this.googleAuthService.getTeacherIdFromUserId(userId);
     await this.googleAuthService.disconnect(teacherId);
