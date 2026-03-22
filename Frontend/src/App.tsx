@@ -103,7 +103,7 @@ const App = () => (
               <Route
                 path="/booking/:bookingId"
                 element={
-                  <ProtectedRoute allowedRoles={["student", "teacher"]}>
+                  <ProtectedRoute allowedRoles={["student", "teacher", "mentor"]}>
                     <BookingDetailPage />
                   </ProtectedRoute>
                 }
@@ -127,11 +127,11 @@ const App = () => (
                 }
               />
               
-              {/* ========== TEACHER ONLY ROUTES ========== */}
+              {/* ========== TEACHER / MENTOR ROUTES ========== */}
               <Route
                 path="/teacher-dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={["teacher"]}>
+                  <ProtectedRoute allowedRoles={["teacher", "mentor"]}>
                     <TeacherDashboard />
                   </ProtectedRoute>
                 }
@@ -139,7 +139,7 @@ const App = () => (
               <Route
                 path="/session/:bookingId"
                 element={
-                  <ProtectedRoute allowedRoles={["teacher"]}>
+                  <ProtectedRoute allowedRoles={["teacher", "mentor"]}>
                     <StudentSessionDetailPage />
                   </ProtectedRoute>
                 }

@@ -184,6 +184,7 @@ export const Navigation = () => {
       case 'parent':
         return "/parent-dashboard";
       case 'teacher':
+      case 'mentor':
         return "/teacher-dashboard";
       default:
         return "/dashboard";

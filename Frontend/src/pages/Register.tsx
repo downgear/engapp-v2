@@ -68,7 +68,7 @@ const Register = () => {
       if (role === "student") {
         registerData.grade = formData.grade;
         registerData.cefrLevel = formData.cefrLevel;
-      } else if (role === "teacher") {
+      } else if (role === "teacher" || role === "mentor") {
         registerData.teacherType = formData.teacherType;
         registerData.bio = formData.bio;
       }
@@ -234,7 +234,7 @@ const Register = () => {
                 </div>
               )}
 
-              {role === "teacher" && (
+              {(role === "teacher" || role === "mentor") && (
                 <div className="space-y-4 pt-2 border-t">
                   <div className="space-y-2">
                     <Label htmlFor="teacherType">{language === "vi" ? "Loại giáo viên" : "Teacher Type"}</Label>

@@ -161,6 +161,10 @@ export const api = {
     return fetchApi<Teacher[]>('/teachers/video-call');
   },
 
+  async getMentors(): Promise<Teacher[]> {
+    return fetchApi<Teacher[]>('/teachers/mentors');
+  },
+
   async getTeacher(id: number): Promise<Teacher> {
     return fetchApi<Teacher>(`/teachers/${id}`);
   },

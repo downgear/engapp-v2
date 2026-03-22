@@ -110,7 +110,7 @@ const BookingDetailPage = () => {
     if (authLoading) return;
 
     // Allow both students and teachers to view booking details
-    if (!isAuthenticated || (user?.role !== "student" && user?.role !== "teacher")) {
+    if (!isAuthenticated || (user?.role !== "student" && user?.role !== "teacher" && user?.role !== "mentor")) {
       navigate("/login");
       return;
     }
@@ -146,7 +146,7 @@ const BookingDetailPage = () => {
 
   // Meeting actions
   const handleEndMeeting = async () => {
-    if (!accessToken || !booking || user?.role !== 'teacher') return;
+    if (!accessToken || !booking || (user?.role !== 'teacher' && user?.role !== 'mentor')) return;
     setIsActionLoading(true);
     try {
       const updated = await api.endMeeting(accessToken, booking.id, user.profileId);
@@ -229,7 +229,7 @@ const BookingDetailPage = () => {
           <div className="text-center py-16">
             <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">{language === "vi" ? "Không tìm thấy lịch hẹn" : "Booking not found"}</h2>
-            <Button onClick={() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : "/student-dashboard")}>
+            <Button onClick={() => navigate((user?.role === 'teacher' || user?.role === 'mentor') ? "/teacher-dashboard" : "/student-dashboard")}>
               {language === "vi" ? "Quay lại Dashboard" : "Back to Dashboard"}
             </Button>
           </div>
@@ -248,7 +248,7 @@ const BookingDetailPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(user?.role === 'teacher' ? "/teacher-dashboard" : "/student-dashboard")}
+            onClick={() => navigate((user?.role === 'teacher' || user?.role === 'mentor') ? "/teacher-dashboard" : "/student-dashboard")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -362,7 +362,7 @@ const BookingDetailPage = () => {
                       </Button>
                       
                       {/* Teacher: End Meeting Button */}
-                      {user?.role === 'teacher' && booking.meetingStatus !== 'ended' && (
+                      {(user?.role === 'teacher' || user?.role === 'mentor') && booking.meetingStatus !== 'ended' && (
                         <Button 
                           className="w-full gap-2" 
                           variant="destructive"
@@ -389,7 +389,7 @@ const BookingDetailPage = () => {
               )}
 
               {/* Teacher Feedback Section */}
-              {booking.meetingStatus === 'ended' && user?.role === 'teacher' && !booking.teacherFeedback && (
+              {booking.meetingStatus === 'ended' && (user?.role === 'teacher' || user?.role === 'mentor') && !booking.teacherFeedback && (
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-3">
                     <MessageSquare className="h-5 w-5 text-blue-500" />
@@ -488,12 +488,12 @@ const BookingDetailPage = () => {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-500" />
-                {user?.role === 'teacher' ? (language === "vi" ? 'Học sinh' : 'Student') : (language === "vi" ? 'Giảng viên' : 'Teacher')}
+                {(user?.role === 'teacher' || user?.role === 'mentor') ? (language === "vi" ? 'Học sinh' : 'Student') : (language === "vi" ? 'Giảng viên / Mentor' : 'Teacher / Mentor')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {user?.role === 'teacher' ? (
-                /* Student Profile for Teacher View */
+              {(user?.role === 'teacher' || user?.role === 'mentor') ? (
+                /* Student Profile for Teacher/Mentor View */
                 <>
                   <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl">
                     <Avatar className="h-20 w-20">
@@ -585,7 +585,7 @@ const BookingDetailPage = () => {
         </div>
 
         {/* Mentor Brief - shown for teacher before/during session */}
-        {user?.role === 'teacher' && booking.student?.id && booking.module?.id && accessToken && (
+        {(user?.role === 'teacher' || user?.role === 'mentor') && booking.student?.id && booking.module?.id && accessToken && (
           <div className="mt-6">
             <MentorBriefCard
               studentId={booking.student.id}

@@ -86,7 +86,7 @@ const TeacherDashboard = () => {
   useEffect(() => {
     if (authLoading) return;
     
-    if (!isAuthenticated || user?.role !== "teacher") {
+    if (!isAuthenticated || (user?.role !== "teacher" && user?.role !== "mentor")) {
       navigate("/login");
       return;
     }

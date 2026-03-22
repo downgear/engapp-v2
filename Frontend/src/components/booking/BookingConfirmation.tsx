@@ -13,11 +13,12 @@ interface BookingConfirmationProps {
   mentor: Mentor;
   date: Date;
   time: string;
+  moduleId?: number;
   onBack: () => void;
   onReset: () => void;
 }
 
-export const BookingConfirmation = ({ mentor, date, time, onBack, onReset }: BookingConfirmationProps) => {
+export const BookingConfirmation = ({ mentor, date, time, moduleId, onBack, onReset }: BookingConfirmationProps) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -47,8 +48,8 @@ export const BookingConfirmation = ({ mentor, date, time, onBack, onReset }: Boo
 
       await api.createBooking({
         studentId: user.profileId,
-        teacherId: parseInt(mentor.id), // mentor.id matches teacher_id in database
-        moduleId: 3, // Default to current module (Workplace Communication) - TODO: get from user's current enrollment
+        teacherId: parseInt(mentor.id),
+        moduleId: moduleId ?? 1,
         bookingDate: format(date, "yyyy-MM-dd"),
         slotStartTime: time,
       });

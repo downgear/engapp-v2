@@ -8,6 +8,7 @@ import { BookingCalendar } from "@/components/booking/BookingCalendar";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { type Mentor } from "@/data/mentors";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,27 +26,29 @@ const DEFAULT_AVATARS = [
 const BookingDemo = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { user, accessToken } = useAuth();
   const [step, setStep] = useState<BookingStep>("select-mentor");
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentModuleId, setCurrentModuleId] = useState<number | null>(null);
 
-  // Fetch video call teachers from API
+  // Fetch mentors + student's current module
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
         setIsLoading(true);
-        const teachers = await api.getVideoCallTeachers();
+        const teachers = await api.getMentors();
 
         // Convert Teacher[] to Mentor[] format
         const mentorsList: Mentor[] = teachers.map((teacher, index) => ({
           id: teacher.id.toString(),
           name: teacher.name,
           avatar: teacher.avatarUrl || DEFAULT_AVATARS[index % DEFAULT_AVATARS.length],
-          country: language === "vi" ? "Việt Nam" : "Vietnam", // Default country
-          languages: language === "vi" ? ["Tiếng Anh", "Tiếng Việt"] : ["English", "Vietnamese"],
+          country: language === "vi" ? "Nước ngoài" : "International",
+          languages: language === "vi" ? ["Tiếng Anh"] : ["English"],
           specialty: teacher.specialties || [],
           rating: teacher.rating ?? 0,
           reviewCount: teacher.reviewCount ?? 0,
@@ -55,15 +58,49 @@ const BookingDemo = () => {
         }));
 
         setMentors(mentorsList);
+
+        // Fetch student's current enrollment to get the active module ID
+        if (user?.profileId && accessToken) {
+          try {
+            const enrollments = await api.getMyEnrollments(accessToken, user.profileId);
+            if (enrollments.length > 0) {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              // Find the current active module across all enrollments
+              let foundModuleId: number | null = null;
+              for (const enrollment of enrollments) {
+                for (const m of enrollment.course.modules) {
+                  if (m.weekStartDate && m.weekEndDate) {
+                    const start = new Date(m.weekStartDate);
+                    const end = new Date(m.weekEndDate);
+                    end.setHours(23, 59, 59, 999);
+                    if (today >= start && today <= end) {
+                      foundModuleId = m.id;
+                      break;
+                    }
+                  }
+                }
+                if (foundModuleId) break;
+              }
+              // Fallback: use first module of first enrollment
+              if (!foundModuleId && enrollments[0].course.modules.length > 0) {
+                foundModuleId = enrollments[0].course.modules[0].id;
+              }
+              setCurrentModuleId(foundModuleId);
+            }
+          } catch {
+            // Non-fatal: booking will handle missing module gracefully
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch teachers:", error);
+        console.error("Failed to fetch mentors:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTeachers();
-  }, []);
+  }, [user, accessToken]);
 
   const handleSelectMentor = (mentor: Mentor) => {
     setSelectedMentor(mentor);
@@ -203,6 +240,7 @@ const BookingDemo = () => {
               mentor={selectedMentor}
               date={selectedDate}
               time={selectedTime}
+              moduleId={currentModuleId ?? undefined}
               onBack={handleBack}
               onReset={handleReset}
             />

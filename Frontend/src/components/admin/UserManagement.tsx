@@ -72,12 +72,14 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Học sinh",
   parent: "Phụ huynh",
   teacher: "Giáo viên",
+  mentor: "Mentor (GV nước ngoài)",
 };
 
 const ROLE_COLORS: Record<string, string> = {
   student: "bg-blue-100 text-blue-800",
   parent: "bg-green-100 text-green-800",
   teacher: "bg-purple-100 text-purple-800",
+  mentor: "bg-orange-100 text-orange-800",
 };
 
 export const UserManagement = () => {
@@ -246,19 +248,28 @@ export const UserManagement = () => {
 
     try {
       setCreating(true);
-      await api.createAdminUser(accessToken, {
+      const created = await api.createAdminUser(accessToken, {
         email: createForm.email,
         password: createForm.password,
         fullName: createForm.fullName,
         phone: createForm.phone || undefined,
         role: createForm.role,
       });
-      toast.success("Tạo tài khoản thành công");
+      console.log("[createAdminUser] success:", created);
+      toast.success(`Đã tạo tài khoản ${created.email} thành công`);
       setCreateModalOpen(false);
       setCreateForm({ fullName: "", email: "", phone: "", password: "", role: "student" });
-      fetchUsers();
+      // Reset to page 1 with no filters and directly refetch so the new user is visible
+      setRoleFilter("all");
+      setSearch("");
+      setSearchDebounce("");
+      const refreshed = await api.getAdminUsers(accessToken, { page: 1, limit: pagination.limit });
+      setUsers(refreshed.users);
+      setPagination(refreshed.pagination);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[createAdminUser] error:", msg);
+      toast.error(`Tạo tài khoản thất bại: ${msg}`);
     } finally {
       setCreating(false);
     }
@@ -353,6 +364,7 @@ export const UserManagement = () => {
               <SelectItem value="student">Học sinh</SelectItem>
               <SelectItem value="parent">Phụ huynh</SelectItem>
               <SelectItem value="teacher">Giáo viên</SelectItem>
+              <SelectItem value="mentor">Mentor</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -411,6 +423,7 @@ export const UserManagement = () => {
                             <SelectItem value="student">Học sinh</SelectItem>
                             <SelectItem value="parent">Phụ huynh</SelectItem>
                             <SelectItem value="teacher">Giáo viên</SelectItem>
+                            <SelectItem value="mentor">Mentor</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -618,6 +631,7 @@ export const UserManagement = () => {
                       <SelectItem value="student">Học sinh</SelectItem>
                       <SelectItem value="parent">Phụ huynh</SelectItem>
                       <SelectItem value="teacher">Giáo viên</SelectItem>
+                      <SelectItem value="mentor">Mentor (GV nước ngoài)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -766,6 +780,7 @@ export const UserManagement = () => {
                     <SelectItem value="student">Học sinh</SelectItem>
                     <SelectItem value="parent">Phụ huynh</SelectItem>
                     <SelectItem value="teacher">Giáo viên</SelectItem>
+                    <SelectItem value="mentor">Mentor (GV nước ngoài)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

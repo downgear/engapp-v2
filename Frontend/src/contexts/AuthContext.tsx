@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // Types
-export type UserRole = 'student' | 'parent' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'parent' | 'teacher' | 'mentor' | 'admin';
 
 export interface User {
   id: number;
