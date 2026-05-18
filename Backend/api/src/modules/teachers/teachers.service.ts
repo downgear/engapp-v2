@@ -45,8 +45,9 @@ export class TeachersService {
     const teachers = await this.teacherRepo
       .createQueryBuilder('teacher')
       .leftJoinAndSelect('teacher.user', 'user')
-      .where('user.role = :role', { role: UserRole.MENTOR })
+      .where('user.role IN (:...roles)', { roles: [UserRole.TEACHER, UserRole.MENTOR] })
       .andWhere('user.is_locked = :isLocked', { isLocked: false })
+      .andWhere('teacher.teacher_type != :inPerson', { inPerson: TeacherType.IN_PERSON })
       .getMany();
     return Promise.all(teachers.map((t) => this.formatTeacher(t)));
   }
