@@ -120,11 +120,11 @@ export const Navigation = () => {
   // Fetch notifications
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (!isAuthenticated || !user?.id) return;
+      if (!isAuthenticated || !user?.legacyUserId) return;
       try {
         const [notifs, countResult] = await Promise.all([
-          api.getNotifications(user.id),
-          api.getUnreadNotificationCount(user.id),
+          api.getNotifications(user.legacyUserId),
+          api.getUnreadNotificationCount(user.legacyUserId),
         ]);
         setNotifications(notifs);
         setUnreadCount(countResult.count);
@@ -137,7 +137,7 @@ export const Navigation = () => {
     // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.legacyUserId]);
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {
@@ -152,9 +152,9 @@ export const Navigation = () => {
   };
 
   const handleMarkAllAsRead = async () => {
-    if (!user?.id) return;
+    if (!user?.legacyUserId) return;
     try {
-      await api.markAllNotificationsAsRead(user.id);
+      await api.markAllNotificationsAsRead(user.legacyUserId);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

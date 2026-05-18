@@ -42,17 +42,19 @@ export const ProtectedRoute = ({
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // Check role-based access
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate dashboard based on user's actual role
+  // Check role-based access (server returns roles as array)
+  if (allowedRoles && user && !user.roles.some(r => allowedRoles.includes(r))) {
     const roleRedirects: Record<UserRole, string> = {
       student: "/student-dashboard",
       parent: "/parent-dashboard",
       teacher: "/teacher-dashboard",
+      mentor: "/teacher-dashboard",
+      admin: "/admin",
     };
 
-    const targetRedirect = redirectTo || roleRedirects[user.role] || "/";
-    
+    const primaryRole = user.roles[0];
+    const targetRedirect = redirectTo || (primaryRole && roleRedirects[primaryRole]) || "/";
+
     return <Navigate to={targetRedirect} replace />;
   }
 
@@ -69,9 +71,12 @@ export const AccessDenied = () => {
     student: "/student-dashboard",
     parent: "/parent-dashboard",
     teacher: "/teacher-dashboard",
+    mentor: "/teacher-dashboard",
+    admin: "/admin",
   };
 
-  const dashboardUrl = user ? roleRedirects[user.role] : "/login";
+  const primaryRole = user?.roles[0];
+  const dashboardUrl = primaryRole ? roleRedirects[primaryRole] : "/login";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

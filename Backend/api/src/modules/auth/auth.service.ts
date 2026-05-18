@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
@@ -198,6 +198,27 @@ export class AuthService {
       profileId,
       avatarUrl: user.avatarUrl,
       profile,
+    };
+  }
+
+  async getProfileByEmail(email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const profileId = await this.getProfileId(user);
+
+    return {
+      id: user.id,
+      profileId,
+      role: user.role,
+      email: user.email,
+      fullName: user.fullName,
     };
   }
 

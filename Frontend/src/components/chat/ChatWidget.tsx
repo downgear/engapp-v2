@@ -236,7 +236,7 @@ export const ChatWidget = () => {
             ) : (
               <div className="space-y-4">
                 {messages.map((msg) => {
-                  const isMe = msg.senderId === user?.id;
+                  const isMe = msg.senderId === user?.legacyUserId;
                   const isAdmin = msg.sender?.role === "admin";
                   
                   return (

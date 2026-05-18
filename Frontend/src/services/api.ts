@@ -16,8 +16,10 @@ import type {
   Notification,
 } from '@/types';
 
-// Use VITE_API_URL from environment, fallback to localhost for development
+// engapp-v2 backend (courses, bookings, students, etc.)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// server gateway (auth, notifications, Google Calendar)
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/api/auth';
 
 // ============ API Functions ============
 
@@ -623,30 +625,45 @@ export const api = {
     });
   },
 
-  // ============ Google Auth (for Teachers) ============
+  // ============ Google Calendar (via server gateway) ============
 
-  /**
-   * Exchange Google authorization code for tokens (GIS popup flow)
-   * Frontend gets the code via popup, sends it here to exchange for tokens
-   */
   async exchangeGoogleCode(token: string, code: string): Promise<{ success: boolean; email?: string }> {
-    return fetchApi('/auth/google/exchange-code', {
+    const res = await fetch(`${AUTH_API_URL}/google/calendar/exchange-code`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ code }),
     });
+    if (!res.ok) {
+      throw new Error('Failed to connect Google Calendar');
+    }
+    return { success: true };
   },
 
   async getGoogleConnectionStatus(token: string): Promise<{ connected: boolean; email?: string }> {
-    return fetchApi('/auth/google/status', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const res = await fetch(`${AUTH_API_URL}/google/calendar/token`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return { connected: false };
+      const data = await res.json();
+      return { connected: true, email: data.googleEmail };
+    } catch {
+      return { connected: false };
+    }
   },
 
   async disconnectGoogle(token: string): Promise<{ success: boolean; message: string }> {
-    return fetchApi('/auth/google/disconnect', {
+    const res = await fetch(`${AUTH_API_URL}/google/calendar/connect`, {
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      throw new Error('Failed to disconnect Google Calendar');
+    }
+    return { success: true, message: 'Disconnected' };
   },
 
   // ============ Programs (Public) ============
