@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/api/auth';
 const LEGACY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const ENGLISH_PREP_API_URL = import.meta.env.VITE_ENGLISH_PREP_API_URL || 'https://meowlish.servebeer.com/api';
 
 // Types — aligned with server gateway's hydrated identity
 export type UserRole = 'student' | 'parent' | 'teacher' | 'mentor' | 'admin';
@@ -34,6 +35,8 @@ export interface AuthState {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => void;
+  handleGoogleCallback: (loginToken: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -333,6 +336,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearAuth();
   }, [clearAuth]);
 
+  const loginWithGoogle = useCallback(() => {
+    window.location.href = `${ENGLISH_PREP_API_URL}/v1/auth/google`;
+  }, []);
+
+  const handleGoogleCallback = useCallback(async (loginToken: string) => {
+    const res = await fetch(`${ENGLISH_PREP_API_URL}/v1/auth/google/tokens?loginToken=${encodeURIComponent(loginToken)}`);
+    if (!res.ok) throw new Error('Failed to exchange login token');
+
+    const data = await res.json();
+    const tokens = data.data ?? data;
+
+    if (!tokens.accessToken) throw new Error('No access token received');
+
+    saveTokens(tokens.accessToken, tokens.refreshToken);
+
+    const decoded: Record<string, string> = JSON.parse(atob(tokens.accessToken.split('.')[1]));
+    const email = decoded.email || decoded.mail || '';
+
+    const user = await fetchIdentity(tokens.accessToken, email);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+    setState({
+      user,
+      accessToken: tokens.accessToken,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  }, []);
+
   const refreshProfile = useCallback(async () => {
     if (!state.accessToken || !state.user) return;
 
@@ -351,6 +383,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         ...state,
         login,
+        loginWithGoogle,
+        handleGoogleCallback,
         register,
         logout,
         refreshProfile,
