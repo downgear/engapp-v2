@@ -189,7 +189,6 @@ const CurriculumPage = () => {
     );
   }
 
-  // ── Module detail view ───────────────────────────────────────────────────
   if (selectedEnrollment) {
     const modules = [...selectedEnrollment.course.modules].sort(
       (a, b) => a.moduleNumber - b.moduleNumber,
@@ -383,7 +382,6 @@ const CurriculumPage = () => {
     );
   }
 
-  // ── Course list view ─────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
       <FloatingEffects intensity="subtle" />

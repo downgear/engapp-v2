@@ -26,7 +26,6 @@ export class CoursesService {
     });
 
     if (!course) {
-      // Return the most recent course
       const recentCourse = await this.courseRepo.findOne({
         order: { startDate: 'DESC' },
         relations: ['modules'],

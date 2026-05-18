@@ -47,7 +47,6 @@ interface TranscriptEntry {
   words?: Array<{ word: string; start: number; end: number }>;
 }
 
-// Removed "select-topic" step - topic is auto-selected from current module
 type Step = "select-type" | "select-level" | "select-mode" | "ready" | "practice" | "loading-feedback" | "feedback";
 
 interface CurrentModule {
@@ -72,7 +71,6 @@ const AIPracticeDemo = () => {
   const [weeklyFocus, setWeeklyFocus] = useState<WeeklyFocusResponse | null>(null);
   const [practiceStartTime, setPracticeStartTime] = useState<string | null>(null);
 
-  // Fetch current module on load
   useEffect(() => {
     const loadCurrentModule = async () => {
       if (!isAuthenticated || !user) {
@@ -140,7 +138,6 @@ const AIPracticeDemo = () => {
     loadCurrentModule();
   }, [isAuthenticated, user, searchParams]);
 
-  // Skip topic selection - go directly to level selection
   const handleSelectType = (type: PracticeType) => {
     setPracticeType(type);
     setStep("select-level");
@@ -332,7 +329,6 @@ const AIPracticeDemo = () => {
     setPracticeStartTime(null);
   };
 
-  // Updated steps - removed topic selection step
   const steps = [
     { key: "select-type", label: t("aiPractice.step1") },
     { key: "select-level", label: t("aiPractice.step3") },

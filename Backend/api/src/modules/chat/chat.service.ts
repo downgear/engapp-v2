@@ -16,27 +16,19 @@ export class ChatService {
     private readonly userRepo: Repository<User>,
   ) {}
 
-  // ==================== USER ENDPOINTS ====================
-
-  /**
-   * Get or create a conversation for a user
-   */
   async getOrCreateConversation(userId: number) {
-    // Check if user has an open conversation
     let conversation = await this.conversationRepo.findOne({
       where: { userId, status: ConversationStatus.OPEN },
       relations: ['user', 'admin'],
     });
 
     if (!conversation) {
-      // Create new conversation
       conversation = this.conversationRepo.create({
         userId,
         status: ConversationStatus.OPEN,
       });
       await this.conversationRepo.save(conversation);
       
-      // Reload with relations
       conversation = await this.conversationRepo.findOne({
         where: { id: conversation.id },
         relations: ['user', 'admin'],
@@ -46,9 +38,6 @@ export class ChatService {
     return this.formatConversation(conversation!);
   }
 
-  /**
-   * Get all conversations for a user
-   */
   async getUserConversations(userId: number) {
     const conversations = await this.conversationRepo.find({
       where: { userId },
@@ -68,11 +57,7 @@ export class ChatService {
     }));
   }
 
-  /**
-   * Get unread message count for a user
-   */
   async getUserUnreadCount(userId: number) {
-    // Count all unread messages from others (admin) in user's conversations
     const count = await this.messageRepo
       .createQueryBuilder('msg')
       .innerJoin('msg.conversation', 'conv')
@@ -85,9 +70,6 @@ export class ChatService {
     return { count };
   }
 
-  /**
-   * Get messages for a conversation (for user)
-   */
   async getConversationMessages(conversationId: number, userId: number) {
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
@@ -97,7 +79,6 @@ export class ChatService {
       throw new NotFoundException('Conversation not found');
     }
 
-    // Check if user has access
     if (conversation.userId !== userId) {
       throw new ForbiddenException('Access denied');
     }
@@ -108,7 +89,6 @@ export class ChatService {
       order: { createdAt: 'ASC' },
     });
 
-    // Mark messages from other user as read
     await this.messageRepo.update(
       { conversationId, senderId: Not(userId), isRead: false },
       { isRead: true },
@@ -117,9 +97,6 @@ export class ChatService {
     return messages.map((msg) => this.formatMessage(msg));
   }
 
-  /**
-   * Send a message (for user)
-   */
   async sendMessage(conversationId: number, userId: number, messageText: string) {
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
@@ -157,11 +134,6 @@ export class ChatService {
     return this.formatMessage(savedMessage!);
   }
 
-  // ==================== ADMIN ENDPOINTS ====================
-
-  /**
-   * Get all conversations (for admin)
-   */
   async getAllConversations(options: { status?: string; page?: number; limit?: number }) {
     const { status, page = 1, limit = 20 } = options;
     const skip = (page - 1) * limit;
@@ -191,7 +163,6 @@ export class ChatService {
           },
         });
         
-        // Get last message
         const lastMessage = await this.messageRepo.findOne({
           where: { conversationId: conv.id },
           order: { createdAt: 'DESC' },
@@ -219,9 +190,6 @@ export class ChatService {
     };
   }
 
-  /**
-   * Get messages for a conversation (for admin)
-   */
   async getAdminConversationMessages(conversationId: number, adminId: number) {
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
@@ -237,13 +205,11 @@ export class ChatService {
       order: { createdAt: 'ASC' },
     });
 
-    // Mark messages from user as read
     await this.messageRepo.update(
       { conversationId, senderId: conversation.userId, isRead: false },
       { isRead: true },
     );
 
-    // Assign admin if not assigned
     if (!conversation.adminId) {
       conversation.adminId = adminId;
       await this.conversationRepo.save(conversation);
@@ -252,9 +218,6 @@ export class ChatService {
     return messages.map((msg) => this.formatMessage(msg));
   }
 
-  /**
-   * Send a message (for admin)
-   */
   async sendAdminMessage(conversationId: number, adminId: number, messageText: string) {
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
@@ -268,7 +231,6 @@ export class ChatService {
       throw new ForbiddenException('Conversation is closed');
     }
 
-    // Assign admin if not assigned
     if (!conversation.adminId) {
       conversation.adminId = adminId;
     }
@@ -280,11 +242,9 @@ export class ChatService {
     });
     await this.messageRepo.save(message);
 
-    // Update conversation updatedAt
     conversation.updatedAt = new Date();
     await this.conversationRepo.save(conversation);
 
-    // Reload with sender
     const savedMessage = await this.messageRepo.findOne({
       where: { id: message.id },
       relations: ['sender'],
@@ -293,9 +253,6 @@ export class ChatService {
     return this.formatMessage(savedMessage!);
   }
 
-  /**
-   * Close a conversation (for admin)
-   */
   async closeConversation(conversationId: number) {
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId },
@@ -311,11 +268,7 @@ export class ChatService {
     return { id: conversationId, status: ConversationStatus.CLOSED };
   }
 
-  /**
-   * Get unread count for admin
-   */
   async getAdminUnreadCount() {
-    // Count messages from users in open conversations that are unread
     const count = await this.messageRepo
       .createQueryBuilder('msg')
       .innerJoin('msg.conversation', 'conv')
@@ -327,8 +280,6 @@ export class ChatService {
 
     return { count };
   }
-
-  // ==================== HELPERS ====================
 
   private formatConversation(conv: ChatConversation) {
     return {

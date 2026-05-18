@@ -16,10 +16,7 @@ import type {
   Notification,
 } from '@/types';
 
-// Use VITE_API_URL from environment, fallback to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-// ============ API Functions ============
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options || {};
@@ -44,8 +41,6 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 }
 
 export const api = {
-  // ============ Parents ============
-  
   async getChildren(parentId: number = 1): Promise<Child[]> {
     return fetchApi<Child[]>(`/parents/${parentId}/children`);
   },
@@ -70,8 +65,6 @@ export const api = {
   async getChildAIPracticeStats(parentId: number, studentId: number, weeks: number = 8): Promise<AIPracticeWeeklyStats> {
     return fetchApi<AIPracticeWeeklyStats>(`/parents/${parentId}/children/${studentId}/ai-practice-stats?weeks=${weeks}`);
   },
-
-  // ============ Students ============
 
   async getStudents(): Promise<Child[]> {
     return fetchApi<Child[]>('/students');
@@ -151,8 +144,6 @@ export const api = {
     );
   },
 
-  // ============ Teachers ============
-
   async getTeachers(): Promise<Teacher[]> {
     return fetchApi<Teacher[]>('/teachers');
   },
@@ -177,8 +168,6 @@ export const api = {
     return fetchApi<TeachingCourse[]>(`/teachers/${teacherId}/teaching-courses`);
   },
 
-  // ============ Courses ============
-
   async getCourses(): Promise<Course[]> {
     return fetchApi<Course[]>('/courses');
   },
@@ -198,8 +187,6 @@ export const api = {
   async getCourseModule(moduleId: number): Promise<Module> {
     return fetchApi<Module>(`/courses/modules/${moduleId}`);
   },
-
-  // ============ Bookings ============
 
   async createBooking(data: {
     studentId: number;
@@ -234,8 +221,6 @@ export const api = {
     return fetchApi<Booking>(`/bookings/${id}/complete`, { method: 'PATCH' });
   },
 
-  // ============ Meeting Status ============
-
   async startMeeting(token: string, bookingId: number, teacherId: number): Promise<Booking> {
     return fetchApi(`/bookings/${bookingId}/start-meeting`, {
       method: 'PATCH',
@@ -268,8 +253,6 @@ export const api = {
     });
   },
 
-  // ============ Connections ============
-
   async getStudentConnections(studentId: number): Promise<Connection[]> {
     return fetchApi<Connection[]>(`/students/${studentId}/connections`);
   },
@@ -289,8 +272,6 @@ export const api = {
     return fetchApi<void>(`/connections/${connectionId}`, { method: 'DELETE' });
   },
 
-  // ============ Notifications ============
-
   async getNotifications(userId: number): Promise<Notification[]> {
     return fetchApi<Notification[]>(`/notifications?userId=${userId}`);
   },
@@ -306,8 +287,6 @@ export const api = {
   async markAllNotificationsAsRead(userId: number): Promise<void> {
     return fetchApi<void>(`/notifications/mark-all-read?userId=${userId}`, { method: 'PATCH' });
   },
-
-  // ============ Inaugural Registrations ============
 
   async submitInauguralRegistration(data: {
     parentName: string;
@@ -332,12 +311,6 @@ export const api = {
     });
   },
 
-  // ============ Payments ============
-
-  /**
-   * Create a pending payment session
-   * Returns transaction code to include in bank transfer
-   */
   async createPendingPayment(studentId: number): Promise<{ 
     transactionCode: string; 
     amount: number;
@@ -349,9 +322,6 @@ export const api = {
     });
   },
 
-  /**
-   * Check payment status (poll this to detect when payment is confirmed)
-   */
   async checkPaymentStatus(studentId: number): Promise<{ 
     paid: boolean; 
     paidAt: string | null;
@@ -364,17 +334,12 @@ export const api = {
     return fetchApi(`/payments/status/${studentId}`);
   },
 
-  /**
-   * Manual payment confirmation (for demo/admin)
-   */
   async processPayment(studentId: number, moduleId: number): Promise<{ success: boolean; message: string }> {
     return fetchApi<{ success: boolean; message: string }>('/payments/process', {
       method: 'POST',
       body: JSON.stringify({ studentId, moduleId }),
     });
   },
-
-  // ============ Admin ============
 
   async getAdminUserStatistics(token: string): Promise<{
     total: number;
@@ -522,8 +487,6 @@ export const api = {
     });
   },
 
-  // ============ Chat (User) ============
-
   async getOrCreateConversation(token: string): Promise<{
     id: number;
     userId: number;
@@ -586,8 +549,6 @@ export const api = {
     });
   },
 
-  // ============ Chat (Admin) ============
-
   async getAdminConversations(token: string, options: { status?: string; page?: number; limit?: number } = {}): Promise<{
     conversations: Array<{
       id: number;
@@ -623,12 +584,6 @@ export const api = {
     });
   },
 
-  // ============ Google Auth (for Teachers) ============
-
-  /**
-   * Exchange Google authorization code for tokens (GIS popup flow)
-   * Frontend gets the code via popup, sends it here to exchange for tokens
-   */
   async exchangeGoogleCode(token: string, code: string): Promise<{ success: boolean; email?: string }> {
     return fetchApi('/auth/google/exchange-code', {
       method: 'POST',
@@ -649,13 +604,9 @@ export const api = {
     });
   },
 
-  // ============ Programs (Public) ============
-
   async getAllPrograms(): Promise<ProgramResponse[]> {
     return fetchApi('/programs');
   },
-
-  // ============ Programs (Admin) ============
 
   async createProgram(token: string, data: { name: string; description?: string }): Promise<ProgramResponse> {
     return fetchApi('/programs', {
@@ -680,8 +631,6 @@ export const api = {
     });
   },
 
-  // ============ Cohorts (Admin) ============
-
   async createCohort(token: string, data: { name: string; startDate: string; status?: string; programId: number }): Promise<CohortResponse> {
     return fetchApi('/programs/cohorts', {
       method: 'POST',
@@ -705,8 +654,6 @@ export const api = {
     });
   },
 
-  // ============ Cohort Courses (Admin) ============
-
   async createCohortCourse(token: string, data: { cohortId: number; courseId: number; teacherId?: number | null; level?: string; displayName?: string; description?: string; maxStudents?: number }): Promise<CohortCourseResponse> {
     return fetchApi('/programs/cohort-courses', {
       method: 'POST',
@@ -729,8 +676,6 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
-
-  // ============ Modules (Admin) ============
 
   async createModule(token: string, data: {
     courseId: number;
@@ -777,8 +722,6 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
   },
-
-  // ============ Student Cohort Enrollments ============
 
   async enrollInCohortCourse(token: string, studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
     return fetchApi('/programs/enroll', {
@@ -913,8 +856,6 @@ export const api = {
     });
   },
 
-  // ============ Weekly Focus (3L Model) ============
-
   async createOrUpdateWeeklyFocus(token: string, data: {
     moduleId: number;
     teacherId: number;
@@ -957,8 +898,6 @@ export const api = {
     });
   },
 };
-
-// ============ Program Types ============
 
 export interface StudentCohortEnrollment {
   id: number;
@@ -1107,8 +1046,6 @@ export interface TeachingCourse {
   } | null;
   moduleCount: number;
 }
-
-// ============ Weekly Focus Types (3L Model) ============
 
 export interface WeeklyFocusResponse {
   id: number;

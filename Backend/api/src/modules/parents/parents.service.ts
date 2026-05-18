@@ -54,10 +54,8 @@ export class ParentsService {
       throw new NotFoundException('Student not found or not linked to this parent');
     }
 
-    // Use the new StudentCohortEnrollment system first; fall back to old Enrollment table
     const cohortEnrollments = await this.programsService.getStudentEnrollmentsFormatted(studentId);
     if (cohortEnrollments.length > 0) {
-      // Return the most recently enrolled course shaped like the legacy Enrollment response
       const latest = cohortEnrollments[cohortEnrollments.length - 1];
       const currentModuleNumber = this.computeCurrentModuleNumber(latest.course.modules);
       return {
@@ -78,7 +76,6 @@ export class ParentsService {
       };
     }
 
-    // Fallback: legacy enrollment table
     return this.studentsService.getEnrollment(studentId);
   }
 

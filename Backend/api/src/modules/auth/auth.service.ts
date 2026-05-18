@@ -48,13 +48,11 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
-    // Check if email already exists
     const existingUser = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existingUser) {
       throw new ConflictException('Email đã được sử dụng');
     }
 
-    // Check if phone already exists
     if (dto.phone) {
       const existingPhone = await this.userRepo.findOne({ where: { phone: dto.phone } });
       if (existingPhone) {
@@ -62,17 +60,15 @@ export class AuthService {
       }
     }
 
-    // Create user with plaintext password
     const user = this.userRepo.create({
       email: dto.email,
-      passwordHash: dto.password, // Store as plaintext for simplicity
+      passwordHash: dto.password,
       phone: dto.phone,
       fullName: dto.fullName,
       role: dto.role,
     });
     await this.userRepo.save(user);
 
-    // Create role-specific profile
     let profileId: number;
 
     switch (dto.role) {
@@ -85,7 +81,6 @@ export class AuthService {
         await this.studentRepo.save(student);
         profileId = student.id;
         
-        // Auto-enroll student in current course
         await this.autoEnrollStudent(student.id);
         break;
 
@@ -113,7 +108,6 @@ export class AuthService {
         throw new BadRequestException('Invalid role');
     }
 
-    // Notify user by email (same SMTP as admin-created accounts; skipped if SMTP not configured)
     await this.emailService.sendSelfRegistrationEmail(
       user.email,
       user.fullName,
@@ -121,7 +115,6 @@ export class AuthService {
       dto.role,
     );
 
-    // Generate JWT
     return this.generateAuthResponse(user, profileId);
   }
 
@@ -132,17 +125,14 @@ export class AuthService {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
-    // Check if user is locked
     if (user.isLocked) {
       throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.');
     }
 
-    // Simple plaintext comparison
     if (dto.password !== user.passwordHash) {
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
-    // Log login session
     try {
       const session = this.loginSessionRepo.create({
         userId: user.id,
@@ -152,10 +142,8 @@ export class AuthService {
       await this.loginSessionRepo.save(session);
     } catch (err) {
       console.error('Failed to log login session:', err);
-      // Don't fail login if session logging fails
     }
 
-    // Get profile ID based on role
     const profileId = await this.getProfileId(user);
 
     return this.generateAuthResponse(user, profileId);
@@ -213,7 +201,6 @@ export class AuthService {
         const teacher = await this.teacherRepo.findOne({ where: { userId: user.id } });
         return teacher?.id || 0;
       case UserRole.ADMIN:
-        // Admin doesn't have a profile table, use user id
         return user.id;
       default:
         return 0;
@@ -241,12 +228,8 @@ export class AuthService {
     };
   }
 
-  /**
-   * Auto-enroll a new student in the current/latest active course
-   */
   private async autoEnrollStudent(studentId: number): Promise<void> {
     try {
-      // Find the current in_progress course, or the latest upcoming/registration_open course
       const course = await this.courseRepo.findOne({
         where: [
           { status: CourseStatus.IN_PROGRESS },
@@ -261,7 +244,6 @@ export class AuthService {
         return;
       }
 
-      // Check if already enrolled
       const existingEnrollment = await this.enrollmentRepo.findOne({
         where: { studentId, courseId: course.id },
       });
@@ -271,7 +253,6 @@ export class AuthService {
         return;
       }
 
-      // Create enrollment
       const enrollment = this.enrollmentRepo.create({
         studentId,
         courseId: course.id,
@@ -283,7 +264,6 @@ export class AuthService {
       console.log(`Auto-enrolled student ${studentId} in course "${course.name}" (ID: ${course.id})`);
     } catch (error) {
       console.error(`Failed to auto-enroll student ${studentId}:`, error);
-      // Don't throw - registration should still succeed even if auto-enrollment fails
     }
   }
 }

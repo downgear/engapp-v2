@@ -8,7 +8,7 @@ import { CohortStatus } from '../../entities/cohort.entity';
 import { CourseLevel } from '../../entities/cohort-course.entity';
 import { CourseStatus } from '../../entities/course.entity';
 
-// DTOs (using classes with class-validator decorators)
+// DTOs (using classes with class-validator decorators) (using classes with class-validator decorators)
 export class CreateProgramDto {
   @IsString()
   name: string;
@@ -277,8 +277,6 @@ export class ProgramsService {
     private studentRepository: Repository<Student>,
   ) {}
 
-  // ==================== PROGRAMS ====================
-
   async findAllPrograms(): Promise<Program[]> {
     return this.programRepository.find({
       where: { isActive: true },
@@ -336,8 +334,6 @@ export class ProgramsService {
     this.logger.log(`Deleted program: ${program.name} (ID: ${id})`);
   }
 
-  // ==================== COHORTS ====================
-
   async findCohortById(id: number): Promise<Cohort> {
     const cohort = await this.cohortRepository.findOne({
       where: { id },
@@ -357,7 +353,6 @@ export class ProgramsService {
   }
 
   async createCohort(dto: CreateCohortDto): Promise<Cohort> {
-    // Verify program exists
     await this.findProgramById(dto.programId);
 
     const cohort = this.cohortRepository.create({
@@ -385,8 +380,6 @@ export class ProgramsService {
     this.logger.log(`Deleted cohort: ${cohort.name} (ID: ${id})`);
   }
 
-  // ==================== COHORT COURSES ====================
-
   async findCohortCourseById(id: number): Promise<CohortCourse> {
     const cohortCourse = await this.cohortCourseRepository.findOne({
       where: { id },
@@ -399,14 +392,12 @@ export class ProgramsService {
   }
 
   async createCohortCourse(dto: CreateCohortCourseDto): Promise<CohortCourse> {
-    // Verify cohort and course exist
     await this.findCohortById(dto.cohortId);
     const course = await this.courseRepository.findOne({ where: { id: dto.courseId } });
     if (!course) {
       throw new NotFoundException(`Course with ID ${dto.courseId} not found`);
     }
 
-    // Validate teacher if provided
     let teacherId: number | null = null;
     if (dto.teacherId) {
       const teacher = await this.teacherRepository.findOne({
@@ -424,7 +415,8 @@ export class ProgramsService {
 
     const level = dto.level || CourseLevel.BASIC;
 
-    // Check if this combination already exists
+    const level = dto.level || CourseLevel.BASIC;
+
     const existing = await this.cohortCourseRepository.findOne({
       where: { cohortId: dto.cohortId, courseId: dto.courseId, level },
     });
@@ -449,10 +441,8 @@ export class ProgramsService {
   async updateCohortCourse(id: number, dto: UpdateCohortCourseDto): Promise<CohortCourse> {
     const cohortCourse = await this.findCohortCourseById(id);
     
-    // Validate teacher if being updated
     if (dto.teacherId !== undefined) {
       if (dto.teacherId === null) {
-        // Allow removing teacher
         cohortCourse.teacherId = null;
       } else {
         const teacher = await this.teacherRepository.findOne({
@@ -481,8 +471,6 @@ export class ProgramsService {
     await this.cohortCourseRepository.remove(cohortCourse);
     this.logger.log(`Deleted cohort course (ID: ${id})`);
   }
-
-  // ==================== MODULES ====================
 
   async findModuleById(id: number): Promise<CourseModule> {
     const module = await this.moduleRepository.findOne({ where: { id } });
@@ -546,8 +534,6 @@ export class ProgramsService {
     this.logger.log(`Deleted module ${id}`);
   }
 
-  // ==================== PUBLIC API (for students) ====================
-
   async getAllProgramsForPublic() {
     const programs = await this.findAllPrograms();
     
@@ -561,7 +547,6 @@ export class ProgramsService {
         startDate: cohort.startDate,
         status: cohort.status,
         courses: cohort.cohortCourses.map(cc => {
-          // Determine teacher info - show null if not found or locked
           let teacherInfo: { id: number; name: string; email: string } | null = null;
           if (cc.teacher && cc.teacher.user && !cc.teacher.user.isLocked) {
             teacherInfo = {
@@ -605,10 +590,7 @@ export class ProgramsService {
     }));
   }
 
-  // ==================== STUDENT ENROLLMENTS ====================
-
   async enrollStudent(studentId: number, cohortCourseId: number): Promise<StudentCohortEnrollment> {
-    // Check if already enrolled
     const existing = await this.enrollmentRepository.findOne({
       where: { studentId, cohortCourseId },
     });
@@ -616,7 +598,6 @@ export class ProgramsService {
       return existing;
     }
 
-    // Create enrollment
     const enrollment = this.enrollmentRepository.create({
       studentId,
       cohortCourseId,
@@ -624,7 +605,6 @@ export class ProgramsService {
     });
     const saved = await this.enrollmentRepository.save(enrollment);
     
-    // Update enrolled count on cohort course
     await this.cohortCourseRepository.increment({ id: cohortCourseId }, 'enrolledStudents', 1);
     
     this.logger.log(`Student ${studentId} enrolled in cohort course ${cohortCourseId}`);
@@ -651,7 +631,6 @@ export class ProgramsService {
     });
 
     if (!enrollment) {
-      // Auto-enroll if not enrolled
       enrollment = await this.enrollStudent(studentId, cohortCourseId);
     }
 
@@ -669,8 +648,6 @@ export class ProgramsService {
     });
     return enrollment?.paid || false;
   }
-
-  // ==================== UPDATE STANDALONE COURSE ====================
 
   async updateCourse(id: number, dto: Partial<Pick<CreateCourseDto, 'name' | 'description' | 'startDate' | 'endDate' | 'price' | 'status' | 'imageUrl'>>): Promise<Course> {
     const course = await this.courseRepository.findOne({ where: { id } });
@@ -690,8 +667,6 @@ export class ProgramsService {
     this.logger.log(`Updated course: ${updated.name} (ID: ${updated.id})`);
     return updated;
   }
-
-  // ==================== CREATE STANDALONE COURSE ====================
 
   async createStandaloneCourse(dto: CreateCourseDto): Promise<Course> {
     const today = dto.startDate || new Date().toISOString().split('T')[0];
@@ -713,8 +688,6 @@ export class ProgramsService {
     this.logger.log(`Created standalone course: ${saved.name} (ID: ${saved.id})`);
     return saved;
   }
-
-  // ==================== COHORT COURSE ENROLLMENTS (admin view) ====================
 
   async getCohortCourseEnrollments(cohortCourseId: number) {
     const enrollments = await this.enrollmentRepository.find({
@@ -762,7 +735,6 @@ export class ProgramsService {
     if (!student) {
       throw new NotFoundException(`Student profile not found for user ID ${userId}`);
     }
-    // Enroll and immediately mark as paid (admin-initiated enrollments are fully authorized)
     const enrollment = await this.enrollStudent(student.id, cohortCourseId);
     if (!enrollment.paid) {
       enrollment.paid = true;

@@ -64,10 +64,6 @@ export class WeeklyFocusService {
     });
   }
 
-  /**
-   * Get mentor brief: weekly focus + AI practice count for a student/module
-   * Used by mentor before video call session
-   */
   async getMentorBrief(studentId: number, moduleId: number): Promise<{
     weeklyFocus: WeeklyFocus | null;
     aiPracticeCount: number;
@@ -86,7 +82,6 @@ export class WeeklyFocusService {
       },
     });
 
-    // Get the most recent AI feedback for this student/module
     const lastAiHistory = await this.learningHistoryRepo.findOne({
       where: {
         studentId,

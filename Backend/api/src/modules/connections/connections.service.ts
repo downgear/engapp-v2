@@ -22,7 +22,6 @@ export class ConnectionsService {
   ) {}
 
   async createConnection(dto: CreateConnectionDto) {
-    // Find the user by email
     const targetUser = await this.userRepo.findOne({
       where: { email: dto.email },
     });
@@ -31,12 +30,10 @@ export class ConnectionsService {
       throw new NotFoundException(`Email ${dto.email} không tồn tại trong hệ thống`);
     }
 
-    // Validate role matches the link type
     if (dto.linkType === 'teacher') {
       if (targetUser.role !== 'teacher') {
         throw new BadRequestException(`${dto.email} không phải là giáo viên`);
       }
-      // Verify teacher profile exists
       const teacher = await this.teacherRepo.findOne({ where: { userId: targetUser.id } });
       if (!teacher) {
         throw new BadRequestException(`${dto.email} không phải là giáo viên`);
@@ -45,14 +42,12 @@ export class ConnectionsService {
       if (targetUser.role !== 'parent') {
         throw new BadRequestException(`${dto.email} không phải là phụ huynh`);
       }
-      // Verify parent profile exists
       const parent = await this.parentRepo.findOne({ where: { userId: targetUser.id } });
       if (!parent) {
         throw new BadRequestException(`${dto.email} không phải là phụ huynh`);
       }
     }
 
-    // Check if connection already exists
     const existingLink = await this.accountLinkRepo.findOne({
       where: {
         studentId: dto.studentId,
@@ -64,7 +59,6 @@ export class ConnectionsService {
       throw new BadRequestException('Kết nối này đã tồn tại');
     }
 
-    // Get student info for notification
     const student = await this.studentRepo.findOne({
       where: { id: dto.studentId },
       relations: ['user'],
@@ -74,7 +68,6 @@ export class ConnectionsService {
       throw new NotFoundException('Học sinh không tồn tại');
     }
 
-    // Create the connection
     const connection = this.accountLinkRepo.create({
       studentId: dto.studentId,
       linkedUserId: targetUser.id,
@@ -83,7 +76,6 @@ export class ConnectionsService {
 
     await this.accountLinkRepo.save(connection);
 
-    // Create notification for the target user
     const notification = this.notificationRepo.create({
       userId: targetUser.id,
       type: NotificationType.CONNECTION_REQUEST,

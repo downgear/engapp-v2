@@ -30,7 +30,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
-// Use API types
 type Program = ProgramResponse;
 type Cohort = CohortResponse;
 type Course = CohortCourseResponse;
@@ -100,7 +99,6 @@ const AllPrograms = () => {
         const data = await api.getAllPrograms();
         setPrograms(data);
         
-        // If user is a student, get their enrolled and paid courses from API
         if (isAuthenticated && user?.role === 'student' && accessToken) {
           try {
             const enrollments = await api.getStudentCohortEnrollments(accessToken, user.profileId);

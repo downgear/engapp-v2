@@ -83,7 +83,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse, ModuleResponse } from "@/services/api";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
-// ── Reusable image preview / upload widget ────────────────────────────────
 interface ImageUploadPreviewProps {
   value: string;
   onChange: (url: string) => void;
@@ -143,14 +142,12 @@ const ImageUploadPreview = ({ value, onChange, onFileChange, disabled, label }: 
   </div>
 );
 
-// Teacher type for selection
 interface TeacherOption {
   id: number;
   name: string;
   email: string;
 }
 
-// Student enrollment record
 interface EnrollmentRecord {
   enrollmentId: number;
   studentId: number;
@@ -247,11 +244,9 @@ export const CourseManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Teachers for selection
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [teacherPopoverOpen, setTeacherPopoverOpen] = useState(false);
 
-  // Dialog states
   const [programDialogOpen, setProgramDialogOpen] = useState(false);
   const [cohortDialogOpen, setCohortDialogOpen] = useState(false);
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
@@ -261,7 +256,6 @@ export const CourseManagement = () => {
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null);
   const [selectedCohortId, setSelectedCohortId] = useState<number | null>(null);
 
-  // Module dialog states
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewModule, setPreviewModule] = useState<ModuleResponse | null>(null);
@@ -283,7 +277,6 @@ export const CourseManagement = () => {
     teacherImageUrl: "",
   });
 
-  // Student enrollment dialog
   const [studentsDialogOpen, setStudentsDialogOpen] = useState(false);
   const [studentsDialogCourse, setStudentsDialogCourse] = useState<Course | null>(null);
   const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>([]);
@@ -310,7 +303,6 @@ export const CourseManagement = () => {
   });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Fetch programs from API and keep selectedCourse in sync
   const fetchPrograms = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -336,7 +328,6 @@ export const CourseManagement = () => {
     }
   }, [selectedCourse, language, toast]);
 
-  // Initial load – don't depend on selectedCourse to avoid infinite loops
   useEffect(() => {
     const init = async () => {
       try {
@@ -354,7 +345,6 @@ export const CourseManagement = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch teachers for selection
   const fetchTeachers = async () => {
     try {
       const data = await api.getTeachers();
@@ -390,13 +380,11 @@ export const CourseManagement = () => {
     }
   }, [selectedCourse?.id]);
 
-  // Find selected teacher
   const selectedTeacher = useMemo(() => {
     if (!courseForm.teacherId) return null;
     return teachers.find(t => t.id === courseForm.teacherId) || null;
   }, [courseForm.teacherId, teachers]);
 
-  // ==================== Program CRUD ====================
   const openAddProgram = () => {
     setEditingProgram(null);
     setProgramForm({ name: "", description: "" });
@@ -446,7 +434,6 @@ export const CourseManagement = () => {
     }
   };
 
-  // ==================== Cohort CRUD ====================
   const openAddCohort = (programId: number) => {
     setSelectedProgramId(programId);
     setEditingCohort(null);
@@ -523,7 +510,6 @@ export const CourseManagement = () => {
     }
   };
 
-  // ==================== Course CRUD ====================
   const openAddCourse = (programId: number, cohortId: number) => {
     setSelectedProgramId(programId);
     setSelectedCohortId(cohortId);
@@ -626,7 +612,6 @@ export const CourseManagement = () => {
     }
   };
 
-  // ==================== Module CRUD ====================
   const openAddModule = (courseId: number, existingModuleCount: number) => {
     setModuleTargetCourseId(courseId);
     setEditingModule(null);
@@ -724,7 +709,6 @@ export const CourseManagement = () => {
     }
   };
 
-  // ==================== Student Enrollment ====================
   const openStudentsDialog = async (course: Course) => {
     setStudentsDialogCourse(course);
     setStudentsDialogOpen(true);

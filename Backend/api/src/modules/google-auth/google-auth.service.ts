@@ -16,20 +16,14 @@ export class GoogleAuthService {
     @InjectRepository(Teacher)
     private readonly teacherRepo: Repository<Teacher>,
   ) {
-    // For GIS popup flow, we don't need redirect_uri in the client config
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
     );
   }
 
-  /**
-   * Exchange authorization code for tokens (GIS popup flow)
-   * For popup flow, we use 'postmessage' as redirect_uri
-   */
   async exchangeCodeForTokens(code: string, teacherId: number): Promise<{ success: boolean; email?: string }> {
     try {
-      // For GIS popup flow, use 'postmessage' as redirect_uri
       const { tokens } = await this.oauth2Client.getToken({
         code,
         redirect_uri: 'postmessage', // Special value for popup flow
@@ -39,18 +33,15 @@ export class GoogleAuthService {
         this.logger.warn('No refresh token received. User may have already authorized.');
       }
 
-      // Get user email from tokens
       this.oauth2Client.setCredentials(tokens);
       const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
       const userInfo = await oauth2.userinfo.get();
       const email = userInfo.data.email || '';
 
-      // Calculate expiration
       const expiresAt = tokens.expiry_date 
         ? new Date(tokens.expiry_date)
         : new Date(Date.now() + 3600 * 1000); // Default 1 hour
 
-      // Save or update tokens
       let tokenRecord = await this.tokenRepo.findOne({
         where: { teacherId },
       });
@@ -82,9 +73,6 @@ export class GoogleAuthService {
     }
   }
 
-  /**
-   * Get authenticated OAuth2 client for a teacher
-   */
   async getAuthenticatedClient(teacherId: number): Promise<OAuth2Client> {
     const tokenRecord = await this.tokenRepo.findOne({
       where: { teacherId },
@@ -94,7 +82,6 @@ export class GoogleAuthService {
       throw new UnauthorizedException('Teacher has not connected Google account');
     }
 
-    // Create a new client with the stored credentials
     const client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -107,14 +94,12 @@ export class GoogleAuthService {
       expiry_date: tokenRecord.expiresAt.getTime(),
     });
 
-    // Check if token is expired and refresh if needed
     if (new Date() >= tokenRecord.expiresAt) {
       this.logger.log(`Refreshing expired token for teacher ${teacherId}`);
       
       try {
         const { credentials } = await client.refreshAccessToken();
         
-        // Update stored tokens
         tokenRecord.accessToken = credentials.access_token!;
         if (credentials.expiry_date) {
           tokenRecord.expiresAt = new Date(credentials.expiry_date);
@@ -131,9 +116,6 @@ export class GoogleAuthService {
     return client;
   }
 
-  /**
-   * Check if teacher has connected Google account
-   */
   async isConnected(teacherId: number): Promise<{ connected: boolean; email?: string }> {
     const tokenRecord = await this.tokenRepo.findOne({
       where: { teacherId },
@@ -149,16 +131,12 @@ export class GoogleAuthService {
     };
   }
 
-  /**
-   * Disconnect Google account for a teacher
-   */
   async disconnect(teacherId: number): Promise<void> {
     const tokenRecord = await this.tokenRepo.findOne({
       where: { teacherId },
     });
 
     if (tokenRecord) {
-      // Optionally revoke the token
       try {
         const client = await this.getAuthenticatedClient(teacherId);
         await client.revokeCredentials();
@@ -171,9 +149,6 @@ export class GoogleAuthService {
     }
   }
 
-  /**
-   * Get teacher ID from user ID
-   */
   async getTeacherIdFromUserId(userId: number): Promise<number> {
     const teacher = await this.teacherRepo.findOne({
       where: { userId },

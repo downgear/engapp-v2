@@ -27,8 +27,6 @@ export class AdminService {
     private readonly emailService: EmailService,
   ) {}
 
-  // ==================== USER STATISTICS ====================
-
   async getUserStatistics() {
     const total = await this.userRepository.count({
       where: [
@@ -80,8 +78,6 @@ export class AdminService {
 
     return { total, breakdown };
   }
-
-  // ==================== USER MANAGEMENT ====================
 
   async getUsers(options: {
     page?: number;
@@ -217,8 +213,6 @@ export class AdminService {
     };
   }
 
-  // ==================== CREATE USER (ADMIN) ====================
-
   async createUser(data: {
     email: string;
     password: string;
@@ -230,13 +224,11 @@ export class AdminService {
       throw new BadRequestException('Cannot create admin users');
     }
 
-    // Check email uniqueness
     const existingEmail = await this.userRepository.findOne({ where: { email: data.email } });
     if (existingEmail) {
       throw new ConflictException('Email đã được sử dụng');
     }
 
-    // Check phone uniqueness
     if (data.phone) {
       const existingPhone = await this.userRepository.findOne({ where: { phone: data.phone } });
       if (existingPhone) {
@@ -244,7 +236,6 @@ export class AdminService {
       }
     }
 
-    // Create user
     const user = this.userRepository.create({
       email: data.email,
       passwordHash: data.password,
@@ -254,7 +245,6 @@ export class AdminService {
     });
     await this.userRepository.save(user);
 
-    // Create role-specific profile
     switch (data.role) {
       case UserRole.STUDENT:
         const student = this.studentRepository.create({ userId: user.id, cefrLevel: 'A1' });
@@ -272,13 +262,10 @@ export class AdminService {
       }
     }
 
-    // Send welcome email — must be awaited so Vercel doesn't cut it off before dispatch
     await this.emailService.sendWelcomeEmail(data.email, data.fullName, data.password, data.role);
 
     return this.getUserById(user.id);
   }
-
-  // ==================== BULK CREATE USERS ====================
 
   async bulkCreateUsers(users: Array<{
     email: string;
@@ -324,8 +311,6 @@ export class AdminService {
     };
   }
 
-  // ==================== UPDATE USER ROLE ====================
-
   async updateUserRole(id: number, newRole: UserRole) {
     if (newRole === UserRole.ADMIN) {
       throw new BadRequestException('Cannot assign admin role');
@@ -345,7 +330,6 @@ export class AdminService {
       return this.getUserById(id);
     }
 
-    // Remove old role-specific profile
     switch (oldRole) {
       case UserRole.STUDENT:
         await this.studentRepository.delete({ userId: user.id });
@@ -359,7 +343,6 @@ export class AdminService {
         break;
     }
 
-    // Create new role-specific profile
     switch (newRole) {
       case UserRole.STUDENT: {
         const student = this.studentRepository.create({ userId: user.id, cefrLevel: 'A1' });
@@ -379,20 +362,16 @@ export class AdminService {
       }
     }
 
-    // Update user role
     user.role = newRole;
     await this.userRepository.save(user);
 
     return this.getUserById(id);
   }
 
-  // ==================== VISIT STATISTICS ====================
-
   async getVisitStatistics(hours: number = 24) {
     const since = new Date();
     since.setHours(since.getHours() - hours);
 
-    // Get hourly login data
     const hourlyData = await this.loginSessionRepository
       .createQueryBuilder('session')
       .select("DATE_TRUNC('hour', session.logged_in_at)", 'hour')
@@ -402,7 +381,6 @@ export class AdminService {
       .orderBy('hour', 'ASC')
       .getRawMany();
 
-    // Get total
     const total = await this.loginSessionRepository.count({
       where: {
         loggedInAt: MoreThan(since),
@@ -418,13 +396,10 @@ export class AdminService {
     };
   }
 
-  // ==================== PRACTICE STATISTICS ====================
-
   async getPracticeStatistics(hours: number = 24) {
     const since = new Date();
     since.setHours(since.getHours() - hours);
 
-    // Get AI practice statistics
     const aiPracticeData = await this.learningHistoryRepository
       .createQueryBuilder('lh')
       .select("DATE_TRUNC('hour', lh.start_time)", 'hour')
@@ -435,7 +410,6 @@ export class AdminService {
       .orderBy('hour', 'ASC')
       .getRawMany();
 
-    // Get Video call statistics
     const videoCallData = await this.learningHistoryRepository
       .createQueryBuilder('lh')
       .select("DATE_TRUNC('hour', lh.start_time)", 'hour')
@@ -446,7 +420,6 @@ export class AdminService {
       .orderBy('hour', 'ASC')
       .getRawMany();
 
-    // Get totals
     const aiPracticeTotal = await this.learningHistoryRepository.count({
       where: {
         activityType: ActivityType.AI_PRACTICE,

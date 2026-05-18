@@ -25,9 +25,6 @@ export class GoogleCalendarService {
 
   constructor(private readonly googleAuthService: GoogleAuthService) {}
 
-  /**
-   * Create a Google Calendar event with Google Meet link
-   */
   async createMeeting(params: CreateMeetingParams): Promise<MeetingResult> {
     const {
       teacherId,
@@ -40,17 +37,12 @@ export class GoogleCalendarService {
       studentEmail,
     } = params;
 
-    // Get authenticated client for this teacher
     const authClient = await this.googleAuthService.getAuthenticatedClient(teacherId);
-    
-    // Create calendar API client
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
-    // Build datetime strings (ISO 8601)
     const startDateTime = `${bookingDate}T${startTime}:00`;
     const endDateTime = `${bookingDate}T${endTime}:00`;
 
-    // Event details
     const event: calendar_v3.Schema$Event = {
       summary: `Lingriser - ${moduleTitle}`,
       description: `Buổi học 1-1 với học viên ${studentName}\n\nChủ đề: ${moduleTitle}\nGiáo viên: ${teacherName}\n\n---\nĐược tạo tự động bởi Lingriser`,
@@ -62,7 +54,6 @@ export class GoogleCalendarService {
         dateTime: endDateTime,
         timeZone: 'Asia/Ho_Chi_Minh',
       },
-      // Add Google Meet conferencing
       conferenceData: {
         createRequest: {
           requestId: `lingriser-${teacherId}-${Date.now()}`,
@@ -71,17 +62,15 @@ export class GoogleCalendarService {
           },
         },
       },
-      // Send notifications
       reminders: {
         useDefault: false,
         overrides: [
-          { method: 'email', minutes: 60 }, // 1 hour before
-          { method: 'popup', minutes: 10 }, // 10 minutes before
+          { method: 'email', minutes: 60 },
+          { method: 'popup', minutes: 10 },
         ],
       },
     };
 
-    // Add student as attendee if email provided
     if (studentEmail) {
       event.attendees = [
         { email: studentEmail, displayName: studentName },
@@ -89,12 +78,11 @@ export class GoogleCalendarService {
     }
 
     try {
-      // Create event with conferencing
       const response = await calendar.events.insert({
         calendarId: 'primary',
         requestBody: event,
-        conferenceDataVersion: 1, // Required for Meet link
-        sendUpdates: studentEmail ? 'all' : 'none', // Send invite if student email provided
+        conferenceDataVersion: 1,
+        sendUpdates: studentEmail ? 'all' : 'none',
       });
 
       const createdEvent = response.data;
@@ -113,9 +101,6 @@ export class GoogleCalendarService {
     }
   }
 
-  /**
-   * Cancel/delete a Google Calendar event
-   */
   async cancelMeeting(teacherId: number, googleEventId: string): Promise<void> {
     try {
       const authClient = await this.googleAuthService.getAuthenticatedClient(teacherId);
@@ -124,19 +109,15 @@ export class GoogleCalendarService {
       await calendar.events.delete({
         calendarId: 'primary',
         eventId: googleEventId,
-        sendUpdates: 'all', // Notify attendees
+        sendUpdates: 'all',
       });
 
       this.logger.log(`Cancelled Google Calendar event: ${googleEventId}`);
     } catch (error) {
       this.logger.error(`Failed to cancel Google Calendar event: ${error.message}`);
-      // Don't throw - event might already be deleted
     }
   }
 
-  /**
-   * Update a Google Calendar event
-   */
   async updateMeeting(
     teacherId: number,
     googleEventId: string,

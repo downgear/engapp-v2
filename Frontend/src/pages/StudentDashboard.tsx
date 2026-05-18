@@ -59,7 +59,6 @@ const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | n
   }
 };
 
-// Collapsible feedback section component
 interface FeedbackSectionProps {
   icon: React.ReactNode;
   title: string;
@@ -69,7 +68,6 @@ interface FeedbackSectionProps {
   language: string;
 }
 
-// Type for structured feedback items (grammar, pronunciation errors, etc.)
 interface StructuredFeedbackItem {
   quote?: string;
   explanation?: string;
@@ -79,7 +77,6 @@ interface StructuredFeedbackItem {
   errorType?: string;
 }
 
-// Helper to check if a string is JSON
 const tryParseJSON = (str: string): StructuredFeedbackItem | null => {
   if (!str.startsWith('{')) return null;
   try {
@@ -89,7 +86,6 @@ const tryParseJSON = (str: string): StructuredFeedbackItem | null => {
   }
 };
 
-// Render a structured feedback item nicely
 const StructuredItem = ({ item, bulletColor, language }: { item: StructuredFeedbackItem; bulletColor: string; language: string }) => (
   <li className="flex items-start gap-1 pb-1.5 border-b border-border/30 last:border-0">
     <span className={`${bulletColor} mt-0.5`}>•</span>
@@ -137,14 +133,12 @@ const StructuredItem = ({ item, bulletColor, language }: { item: StructuredFeedb
 const FeedbackSection = ({ icon, title, items, colorClass, bulletColor, language }: FeedbackSectionProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Process items - handle both plain strings and JSON objects
   const processedItems = (items || [])
     .map(item => {
       if (item == null) return null;
       if (typeof item === 'string') {
         const trimmed = item.trim();
         if (!trimmed) return null;
-        // Try to parse as JSON
         const parsed = tryParseJSON(trimmed);
         if (parsed) return { type: 'structured' as const, data: parsed };
         return { type: 'text' as const, data: trimmed };
@@ -284,7 +278,6 @@ const StudentDashboard = () => {
     setCohortExpanded(prev => ({ ...prev, [cohortId]: !prev[cohortId] }));
   };
 
-  // Get cohort course IDs that the student is enrolled in
   const enrolledCourseIds = new Set(enrollments.map(e => e.cohortCourseId));
 
   const fetchData = useCallback(async () => {

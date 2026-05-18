@@ -29,7 +29,6 @@ export class BookingsService {
   ) {}
 
   async create(dto: CreateBookingDto) {
-    // Validate student exists and account is not locked
     const student = await this.studentRepo.findOne({ 
       where: { id: dto.studentId },
       relations: ['user'],
@@ -41,7 +40,6 @@ export class BookingsService {
       throw new BadRequestException('Student account is locked');
     }
 
-    // Validate teacher exists, is video call type, and account is not locked
     const teacher = await this.teacherRepo.findOne({ 
       where: { id: dto.teacherId },
       relations: ['user'],
@@ -56,12 +54,10 @@ export class BookingsService {
       throw new BadRequestException('This teacher is not available for video calls');
     }
 
-    // Validate module exists (optional — booking can exist without a specific module)
     let module: import('../../entities/module.entity').Module | null = null;
     if (dto.moduleId) {
       module = await this.moduleRepo.findOne({ where: { id: dto.moduleId } });
       if (!module) {
-        // Fall back gracefully: find the first available module
         module = await this.moduleRepo.findOne({ order: { id: 'ASC' } });
       }
     }
@@ -72,7 +68,6 @@ export class BookingsService {
       throw new NotFoundException('No module found in the system. Please contact admin.');
     }
 
-    // Check if slot is available
     const existingBooking = await this.bookingRepo.findOne({
       where: {
         teacherId: dto.teacherId,
@@ -86,7 +81,6 @@ export class BookingsService {
       throw new BadRequestException('This time slot is already booked');
     }
 
-    // Create booking (auto-confirmed)
     const booking = this.bookingRepo.create({
       studentId: dto.studentId,
       teacherId: dto.teacherId,
@@ -99,18 +93,15 @@ export class BookingsService {
 
     const savedBooking = await this.bookingRepo.save(booking);
 
-    // Try to create Google Meet link if teacher has connected Google
     try {
       const googleStatus = await this.googleAuthService.isConnected(dto.teacherId);
       
       if (googleStatus.connected) {
-        // Get student user info for attendee
         const studentWithUser = await this.studentRepo.findOne({
           where: { id: dto.studentId },
           relations: ['user'],
         });
 
-        // Get teacher user info
         const teacherWithUser = await this.teacherRepo.findOne({
           where: { id: dto.teacherId },
           relations: ['user'],
@@ -127,7 +118,6 @@ export class BookingsService {
           studentEmail: studentWithUser?.user?.email,
         });
 
-        // Update booking with meeting link
         savedBooking.meetingLink = meetingResult.meetingLink;
         savedBooking.googleEventId = meetingResult.googleEventId;
         await this.bookingRepo.save(savedBooking);
@@ -138,7 +128,6 @@ export class BookingsService {
       }
     } catch (error) {
       this.logger.error(`Failed to create Google Meet: ${error.message}`);
-      // Don't fail the booking - just log the error
     }
 
     return this.formatBooking(savedBooking);
@@ -174,7 +163,6 @@ export class BookingsService {
       throw new NotFoundException(`Booking with ID ${id} not found`);
     }
 
-    // Return detailed booking for single booking view
     return {
       id: booking.id,
       bookingDate: booking.bookingDate,
@@ -234,7 +222,6 @@ export class BookingsService {
     booking.status = BookingStatus.COMPLETED;
     await this.bookingRepo.save(booking);
 
-    // Create learning history entry
     const learningHistory = this.learningHistoryRepo.create({
       studentId: booking.studentId,
       moduleId: booking.moduleId,
@@ -256,7 +243,6 @@ export class BookingsService {
       throw new NotFoundException(`Booking with ID ${id} not found`);
     }
 
-    // Cancel Google Calendar event if exists
     if (booking.googleEventId) {
       try {
         await this.googleCalendarService.cancelMeeting(booking.teacherId, booking.googleEventId);
@@ -315,11 +301,6 @@ export class BookingsService {
     };
   }
 
-  // ==================== MEETING STATUS MANAGEMENT ====================
-
-  /**
-   * Start a meeting - change status to in_progress
-   */
   async startMeeting(bookingId: number, teacherId: number) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId, teacherId },
@@ -341,9 +322,6 @@ export class BookingsService {
     return this.formatBooking(booking);
   }
 
-  /**
-   * End a meeting - change status to ended and create learning history
-   */
   async endMeeting(bookingId: number, teacherId: number) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId, teacherId },
@@ -364,7 +342,6 @@ export class BookingsService {
     booking.status = BookingStatus.COMPLETED;
     await this.bookingRepo.save(booking);
 
-    // Create learning history entry for the video call
     const bookingDate = new Date(booking.bookingDate);
     const [startHour, startMin] = booking.slotStartTime.split(':').map(Number);
     const startTime = new Date(bookingDate);
@@ -385,9 +362,6 @@ export class BookingsService {
     return this.formatBooking(booking);
   }
 
-  /**
-   * Add teacher feedback after meeting ends
-   */
   async addTeacherFeedback(bookingId: number, teacherId: number, feedback: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId, teacherId },
@@ -405,7 +379,6 @@ export class BookingsService {
     booking.teacherFeedback = feedback;
     await this.bookingRepo.save(booking);
 
-    // Find the learning history for this booking and add teacher feedback
     const learningHistory = await this.learningHistoryRepo.findOne({
       where: { bookingId: booking.id },
     });
@@ -424,9 +397,6 @@ export class BookingsService {
     return this.formatBooking(booking);
   }
 
-  /**
-   * Add student rating after meeting ends
-   */
   async addStudentRating(bookingId: number, studentId: number, rating: number, comment?: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId, studentId },
@@ -455,11 +425,7 @@ export class BookingsService {
     return this.formatBooking(booking);
   }
 
-  /**
-   * Get computed meeting status based on time and manual status
-   */
   getMeetingStatusFromBooking(booking: Booking): MeetingStatus {
-    // If already ended, return ended
     if (booking.meetingStatus === MeetingStatus.ENDED) {
       return MeetingStatus.ENDED;
     }
@@ -475,12 +441,10 @@ export class BookingsService {
     const endTime = new Date(bookingDate);
     endTime.setHours(endHour, endMin, 0, 0);
 
-    // If current time is past end time, auto-end the meeting
     if (now > endTime) {
       return MeetingStatus.ENDED;
     }
 
-    // If current time is within the meeting time range
     if (now >= startTime && now <= endTime) {
       return MeetingStatus.IN_PROGRESS;
     }

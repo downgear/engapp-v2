@@ -14,7 +14,7 @@ export class NotificationsService {
     const notifications = await this.notificationRepo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
-      take: 20, // Limit to last 20 notifications
+      take: 20,
     });
 
     return notifications.map((n) => ({
