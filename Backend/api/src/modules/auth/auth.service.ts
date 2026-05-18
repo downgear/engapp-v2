@@ -1,23 +1,23 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus, LoginSession } from '../../entities';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { EmailService } from '../email/email.service';
+import { AuthGrpcClient } from '../grpc/auth-grpc.client';
 
 export interface JwtPayload {
-  sub: number;
-  email: string;
-  role: UserRole;
-  profileId: number;
+  sub: string;
+  iat?: number;
 }
 
 export interface AuthResponse {
   accessToken: string;
+  refreshToken?: string;
   user: {
     id: number;
+    identityId: string;
     email: string;
     fullName: string;
     role: UserRole;
@@ -43,8 +43,8 @@ export class AuthService {
     private enrollmentRepo: Repository<Enrollment>,
     @InjectRepository(LoginSession)
     private loginSessionRepo: Repository<LoginSession>,
-    private jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly authGrpc: AuthGrpcClient,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -60,12 +60,26 @@ export class AuthService {
       }
     }
 
+    let grpcResult: any;
+    try {
+      grpcResult = await this.authGrpc.registerMail({
+        mail: dto.email,
+        password: dto.password,
+        username: dto.fullName,
+      });
+    } catch (err: any) {
+      throw new ConflictException(err.details || 'Đăng ký thất bại');
+    }
+
+    const identityId: string = grpcResult?.identity?.id || grpcResult?.sub || '';
+
     const user = this.userRepo.create({
       email: dto.email,
-      passwordHash: dto.password,
+      passwordHash: '',
       phone: dto.phone,
       fullName: dto.fullName,
       role: dto.role,
+      identityId,
     });
     await this.userRepo.save(user);
 
@@ -80,14 +94,11 @@ export class AuthService {
         });
         await this.studentRepo.save(student);
         profileId = student.id;
-        
         await this.autoEnrollStudent(student.id);
         break;
 
       case UserRole.PARENT:
-        const parent = this.parentRepo.create({
-          userId: user.id,
-        });
+        const parent = this.parentRepo.create({ userId: user.id });
         await this.parentRepo.save(parent);
         profileId = parent.id;
         break;
@@ -108,6 +119,10 @@ export class AuthService {
         throw new BadRequestException('Invalid role');
     }
 
+    try {
+      await this.authGrpc.assignRoleTo({ identity_id: identityId, role_id: dto.role });
+    } catch (_) {}
+
     await this.emailService.sendSelfRegistrationEmail(
       user.email,
       user.fullName,
@@ -115,22 +130,25 @@ export class AuthService {
       dto.role,
     );
 
-    return this.generateAuthResponse(user, profileId);
+    return this.generateAuthResponse(user, profileId, grpcResult.accessToken, grpcResult.refreshToken);
   }
 
   async login(dto: LoginDto, sessionInfo?: { ipAddress?: string; userAgent?: string }): Promise<AuthResponse> {
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
-    
+    let grpcResult: any;
+    try {
+      grpcResult = await this.authGrpc.loginMail({
+        mail: dto.email,
+        password: dto.password,
+      });
+    } catch (err: any) {
+      throw new UnauthorizedException(err.details || 'Email hoặc mật khẩu không đúng');
+    }
+
+    const identityId: string = grpcResult.identity_id || '';
+
+    const user = await this.userRepo.findOne({ where: { identityId } });
     if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
-    }
-
-    if (user.isLocked) {
-      throw new UnauthorizedException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin để được hỗ trợ.');
-    }
-
-    if (dto.password !== user.passwordHash) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException('Tài khoản không tồn tại trong hệ thống');
     }
 
     try {
@@ -146,11 +164,32 @@ export class AuthService {
 
     const profileId = await this.getProfileId(user);
 
-    return this.generateAuthResponse(user, profileId);
+    return this.generateAuthResponse(user, profileId, grpcResult.accessToken, grpcResult.refreshToken);
   }
 
-  async validateUser(payload: JwtPayload): Promise<User | null> {
-    return this.userRepo.findOne({ where: { id: payload.sub } });
+  async validateUser(payload: JwtPayload): Promise<any> {
+    if (payload.iat) {
+      try {
+        await this.authGrpc.validateAccess({ identity_id: payload.sub, iat: payload.iat });
+      } catch {
+        throw new UnauthorizedException('Token đã bị thu hồi');
+      }
+    }
+
+    const user = await this.userRepo.findOne({ where: { identityId: payload.sub } });
+    if (!user) {
+      throw new UnauthorizedException('Người dùng không tồn tại');
+    }
+
+    const profileId = await this.getProfileId(user);
+
+    return {
+      userId: user.id,
+      identityId: user.identityId,
+      email: user.email,
+      role: user.role,
+      profileId,
+    };
   }
 
   async getProfile(userId: number): Promise<any> {
@@ -179,6 +218,7 @@ export class AuthService {
 
     return {
       id: user.id,
+      identityId: user.identityId,
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
@@ -203,11 +243,20 @@ export class AuthService {
 
     return {
       id: user.id,
+      identityId: user.identityId,
       profileId,
       role: user.role,
       email: user.email,
       fullName: user.fullName,
     };
+  }
+
+  async findByEmail(email: string) {
+    return this.userRepo.findOne({ where: { email } });
+  }
+
+  async findByIdentityId(identityId: string) {
+    return this.userRepo.findOne({ where: { identityId } });
   }
 
   private async getProfileId(user: User): Promise<number> {
@@ -228,18 +277,13 @@ export class AuthService {
     }
   }
 
-  private generateAuthResponse(user: User, profileId: number): AuthResponse {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      profileId,
-    };
-
+  private generateAuthResponse(user: User, profileId: number, accessToken: string, refreshToken?: string): AuthResponse {
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
+        identityId: user.identityId || '',
         email: user.email,
         fullName: user.fullName,
         role: user.role,
@@ -288,4 +332,3 @@ export class AuthService {
     }
   }
 }
-

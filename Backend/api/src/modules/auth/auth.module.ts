@@ -18,7 +18,7 @@ import { EmailModule } from '../email/email.module';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'lingriser-secret-key-2026',
-        signOptions: { expiresIn: '7d' },
+        signOptions: { expiresIn: '15m' },
       }),
       inject: [ConfigService],
     }),
@@ -28,4 +28,3 @@ import { EmailModule } from '../email/email.module';
   exports: [AuthService, JwtStrategy, PassportModule],
 })
 export class AuthModule {}
-

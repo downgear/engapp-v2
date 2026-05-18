@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, Student, AccountLink, Notification, NotificationType, Teacher, Parent } from '../../entities';
+import { User, Student, AccountLink, Teacher, Parent } from '../../entities';
 import { CreateConnectionDto } from './dto/create-connection.dto';
+import { NotificationGrpcClient } from '../grpc/notification-grpc.client';
 
 @Injectable()
 export class ConnectionsService {
@@ -13,12 +14,11 @@ export class ConnectionsService {
     private studentRepo: Repository<Student>,
     @InjectRepository(AccountLink)
     private accountLinkRepo: Repository<AccountLink>,
-    @InjectRepository(Notification)
-    private notificationRepo: Repository<Notification>,
     @InjectRepository(Teacher)
     private teacherRepo: Repository<Teacher>,
     @InjectRepository(Parent)
     private parentRepo: Repository<Parent>,
+    private readonly notificationGrpc: NotificationGrpcClient,
   ) {}
 
   async createConnection(dto: CreateConnectionDto) {
@@ -76,20 +76,23 @@ export class ConnectionsService {
 
     await this.accountLinkRepo.save(connection);
 
-    const notification = this.notificationRepo.create({
-      userId: targetUser.id,
-      type: NotificationType.CONNECTION_REQUEST,
-      title: 'Yêu cầu kết nối mới',
-      message: `Học sinh ${student.user.fullName} đã gửi yêu cầu kết nối với bạn`,
-      data: JSON.stringify({
-        studentId: dto.studentId,
-        studentName: student.user.fullName,
-        connectionId: connection.id,
-      }),
-      isRead: false,
-    });
-
-    await this.notificationRepo.save(notification);
+    if (targetUser.identityId) {
+      try {
+        await this.notificationGrpc.createNotification({
+          recipient_id: targetUser.identityId,
+          type: 'connection_request',
+          title: 'Yêu cầu kết nối mới',
+          message: `Học sinh ${student.user.fullName} đã gửi yêu cầu kết nối với bạn`,
+          data: JSON.stringify({
+            studentId: dto.studentId,
+            studentName: student.user.fullName,
+            connectionId: connection.id,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to create notification via gRPC:', err);
+      }
+    }
 
     return {
       id: connection.id,
@@ -117,4 +120,3 @@ export class ConnectionsService {
     return { success: true };
   }
 }
-

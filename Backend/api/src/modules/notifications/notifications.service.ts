@@ -1,57 +1,45 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Notification } from '../../entities';
+import { Injectable } from '@nestjs/common';
+import { NotificationGrpcClient } from '../grpc/notification-grpc.client';
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectRepository(Notification)
-    private notificationRepo: Repository<Notification>,
+    private readonly notificationGrpc: NotificationGrpcClient,
   ) {}
 
-  async getByUserId(userId: number) {
-    const notifications = await this.notificationRepo.find({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      take: 20,
+  async getByUserId(identityId: string) {
+    const result = await this.notificationGrpc.listNotifications({
+      recipient_id: identityId,
+      limit: 20,
     });
-
-    return notifications.map((n) => ({
+    return (result.notifications || []).map((n: any) => ({
       id: n.id,
       type: n.type,
       title: n.title,
       message: n.message,
-      data: n.data ? JSON.parse(n.data) : null,
-      isRead: n.isRead,
-      createdAt: n.createdAt,
+      data: n.data ? (typeof n.data === 'string' ? JSON.parse(n.data) : n.data) : null,
+      isRead: n.is_read,
+      readAt: n.read_at,
+      createdAt: n.created_at,
     }));
   }
 
-  async getUnreadCount(userId: number) {
-    const count = await this.notificationRepo.count({
-      where: { userId, isRead: false },
+  async getUnreadCount(identityId: string) {
+    const result = await this.notificationGrpc.listNotifications({
+      recipient_id: identityId,
+      is_read: false,
+      limit: 1,
     });
-    return { count };
+    return { count: result.unread_count || 0 };
   }
 
-  async markAsRead(id: number) {
-    const notification = await this.notificationRepo.findOne({ where: { id } });
-    if (!notification) {
-      throw new NotFoundException('Notification not found');
-    }
-
-    notification.isRead = true;
-    await this.notificationRepo.save(notification);
+  async markAsRead(id: string) {
+    await this.notificationGrpc.markAsRead({ id });
     return { success: true };
   }
 
-  async markAllAsRead(userId: number) {
-    await this.notificationRepo.update(
-      { userId, isRead: false },
-      { isRead: true },
-    );
+  async markAllAsRead(identityId: string) {
+    await this.notificationGrpc.markAllAsRead({ recipient_id: identityId });
     return { success: true };
   }
 }
-

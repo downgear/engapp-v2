@@ -31,6 +31,9 @@ export class User {
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
 
+  @Column({ name: 'identity_id', nullable: true })
+  identityId: string;
+
   @Column({ name: 'is_locked', default: false })
   isLocked: boolean;
 

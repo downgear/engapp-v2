@@ -20,7 +20,7 @@ async function bootstrap(): Promise<express.Express> {
 
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:8080', 'http://localhost:5173'];
+    : ['http://localhost:8080', 'http://localhost:5173', 'http://khoakomlem-internal.ddns.net:8080'];
 
   app.enableCors({
     origin: allowedOrigins,

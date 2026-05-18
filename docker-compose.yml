@@ -13,6 +13,5 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./Backend/database/schema_postgres.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./Backend/database/seed_postgres.sql:/docker-entrypoint-initdb.d/02-seed.sql
-
 volumes:
   pgdata:

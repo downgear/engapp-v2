@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
+import { GrpcModule } from './modules/grpc/grpc.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StudentsModule } from './modules/students/students.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
@@ -26,6 +27,7 @@ import { AppService } from './app.service';
       isGlobal: true,
     }),
     DatabaseModule,
+    GrpcModule,
     AuthModule,
     StudentsModule,
     TeachersModule,
