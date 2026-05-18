@@ -9,6 +9,18 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 6768,
     allowedHosts: ["khoakomlem-internal.ddns.net"],
+    proxy: {
+      "/auth-api": {
+        target: "http://localhost:1510",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/auth-api/, ""),
+      },
+      "/legacy-api": {
+        target: "http://localhost:1515",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/legacy-api/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

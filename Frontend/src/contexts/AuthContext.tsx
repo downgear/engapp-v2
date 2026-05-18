@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { setRefreshTokensFn } from '@/services/api';
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1511/api/auth';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1510/api/v1';
 const LEGACY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1515/api';
 const ENGLISH_PREP_API_URL = import.meta.env.VITE_ENGLISH_PREP_API_URL || 'https://meowlish.servebeer.com/api';
 
@@ -9,51 +9,51 @@ const ENGLISH_PREP_API_URL = import.meta.env.VITE_ENGLISH_PREP_API_URL || 'https
 export type UserRole = 'student' | 'parent' | 'teacher' | 'mentor' | 'admin';
 
 export interface User {
-  id: string;
-  username: string;
-  fullName?: string;
-  bio?: string;
-  avatarUrl?: string;
-  phoneNumber?: string;
-  roles: UserRole[];
-  // Backward-compat: primary role for components using user.role
-  role: UserRole;
-  // Backward-compat: email preserved from login input
-  email: string;
-  // Backward-compat: engapp-v2 profile ID (student/teacher/parent record).
-  // Not available from server identity — looked up from engapp-v2 backend.
-  profileId: number;
-  // Backward-compat: engapp-v2 users.id (integer), used by notifications, chat, etc.
-  legacyUserId: number;
+	id: string;
+	username: string;
+	fullName?: string;
+	bio?: string;
+	avatarUrl?: string;
+	phoneNumber?: string;
+	roles: UserRole[];
+	// Backward-compat: primary role for components using user.role
+	role: UserRole;
+	// Backward-compat: email preserved from login input
+	email: string;
+	// Backward-compat: engapp-v2 profile ID (student/teacher/parent record).
+	// Not available from server identity — looked up from engapp-v2 backend.
+	profileId: number;
+	// Backward-compat: engapp-v2 users.id (integer), used by notifications, chat, etc.
+	legacyUserId: number;
 }
 
 export interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+	user: User | null;
+	accessToken: string | null;
+	isAuthenticated: boolean;
+	isLoading: boolean;
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => void;
-  handleGoogleCallback: (loginToken: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-  refreshTokens: () => Promise<boolean>;
+	login: (email: string, password: string) => Promise<void>;
+	loginWithGoogle: () => void;
+	handleGoogleCallback: (loginToken: string) => Promise<void>;
+	register: (data: RegisterData) => Promise<void>;
+	logout: () => Promise<void>;
+	refreshProfile: () => Promise<void>;
+	refreshTokens: () => Promise<boolean>;
 }
 
 export interface RegisterData {
-  email: string;
-  password: string;
-  fullName: string;
-  phone?: string;
-  role: UserRole;
-  grade?: string;
-  cefrLevel?: string;
-  teacherType?: 'in_person' | 'video_call' | 'both';
-  bio?: string;
+	email: string;
+	password: string;
+	fullName: string;
+	phone?: string;
+	role: UserRole;
+	grade?: string;
+	cefrLevel?: string;
+	teacherType?: 'in_person' | 'video_call' | 'both';
+	bio?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,364 +70,370 @@ const SHARED_REFRESH_COOKIE = 'refresh_token';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 function getCookie(name: string): string | undefined {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : undefined;
+	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+	return match ? decodeURIComponent(match[1]) : undefined;
 }
 
 function setCookie(name: string, value: string, maxAge: number): void {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; samesite=lax`;
+	document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; samesite=lax`;
 }
 
 function clearCookie(name: string): void {
-  document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
+	document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
 }
 
 function saveTokens(accessToken: string, refreshToken: string): void {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-  setCookie(SHARED_ACCESS_COOKIE, accessToken, COOKIE_MAX_AGE);
-  setCookie(SHARED_REFRESH_COOKIE, refreshToken, COOKIE_MAX_AGE);
-  setCookie('user_authenticated', 'true', COOKIE_MAX_AGE);
+	localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+	localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+	setCookie(SHARED_ACCESS_COOKIE, accessToken, COOKIE_MAX_AGE);
+	setCookie(SHARED_REFRESH_COOKIE, refreshToken, COOKIE_MAX_AGE);
+	setCookie('user_authenticated', 'true', COOKIE_MAX_AGE);
 }
 
 function loadAccessToken(): string | null {
-  return localStorage.getItem(ACCESS_TOKEN_KEY) || getCookie(SHARED_ACCESS_COOKIE) || null;
+	return localStorage.getItem(ACCESS_TOKEN_KEY) || getCookie(SHARED_ACCESS_COOKIE) || null;
 }
 
 function loadRefreshToken(): string | null {
-  return localStorage.getItem(REFRESH_TOKEN_KEY) || getCookie(SHARED_REFRESH_COOKIE) || null;
+	return localStorage.getItem(REFRESH_TOKEN_KEY) || getCookie(SHARED_REFRESH_COOKIE) || null;
 }
 
 function clearAllTokens(): void {
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  clearCookie(SHARED_ACCESS_COOKIE);
-  clearCookie(SHARED_REFRESH_COOKIE);
-  clearCookie('user_authenticated');
+	localStorage.removeItem(ACCESS_TOKEN_KEY);
+	localStorage.removeItem(REFRESH_TOKEN_KEY);
+	localStorage.removeItem(USER_KEY);
+	clearCookie(SHARED_ACCESS_COOKIE);
+	clearCookie(SHARED_REFRESH_COOKIE);
+	clearCookie('user_authenticated');
 }
 
 async function fetchIdentity(accessToken: string, email: string): Promise<User> {
-  const res = await fetch(`${AUTH_API_URL}/my/identity`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) throw new Error('Failed to fetch identity');
-  const data = await res.json();
-  const roles: UserRole[] = data.roles ?? [];
+	const res = await fetch(`${AUTH_API_URL}/my/identity`, {
+		headers: { Authorization: `Bearer ${accessToken}` },
+	});
+	if (!res.ok) throw new Error('Failed to fetch identity');
+	const body = await res.json();
+	const data = body.data ?? body;
+	const roles: UserRole[] = data.roles ?? [];
 
-  // Look up legacy IDs from engapp-v2 backend by email
-  let profileId = 0;
-  let legacyUserId = 0;
-  try {
-    const legacyRes = await fetch(`${LEGACY_API_URL}/auth/profile-by-email?email=${encodeURIComponent(email)}`);
-    if (legacyRes.ok) {
-      const legacy = await legacyRes.json();
-      profileId = legacy.profileId ?? 0;
-      legacyUserId = legacy.id ?? 0;
-    }
-  } catch {
-    // engapp-v2 backend may be unavailable — non-blocking
-  }
+	// Look up legacy IDs from engapp-v2 backend by email
+	let profileId = 0;
+	let legacyUserId = 0;
+	try {
+		const legacyRes = await fetch(`${LEGACY_API_URL}/auth/profile-by-email?email=${encodeURIComponent(email)}`);
+		if (legacyRes.ok) {
+			const legacy = await legacyRes.json();
+			profileId = legacy.profileId ?? 0;
+			legacyUserId = legacy.id ?? 0;
+		}
+	} catch {
+		// engapp-v2 backend may be unavailable — non-blocking
+	}
 
-  return {
-    id: data.id,
-    username: data.username,
-    fullName: data.fullName,
-    bio: data.bio,
-    avatarUrl: data.avatarUrl,
-    phoneNumber: data.phoneNumber,
-    roles,
-    role: roles[0] ?? 'student',
-    email,
-    profileId,
-    legacyUserId,
-  };
+	return {
+		id: data.id,
+		username: data.username,
+		fullName: data.fullName,
+		bio: data.bio,
+		avatarUrl: data.avatarUrl,
+		phoneNumber: data.phoneNumber,
+		roles,
+		role: roles[0] ?? 'student',
+		email,
+		profileId,
+		legacyUserId,
+	};
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    accessToken: null,
-    isAuthenticated: false,
-    isLoading: true,
-  });
+	const [state, setState] = useState<AuthState>({
+		user: null,
+		accessToken: null,
+		isAuthenticated: false,
+		isLoading: true,
+	});
 
-  const refreshingRef = useRef(false);
+	const refreshingRef = useRef(false);
 
-  useEffect(() => {
-    setRefreshTokensFn(refreshTokens);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect(() => {
+		setRefreshTokensFn(refreshTokens);
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const clearAuth = useCallback(() => {
-    clearAllTokens();
-    setState({
-      user: null,
-      accessToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
-  }, []);
+	const clearAuth = useCallback(() => {
+		clearAllTokens();
+		setState({
+			user: null,
+			accessToken: null,
+			isAuthenticated: false,
+			isLoading: false,
+		});
+	}, []);
 
-  const refreshTokens = useCallback(async (): Promise<boolean> => {
-    if (refreshingRef.current) return false;
-    refreshingRef.current = true;
+	const refreshTokens = useCallback(async (): Promise<boolean> => {
+		if (refreshingRef.current) return false;
+		refreshingRef.current = true;
 
-    try {
-      const refreshToken = loadRefreshToken();
-      if (!refreshToken) return false;
+		try {
+			const refreshToken = loadRefreshToken();
+			if (!refreshToken) return false;
 
-      const res = await fetch(`${AUTH_API_URL}/refresh`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${refreshToken}` },
-      });
+			const res = await fetch(`${AUTH_API_URL}/refresh`, {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${refreshToken}` },
+			});
 
-      if (!res.ok) {
-        clearAuth();
-        return false;
-      }
+			if (!res.ok) {
+				clearAuth();
+				return false;
+			}
 
-      const tokens = await res.json();
-      saveTokens(tokens.accessToken, tokens.refreshToken);
+			const body = await res.json();
+			const tokens = body.data ?? body;
+			saveTokens(tokens.accessToken, tokens.refreshToken);
 
-      const savedUser = localStorage.getItem(USER_KEY);
-      const savedEmail = savedUser ? (JSON.parse(savedUser) as User).email : '';
-      const user = await fetchIdentity(tokens.accessToken, savedEmail);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+			const savedUser = localStorage.getItem(USER_KEY);
+			const savedEmail = savedUser ? (JSON.parse(savedUser) as User).email : '';
+			const user = await fetchIdentity(tokens.accessToken, savedEmail);
+			localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-      setState({
-        user,
-        accessToken: tokens.accessToken,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+			setState({
+				user,
+				accessToken: tokens.accessToken,
+				isAuthenticated: true,
+				isLoading: false,
+			});
 
-      return true;
-    } catch {
-      clearAuth();
-      return false;
-    } finally {
-      refreshingRef.current = false;
-    }
-  }, [clearAuth]);
+			return true;
+		} catch {
+			clearAuth();
+			return false;
+		} finally {
+			refreshingRef.current = false;
+		}
+	}, [clearAuth]);
 
-  // Load saved auth state on mount
-  useEffect(() => {
-    const loadSavedAuth = async () => {
-      try {
-        const savedAccessToken = loadAccessToken();
-        const savedUser = localStorage.getItem(USER_KEY);
+	// Load saved auth state on mount
+	useEffect(() => {
+		const loadSavedAuth = async () => {
+			try {
+				const savedAccessToken = loadAccessToken();
+				const savedUser = localStorage.getItem(USER_KEY);
 
-        if (savedAccessToken && savedUser) {
-          // Sync cookie → localStorage if token came from cookie (cross-app login)
-          if (!localStorage.getItem(ACCESS_TOKEN_KEY) && savedAccessToken) {
-            localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
-            const rt = loadRefreshToken();
-            if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
-          }
-          setState({
-            user: JSON.parse(savedUser),
-            accessToken: savedAccessToken,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } else if (savedAccessToken && !savedUser) {
-          // Token exists (from cookie / other app) but no cached user — try identity first
-          localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
-          const rt = loadRefreshToken();
-          if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
-          try {
-            const decoded: Record<string, string> = JSON.parse(atob(savedAccessToken.split('.')[1]));
-            const email = decoded.email || decoded.mail || '';
-            const user = await fetchIdentity(savedAccessToken, email);
-            localStorage.setItem(USER_KEY, JSON.stringify(user));
-            setState({ user, accessToken: savedAccessToken, isAuthenticated: true, isLoading: false });
-          } catch {
-            await refreshTokens();
-          }
-        } else if (loadRefreshToken()) {
-          await refreshTokens();
-        } else {
-          // Migrate from old storage keys if present
-          const oldToken = localStorage.getItem('lingriser_token');
-          if (oldToken) {
-            localStorage.removeItem('lingriser_token');
-            localStorage.removeItem('lingriser_user');
-          }
-          setState(prev => ({ ...prev, isLoading: false }));
-        }
-      } catch {
-        clearAuth();
-      }
-    };
+				if (savedAccessToken && savedUser) {
+					// Sync cookie → localStorage if token came from cookie (cross-app login)
+					if (!localStorage.getItem(ACCESS_TOKEN_KEY) && savedAccessToken) {
+						localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
+						const rt = loadRefreshToken();
+						if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
+					}
+					setState({
+						user: JSON.parse(savedUser),
+						accessToken: savedAccessToken,
+						isAuthenticated: true,
+						isLoading: false,
+					});
+				} else if (savedAccessToken && !savedUser) {
+					// Token exists (from cookie / other app) but no cached user — try identity first
+					localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
+					const rt = loadRefreshToken();
+					if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
+					try {
+						const decoded: Record<string, string> = JSON.parse(atob(savedAccessToken.split('.')[1]));
+						const email = decoded.email || decoded.mail || '';
+						const user = await fetchIdentity(savedAccessToken, email);
+						localStorage.setItem(USER_KEY, JSON.stringify(user));
+						setState({ user, accessToken: savedAccessToken, isAuthenticated: true, isLoading: false });
+					} catch {
+						await refreshTokens();
+					}
+				} else if (loadRefreshToken()) {
+					await refreshTokens();
+				} else {
+					// Migrate from old storage keys if present
+					const oldToken = localStorage.getItem('lingriser_token');
+					if (oldToken) {
+						localStorage.removeItem('lingriser_token');
+						localStorage.removeItem('lingriser_user');
+					}
+					setState((prev) => ({ ...prev, isLoading: false }));
+				}
+			} catch {
+				clearAuth();
+			}
+		};
 
-    loadSavedAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+		loadSavedAuth();
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await fetch(`${AUTH_API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mail: email, password }),
-    });
+	const login = useCallback(async (email: string, password: string) => {
+		const response = await fetch(`${AUTH_API_URL}/login`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ mail: email, password }),
+		});
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Đăng nhập thất bại' }));
-      throw new Error(error.message || 'Đăng nhập thất bại');
-    }
+		if (!response.ok) {
+			const error = await response.json().catch(() => ({ message: 'Đăng nhập thất bại' }));
+			throw new Error(error.message || 'Đăng nhập thất bại');
+		}
 
-    const tokens = await response.json();
+		const body = await response.json();
+		const tokens = body.data ?? body;
 
-    saveTokens(tokens.accessToken, tokens.refreshToken);
+		saveTokens(tokens.accessToken, tokens.refreshToken);
 
-    const user = await fetchIdentity(tokens.accessToken, email);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+		const user = await fetchIdentity(tokens.accessToken, email);
+		localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-    setState({
-      user,
-      accessToken: tokens.accessToken,
-      isAuthenticated: true,
-      isLoading: false,
-    });
-  }, []);
+		setState({
+			user,
+			accessToken: tokens.accessToken,
+			isAuthenticated: true,
+			isLoading: false,
+		});
+	}, []);
 
-  const register = useCallback(async (registerData: RegisterData) => {
-    const username = registerData.email.split('@')[0];
+	const register = useCallback(async (registerData: RegisterData) => {
+		const username = registerData.email.split('@')[0];
 
-    const response = await fetch(`${AUTH_API_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mail: registerData.email,
-        password: registerData.password,
-        username,
-      }),
-    });
+		const response = await fetch(`${AUTH_API_URL}/register`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				mail: registerData.email,
+				password: registerData.password,
+				username,
+			}),
+		});
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Đăng ký thất bại' }));
-      throw new Error(error.message || 'Đăng ký thất bại');
-    }
+		if (!response.ok) {
+			const error = await response.json().catch(() => ({ message: 'Đăng ký thất bại' }));
+			throw new Error(error.message || 'Đăng ký thất bại');
+		}
 
-    const tokens = await response.json();
+		const body = await response.json();
+		const tokens = body.data ?? body;
 
-    saveTokens(tokens.accessToken, tokens.refreshToken);
+		saveTokens(tokens.accessToken, tokens.refreshToken);
 
-    // Update profile with fullName and phone after registration
-    if (registerData.fullName || registerData.phone) {
-      await fetch(`${AUTH_API_URL}/my/identity`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokens.accessToken}`,
-        },
-        body: JSON.stringify({
-          fullName: registerData.fullName,
-          phoneNumber: registerData.phone,
-        }),
-      });
-    }
+		// Update profile with fullName and phone after registration
+		if (registerData.fullName || registerData.phone) {
+			await fetch(`${AUTH_API_URL}/my/identity`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${tokens.accessToken}`,
+				},
+				body: JSON.stringify({
+					fullName: registerData.fullName,
+					phoneNumber: registerData.phone,
+				}),
+			});
+		}
 
-    const user = await fetchIdentity(tokens.accessToken, registerData.email);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+		const user = await fetchIdentity(tokens.accessToken, registerData.email);
+		localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-    setState({
-      user,
-      accessToken: tokens.accessToken,
-      isAuthenticated: true,
-      isLoading: false,
-    });
-  }, []);
+		setState({
+			user,
+			accessToken: tokens.accessToken,
+			isAuthenticated: true,
+			isLoading: false,
+		});
+	}, []);
 
-  const logout = useCallback(async () => {
-    const token = loadAccessToken();
-    if (token) {
-      fetch(`${AUTH_API_URL}/logout-all`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
-    }
-    clearAuth();
-  }, [clearAuth]);
+	const logout = useCallback(async () => {
+		const token = loadAccessToken();
+		if (token) {
+			fetch(`${AUTH_API_URL}/logout-all`, {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${token}` },
+			}).catch(() => {});
+		}
+		clearAuth();
+	}, [clearAuth]);
 
-  const loginWithGoogle = useCallback(() => {
-    window.location.href = `${ENGLISH_PREP_API_URL}/v1/auth/google`;
-  }, []);
+	const loginWithGoogle = useCallback(() => {
+		window.location.href = `${ENGLISH_PREP_API_URL}/v1/auth/google`;
+	}, []);
 
-  const handleGoogleCallback = useCallback(async (loginToken: string) => {
-    const res = await fetch(`${ENGLISH_PREP_API_URL}/v1/auth/google/tokens?loginToken=${encodeURIComponent(loginToken)}`);
-    if (!res.ok) throw new Error('Failed to exchange login token');
+	const handleGoogleCallback = useCallback(async (loginToken: string) => {
+		const res = await fetch(
+			`${ENGLISH_PREP_API_URL}/v1/auth/google/tokens?loginToken=${encodeURIComponent(loginToken)}`,
+		);
+		if (!res.ok) throw new Error('Failed to exchange login token');
 
-    const data = await res.json();
-    const tokens = data.data ?? data;
+		const data = await res.json();
+		const tokens = data.data ?? data;
 
-    if (!tokens.accessToken) throw new Error('No access token received');
+		if (!tokens.accessToken) throw new Error('No access token received');
 
-    saveTokens(tokens.accessToken, tokens.refreshToken);
+		saveTokens(tokens.accessToken, tokens.refreshToken);
 
-    const decoded: Record<string, string> = JSON.parse(atob(tokens.accessToken.split('.')[1]));
-    const email = decoded.email || decoded.mail || '';
+		const decoded: Record<string, string> = JSON.parse(atob(tokens.accessToken.split('.')[1]));
+		const email = decoded.email || decoded.mail || '';
 
-    const user = await fetchIdentity(tokens.accessToken, email);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+		const user = await fetchIdentity(tokens.accessToken, email);
+		localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-    setState({
-      user,
-      accessToken: tokens.accessToken,
-      isAuthenticated: true,
-      isLoading: false,
-    });
-  }, []);
+		setState({
+			user,
+			accessToken: tokens.accessToken,
+			isAuthenticated: true,
+			isLoading: false,
+		});
+	}, []);
 
-  const refreshProfile = useCallback(async () => {
-    if (!state.accessToken || !state.user) return;
+	const refreshProfile = useCallback(async () => {
+		if (!state.accessToken || !state.user) return;
 
-    try {
-      const user = await fetchIdentity(state.accessToken, state.user.email);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-      setState(prev => ({ ...prev, user }));
-    } catch {
-      const refreshed = await refreshTokens();
-      if (!refreshed) clearAuth();
-    }
-  }, [state.accessToken, state.user, refreshTokens, clearAuth]);
+		try {
+			const user = await fetchIdentity(state.accessToken, state.user.email);
+			localStorage.setItem(USER_KEY, JSON.stringify(user));
+			setState((prev) => ({ ...prev, user }));
+		} catch {
+			const refreshed = await refreshTokens();
+			if (!refreshed) clearAuth();
+		}
+	}, [state.accessToken, state.user, refreshTokens, clearAuth]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        login,
-        loginWithGoogle,
-        handleGoogleCallback,
-        register,
-        logout,
-        refreshProfile,
-        refreshTokens,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+	return (
+		<AuthContext.Provider
+			value={{
+				...state,
+				login,
+				loginWithGoogle,
+				handleGoogleCallback,
+				register,
+				logout,
+				refreshProfile,
+				refreshTokens,
+			}}
+		>
+			{children}
+		</AuthContext.Provider>
+	);
 };
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+	const context = useContext(AuthContext);
+	if (context === undefined) {
+		throw new Error('useAuth must be used within an AuthProvider');
+	}
+	return context;
 };
 
 // Helper hook for role-based access
 export const useRequireAuth = (allowedRoles?: UserRole[]) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+	const { isAuthenticated, user, isLoading } = useAuth();
 
-  const hasAccess = isAuthenticated && (!allowedRoles || (user && user.roles.some(r => allowedRoles.includes(r))));
+	const hasAccess = isAuthenticated && (!allowedRoles || (user && user.roles.some((r) => allowedRoles.includes(r))));
 
-  return {
-    isAuthenticated,
-    hasAccess,
-    isLoading,
-    user,
-  };
+	return {
+		isAuthenticated,
+		hasAccess,
+		isLoading,
+		user,
+	};
 };

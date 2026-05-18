@@ -25,7 +25,7 @@ import type {
 // engapp-v2 backend (courses, bookings, students, etc.)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:1515/api';
 // server gateway (auth, notifications, Google Calendar)
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1511/api/auth';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1510/api/v1/auth';
 
 const ACCESS_TOKEN_KEY = 'lingriser_access_token';
 
