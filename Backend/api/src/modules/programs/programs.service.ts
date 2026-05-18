@@ -415,8 +415,6 @@ export class ProgramsService {
 
     const level = dto.level || CourseLevel.BASIC;
 
-    const level = dto.level || CourseLevel.BASIC;
-
     const existing = await this.cohortCourseRepository.findOne({
       where: { cohortId: dto.cohortId, courseId: dto.courseId, level },
     });

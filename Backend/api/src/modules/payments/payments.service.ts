@@ -107,6 +107,8 @@ export class PaymentsService {
 
     if (content.includes('LINGRISER')) {
       this.logger.log(`Received Lingriser payment but could not match transaction code: ${content}`);
+    }
+
     return { success: true, message: 'Webhook received but no matching pending payment found' };
   }
 
