@@ -76,7 +76,7 @@ export class StudentsController {
 
   @Post(':id/upload-video')
   @UseInterceptors(FileInterceptor('video', {
-    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
+    limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
       if (!file.mimetype.startsWith('video/')) {
         return cb(new BadRequestException('Only video files are allowed'), false);
@@ -100,10 +100,8 @@ export class StudentsController {
       throw new BadRequestException('courseId is required');
     }
 
-    // Upload to S3 in the lingriser folder
     const { url } = await this.s3Service.uploadFile(file, 'lingriser');
 
-    // Save video metadata to database
     return this.studentsService.saveProgressVideo(
       id,
       parseInt(courseId),

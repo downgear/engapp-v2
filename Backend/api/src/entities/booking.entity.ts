@@ -11,9 +11,9 @@ export enum BookingStatus {
 }
 
 export enum MeetingStatus {
-  PENDING = 'pending',       // Chưa diễn ra
-  IN_PROGRESS = 'in_progress', // Đang diễn ra
-  ENDED = 'ended',           // Đã kết thúc
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  ENDED = 'ended',
 }
 
 @Entity('bookings')

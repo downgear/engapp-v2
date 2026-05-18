@@ -50,7 +50,6 @@ const TeacherDashboard = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [allModules, setAllModules] = useState<Module[]>([]);
 
-  // Handle Google OAuth success - exchange code for tokens
   const handleGoogleSuccess = useCallback(async (code: string) => {
     if (!accessToken) return;
     
@@ -70,14 +69,12 @@ const TeacherDashboard = () => {
     }
   }, [accessToken]);
 
-  // Handle Google OAuth error
   const handleGoogleError = useCallback((error: string) => {
     console.error("Google OAuth error:", error);
     toast.error(language === "vi" ? `Lỗi kết nối Google: ${error}` : `Google connection error: ${error}`);
     setGoogleLoading(false);
   }, []);
 
-  // Initialize Google Auth hook
   const { requestAuth: requestGoogleAuth, isReady: googleReady } = useGoogleAuth({
     onSuccess: handleGoogleSuccess,
     onError: handleGoogleError,
@@ -121,7 +118,7 @@ const TeacherDashboard = () => {
           setGoogleConnected(googleStatus.connected);
           if (googleStatus.email) setGoogleEmail(googleStatus.email);
         } catch (err) {
-          // Ignore - teacher may not have Google connected
+          // Non-fatal: teacher may not have Google connected
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);

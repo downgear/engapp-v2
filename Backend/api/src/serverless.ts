@@ -18,7 +18,6 @@ async function bootstrap(): Promise<express.Express> {
     new ExpressAdapter(expressApp),
   );
 
-  // Enable CORS
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
     : ['http://localhost:8080', 'http://localhost:5173'];
@@ -29,7 +28,6 @@ async function bootstrap(): Promise<express.Express> {
     credentials: true,
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -38,7 +36,6 @@ async function bootstrap(): Promise<express.Express> {
     }),
   );
 
-  // API prefix
   app.setGlobalPrefix('api');
 
   await app.init();

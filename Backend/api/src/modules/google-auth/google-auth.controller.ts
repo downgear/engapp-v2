@@ -12,10 +12,6 @@ export class GoogleAuthController {
 
   constructor(private readonly googleAuthService: GoogleAuthService) {}
 
-  /**
-   * Exchange authorization code for tokens (GIS popup flow)
-   * Frontend gets the code via Google popup, sends it here
-   */
   @Post('exchange-code')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TEACHER, UserRole.MENTOR)
@@ -46,9 +42,6 @@ export class GoogleAuthController {
     }
   }
 
-  /**
-   * Check if teacher has connected Google account
-   */
   @Get('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TEACHER, UserRole.MENTOR)
@@ -57,9 +50,6 @@ export class GoogleAuthController {
     return this.googleAuthService.isConnected(teacherId);
   }
 
-  /**
-   * Disconnect Google account
-   */
   @Get('disconnect')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.TEACHER, UserRole.MENTOR)

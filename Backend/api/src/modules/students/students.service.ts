@@ -51,7 +51,6 @@ export class StudentsService {
       .leftJoinAndSelect('student.user', 'user')
       .leftJoinAndSelect('student.assignedInpersonTeacher', 'teacher')
       .leftJoinAndSelect('teacher.user', 'teacherUser')
-      // Filter out students with locked accounts
       .where('user.is_locked = :isLocked', { isLocked: false })
       .getMany();
 
@@ -68,7 +67,6 @@ export class StudentsService {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
-    // Check if account is locked
     if (student.user?.isLocked) {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
@@ -77,7 +75,6 @@ export class StudentsService {
   }
 
   async findByParentId(parentId: number) {
-    // Get parent's user_id
     const parent = await this.parentRepo.findOne({
       where: { id: parentId },
       relations: ['user'],
@@ -96,7 +93,6 @@ export class StudentsService {
       .leftJoinAndSelect('teacher.user', 'teacherUser')
       .where('al.linked_user_id = :parentUserId', { parentUserId: parent.userId })
       .andWhere('al.link_type = :linkType', { linkType: 'parent' })
-      // Filter out students with locked accounts
       .andWhere('user.is_locked = :isLocked', { isLocked: false })
       .getMany();
 
@@ -318,7 +314,6 @@ export class StudentsService {
     }> = [];
 
     for (const link of links) {
-      // Skip connections to locked accounts
       if (link.linkedUser?.isLocked) {
         continue;
       }
@@ -337,7 +332,6 @@ export class StudentsService {
         },
       };
 
-      // If it's a teacher link, get teacher details
       if (link.linkType === 'teacher') {
         const teacher = await this.teacherRepo.findOne({
           where: { userId: link.linkedUserId },
@@ -366,7 +360,6 @@ export class StudentsService {
     fileName: string,
     fileSize: number,
   ) {
-    // Check if a video of this type already exists and replace it
     const existing = await this.studentVideoRepo.findOne({
       where: { studentId, courseId, videoType: videoType as VideoType },
     });

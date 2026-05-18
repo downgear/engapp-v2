@@ -42,14 +42,12 @@ const parseFeedbackText = (feedbackText: string | undefined): ParsedFeedback | n
   }
 };
 
-// Activity type icons and labels
 const getActivityConfig = (language: string) => ({
   in_person_class: { icon: BookOpen, label: language === "vi" ? "Học với GV Việt Nam" : "Vietnamese Teacher Class", color: "text-blue-500 bg-blue-50" },
   ai_practice: { icon: MessageSquare, label: language === "vi" ? "Luyện tập AI" : "AI Practice", color: "text-green-500 bg-green-50" },
   video_call: { icon: Video, label: language === "vi" ? "Học với GV nước ngoài" : "Foreign Teacher Class", color: "text-purple-500 bg-purple-50" },
 });
 
-// Learning History Item Component with expandable feedback
 const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
   const { language } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -151,7 +149,6 @@ const LearningHistoryCard = ({ item }: { item: LearningHistoryItem }) => {
   );
 };
 
-// Collapsible Section Component
 const CollapsibleSection = ({ 
   title, 
   icon, 
@@ -205,7 +202,6 @@ const ParentDashboardDemo = () => {
   const { progressVideos, isLoading: isLoadingVideos } = useProgressVideos(selectedChildId, courseId, parentId ?? 1);
   const { learningHistory, isLoading: isLoadingHistory, refetch: refetchLearningHistory } = useLearningHistory(selectedChildId, undefined, parentId ?? 1);
 
-  // Set first child as selected when children are loaded
   useEffect(() => {
     if (children.length > 0 && !selectedChildId) {
       setSelectedChildId(children[0].id);
@@ -220,7 +216,6 @@ const ParentDashboardDemo = () => {
     return () => window.removeEventListener("learning-history-updated", handleUpdate);
   }, [refetchLearningHistory]);
 
-  // Format video URLs for display
   const beforeVideoUrl = progressVideos?.beforeVideo?.fileUrl || null;
   const afterVideoUrl = progressVideos?.afterVideo?.fileUrl || null;
   const beforeDate = progressVideos?.beforeVideo?.uploadedAt 

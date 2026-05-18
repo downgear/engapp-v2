@@ -11,8 +11,6 @@ export class ProgramsController {
     private readonly programS3Service: ProgramS3Service,
   ) {}
 
-  // ==================== PUBLIC ENDPOINTS ====================
-
   @Get()
   async getAllPrograms() {
     return this.programsService.getAllProgramsForPublic();
@@ -22,8 +20,6 @@ export class ProgramsController {
   async getProgramById(@Param('id', ParseIntPipe) id: number) {
     return this.programsService.findProgramById(id);
   }
-
-  // ==================== ADMIN ENDPOINTS (Programs) ====================
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -46,8 +42,6 @@ export class ProgramsController {
     await this.programsService.deleteProgram(id);
     return { success: true, message: 'Program deleted' };
   }
-
-  // ==================== ADMIN ENDPOINTS (Cohorts) ====================
 
   @Get('cohorts/:id')
   async getCohortById(@Param('id', ParseIntPipe) id: number) {
@@ -76,8 +70,6 @@ export class ProgramsController {
     return { success: true, message: 'Cohort deleted' };
   }
 
-  // ==================== ADMIN ENDPOINTS (Cohort Courses) ====================
-
   @Get('cohort-courses/:id')
   async getCohortCourseById(@Param('id', ParseIntPipe) id: number) {
     return this.programsService.findCohortCourseById(id);
@@ -104,8 +96,6 @@ export class ProgramsController {
     await this.programsService.deleteCohortCourse(id);
     return { success: true, message: 'Cohort course deleted' };
   }
-
-  // ==================== ADMIN ENDPOINTS (Standalone Courses) ====================
 
   @Post('courses')
   @UseGuards(JwtAuthGuard)
@@ -139,8 +129,6 @@ export class ProgramsController {
     return { imageUrl };
   }
 
-  // ==================== ADMIN ENDPOINTS (Modules) ====================
-
   @Post('modules')
   @UseGuards(JwtAuthGuard)
   async createModule(@Body() dto: CreateModuleDto) {
@@ -162,8 +150,6 @@ export class ProgramsController {
     await this.programsService.deleteModule(id);
     return { success: true, message: 'Module deleted' };
   }
-
-  // ==================== STUDENT ENROLLMENT ENDPOINTS ====================
 
   @Post('enroll')
   @UseGuards(JwtAuthGuard)

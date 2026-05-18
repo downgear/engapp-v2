@@ -21,8 +21,6 @@ import { UserRole } from '../../entities/user.entity';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // ==================== STATISTICS ====================
-
   @Get('statistics/users')
   getUserStatistics() {
     return this.adminService.getUserStatistics();
@@ -41,8 +39,6 @@ export class AdminController {
       hours ? parseInt(hours, 10) : 24,
     );
   }
-
-  // ==================== USER MANAGEMENT ====================
 
   @Get('users')
   getUsers(

@@ -137,7 +137,6 @@ Keep the suggestions appropriate for the student's level.`;
     // Lightweight speaking analytics without score grading
     const estimateDurationSec = (text: string) => {
       const words = text ? text.split(/\s+/).length : 0;
-      // Average speaking speed estimate: ~2.2 words/sec
       return words > 0 ? Math.max(2, Math.round(words / 2.2)) : 0;
     };
 
@@ -160,7 +159,6 @@ Keep the suggestions appropriate for the student's level.`;
           const prev = turn.words[wordIndex - 1];
           const gap = word.start - prev.end;
           if (gap > pauseThresholdSec) {
-            // Add hesitation markers to reflect real pauses in speech-to-text output.
             spokenParts.push('uhmmm');
             turnPauseCount += 1;
           }
@@ -247,7 +245,6 @@ Keep the suggestions appropriate for the student's level.`;
 
     const text = response.text?.trim() || '';
     
-    // Extract word-level data for pronunciation analysis
     const words = response.words?.map(w => ({
       word: w.word,
       start: w.start,
@@ -257,7 +254,7 @@ Keep the suggestions appropriate for the student's level.`;
     return { 
       text,
       words,
-      rawTranscription: text, // Store original for error tracking
+      rawTranscription: text,
     };
   }
 

@@ -13,6 +13,7 @@ import FloatingEffects from "@/components/FloatingEffects";
 import {
   BookOpen, ChevronRight, CheckCircle2, Clock,
   ArrowLeft, Target, Users, GraduationCap, Calendar,
+  QrCode,
 } from "lucide-react";
 
 interface ModuleItem {
@@ -25,7 +26,13 @@ interface ModuleItem {
   weekEndDate?: string;
 }
 
-const getModuleStatus = (module: ModuleItem, paid: boolean) => {
+const QR_CODE_IMAGE = "/qr-code.jpeg";
+const QR_SHOWN_KEY = "lingriser_qr_shown";
+
+const getModuleStatus = (module: ModuleItem, paid: boolean, qrShown: boolean) => {
+  if (qrShown) {
+    return "current";
+  }
   if (!paid) {
     return module.moduleNumber === 1 ? "current" : "locked";
   }
@@ -65,14 +72,63 @@ const getStatusBadge = (status: string, language: string) => {
   }
 };
 
+const QrCodeModal = ({ language, onRedirect }: { language: string; onRedirect: () => void }) => {
+  const [countdown, setCountdown] = useState(10);
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      onRedirect();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, onRedirect]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-background rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center relative">
+        <h2 className="text-xl font-bold text-foreground mb-2">
+          {language === "vi" ? "Quét mã QR để mở khóa" : "Scan QR Code to Unlock"}
+        </h2>
+        <p className="text-muted-foreground mb-6 text-sm">
+          {language === "vi"
+            ? "Quét mã QR này tại lớp học để mở khóa tất cả modules."
+            : "Scan this QR code in class to unlock all modules."}
+        </p>
+        <div className="flex justify-center mb-6">
+          <img
+            src={QR_CODE_IMAGE}
+            alt="QR Code"
+            className="w-48 h-48 rounded-xl border-2 border-border/50 object-contain bg-white p-2"
+          />
+        </div>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <QrCode className="h-5 w-5 text-primary" />
+          <span className="text-foreground font-medium">
+            {language === "vi" ? "Đang đếm ngược" : "Redirecting in"}:{" "}
+            <span className="text-primary font-bold text-lg">{countdown}s</span>
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {language === "vi"
+            ? "Bạn sẽ được chuyển hướng tự động sau khi hết giờ."
+            : "You will be redirected automatically when the timer ends."}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const CurriculumPage = () => {
   const navigate = useNavigate();
   const { user, accessToken, isAuthenticated, isLoading: authLoading } = useAuth();
   const { language } = useLanguage();
-
   const [enrollments, setEnrollments] = useState<MyEnrollment[]>([]);
   const [selectedEnrollment, setSelectedEnrollment] = useState<MyEnrollment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [pendingModuleId, setPendingModuleId] = useState<number | null>(null);
+  const qrShown = localStorage.getItem(QR_SHOWN_KEY) === "true";
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -96,6 +152,28 @@ const CurriculumPage = () => {
     fetchData();
   }, [user, accessToken]);
 
+  const handleModuleClick = (module: ModuleItem, paid: boolean) => {
+    if (qrShown) {
+      navigate(`/curriculum/${module.id}`);
+      return;
+    }
+    const status = getModuleStatus(module, paid, qrShown);
+    if (status === "locked") {
+      setPendingModuleId(module.id);
+      setShowQrModal(true);
+    } else {
+      navigate(`/curriculum/${module.id}`);
+    }
+  };
+
+  const handleQrUnlock = () => {
+    localStorage.setItem(QR_SHOWN_KEY, "true");
+    setShowQrModal(false);
+    if (pendingModuleId) {
+      navigate(`/curriculum/${pendingModuleId}`);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -111,7 +189,6 @@ const CurriculumPage = () => {
     );
   }
 
-  // ── Module detail view ───────────────────────────────────────────────────
   if (selectedEnrollment) {
     const modules = [...selectedEnrollment.course.modules].sort(
       (a, b) => a.moduleNumber - b.moduleNumber,
@@ -137,6 +214,9 @@ const CurriculumPage = () => {
       <div className="min-h-screen bg-background">
         <FloatingEffects intensity="subtle" />
         <Navigation />
+        {showQrModal && (
+          <QrCodeModal language={language} onRedirect={handleQrUnlock} />
+        )}
         <main className="container mx-auto px-4 pt-28 pb-8 max-w-6xl">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
@@ -257,14 +337,14 @@ const CurriculumPage = () => {
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               {modules.map((module) => {
-                const status = getModuleStatus(module, paid);
+                const status = getModuleStatus(module, paid, qrShown);
                 return (
                   <Card
                     key={module.id}
                     className={`relative overflow-hidden transition-all cursor-pointer hover:shadow-lg hover:border-primary/50 hover:-translate-y-1 ${
                       status === "locked" ? "opacity-60" : ""
                     } ${status === "current" ? "border-primary ring-2 ring-primary/20" : ""}`}
-                    onClick={() => navigate(`/curriculum/${module.id}`)}
+                    onClick={() => handleModuleClick(module, paid)}
                   >
                     <CardContent className="p-5">
                       <div
@@ -302,7 +382,6 @@ const CurriculumPage = () => {
     );
   }
 
-  // ── Course list view ─────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
       <FloatingEffects intensity="subtle" />

@@ -21,51 +21,33 @@ import { UserRole } from '../../entities/user.entity';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  // ==================== USER ENDPOINTS ====================
-
-  /**
-   * Get or create a conversation for current user
-   */
   @Post('conversations')
   getOrCreateConversation(@CurrentUser('userId') userId: number) {
     return this.chatService.getOrCreateConversation(userId);
   }
 
-  /**
-   * Get all conversations for current user
-   */
   @Get('conversations/my')
   getUserConversations(@CurrentUser('userId') userId: number) {
     return this.chatService.getUserConversations(userId);
   }
 
-  /**
-   * Get unread count for current user
-   */
   @Get('user/unread-count')
   getUserUnreadCount(@CurrentUser('userId') userId: number) {
     return this.chatService.getUserUnreadCount(userId);
   }
 
-  /**
-   * Get messages for a conversation (for user)
-   */
   @Get('conversations/:id/messages')
   getConversationMessages(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('userId') userId: number,
     @CurrentUser('role') role: string,
   ) {
-    // If admin, use admin endpoint
     if (role === UserRole.ADMIN) {
       return this.chatService.getAdminConversationMessages(id, userId);
     }
     return this.chatService.getConversationMessages(id, userId);
   }
 
-  /**
-   * Send a message to a conversation (for user)
-   */
   @Post('conversations/:id/messages')
   sendMessage(
     @Param('id', ParseIntPipe) id: number,
@@ -73,18 +55,12 @@ export class ChatController {
     @CurrentUser('role') role: string,
     @Body('message') message: string,
   ) {
-    // If admin, use admin endpoint
     if (role === UserRole.ADMIN) {
       return this.chatService.sendAdminMessage(id, userId, message);
     }
     return this.chatService.sendMessage(id, userId, message);
   }
 
-  // ==================== ADMIN ENDPOINTS ====================
-
-  /**
-   * Get all conversations (admin only)
-   */
   @Get('admin/conversations')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -100,9 +76,6 @@ export class ChatController {
     });
   }
 
-  /**
-   * Get unread count (admin only)
-   */
   @Get('admin/unread-count')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -110,9 +83,6 @@ export class ChatController {
     return this.chatService.getAdminUnreadCount();
   }
 
-  /**
-   * Close a conversation (admin only)
-   */
   @Patch('admin/conversations/:id/close')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)

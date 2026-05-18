@@ -74,7 +74,6 @@ const ConnectionsPage = () => {
   const parentConnections = connections.filter(c => c.linkType === 'parent');
   const teacherConnections = connections.filter(c => c.linkType === 'teacher');
   
-  // Split teachers into in-person and video call
   const inPersonTeachers = teacherConnections.filter(
     c => c.teacher?.teacherType === 'in_person' || c.teacher?.teacherType === 'both'
   );

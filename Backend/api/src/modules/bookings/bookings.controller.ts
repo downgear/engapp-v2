@@ -37,8 +37,6 @@ export class BookingsController {
     return this.bookingsService.cancel(id);
   }
 
-  // ==================== MEETING STATUS ENDPOINTS ====================
-
   @Patch(':id/start-meeting')
   @UseGuards(JwtAuthGuard)
   startMeeting(
