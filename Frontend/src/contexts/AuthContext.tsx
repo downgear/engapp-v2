@@ -54,10 +54,54 @@ export interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Storage keys
+// Storage keys (localStorage — per-origin, NOT shared across ports)
 const ACCESS_TOKEN_KEY = 'lingriser_access_token';
 const REFRESH_TOKEN_KEY = 'lingriser_refresh_token';
 const USER_KEY = 'lingriser_user';
+
+// Shared cookie keys — cookies ARE shared across ports on the same hostname,
+// so both english-prep (:6767) and engapp-v2 (:8080) can read these.
+const SHARED_ACCESS_COOKIE = 'access_token';
+const SHARED_REFRESH_COOKIE = 'refresh_token';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+function getCookie(name: string): string | undefined {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : undefined;
+}
+
+function setCookie(name: string, value: string, maxAge: number): void {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; samesite=lax`;
+}
+
+function clearCookie(name: string): void {
+  document.cookie = `${name}=; path=/; max-age=0; samesite=lax`;
+}
+
+function saveTokens(accessToken: string, refreshToken: string): void {
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  setCookie(SHARED_ACCESS_COOKIE, accessToken, COOKIE_MAX_AGE);
+  setCookie(SHARED_REFRESH_COOKIE, refreshToken, COOKIE_MAX_AGE);
+}
+
+function loadAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY) || getCookie(SHARED_ACCESS_COOKIE) || null;
+}
+
+function loadRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY) || getCookie(SHARED_REFRESH_COOKIE) || null;
+}
+
+function clearAllTokens(): void {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  clearCookie(SHARED_ACCESS_COOKIE);
+  clearCookie(SHARED_REFRESH_COOKIE);
+  clearCookie('user_authenticated');
+}
 
 async function fetchIdentity(accessToken: string, email: string): Promise<User> {
   const res = await fetch(`${AUTH_API_URL}/my/identity`, {
@@ -107,9 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshingRef = useRef(false);
 
   const clearAuth = useCallback(() => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    clearAllTokens();
     setState({
       user: null,
       accessToken: null,
@@ -123,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshingRef.current = true;
 
     try {
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+      const refreshToken = loadRefreshToken();
       if (!refreshToken) return false;
 
       const res = await fetch(`${AUTH_API_URL}/refresh`, {
@@ -137,8 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const tokens = await res.json();
-      localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-      localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+      saveTokens(tokens.accessToken, tokens.refreshToken);
 
       const savedUser = localStorage.getItem(USER_KEY);
       const savedEmail = savedUser ? (JSON.parse(savedUser) as User).email : '';
@@ -165,17 +206,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const loadSavedAuth = async () => {
       try {
-        const savedAccessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+        const savedAccessToken = loadAccessToken();
         const savedUser = localStorage.getItem(USER_KEY);
 
         if (savedAccessToken && savedUser) {
+          // Sync cookie → localStorage if token came from cookie (cross-app login)
+          if (!localStorage.getItem(ACCESS_TOKEN_KEY) && savedAccessToken) {
+            localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
+            const rt = loadRefreshToken();
+            if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
+          }
           setState({
             user: JSON.parse(savedUser),
             accessToken: savedAccessToken,
             isAuthenticated: true,
             isLoading: false,
           });
-        } else if (localStorage.getItem(REFRESH_TOKEN_KEY)) {
+        } else if (savedAccessToken && !savedUser) {
+          // Token exists (from cookie / other app) but no cached user — refresh profile
+          localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
+          const rt = loadRefreshToken();
+          if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
+          await refreshTokens();
+        } else if (loadRefreshToken()) {
           await refreshTokens();
         } else {
           // Migrate from old storage keys if present
@@ -208,8 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const tokens = await response.json();
 
-    localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    saveTokens(tokens.accessToken, tokens.refreshToken);
 
     const user = await fetchIdentity(tokens.accessToken, email);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -242,8 +294,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const tokens = await response.json();
 
-    localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    saveTokens(tokens.accessToken, tokens.refreshToken);
 
     // Update profile with fullName and phone after registration
     if (registerData.fullName || registerData.phone) {
@@ -272,7 +323,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(async () => {
-    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = loadAccessToken();
     if (token) {
       fetch(`${AUTH_API_URL}/logout-all`, {
         method: 'POST',

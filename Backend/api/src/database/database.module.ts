@@ -6,13 +6,13 @@ import { join } from 'path';
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_nkji5mU2JoMr@ep-morning-unit-ahp0dh7v-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require',
+      url: process.env.DATABASE_URL || 'postgresql://lingriser:lingriser@localhost:5432/lingriser',
       entities: [join(__dirname, '..', '**', '*.entity{.ts,.js}')],
       synchronize: false,
       logging: process.env.NODE_ENV === 'development',
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ...(process.env.DATABASE_URL?.includes('neon.tech')
+        ? { ssl: { rejectUnauthorized: false } }
+        : {}),
       retryAttempts: 10,
       retryDelay: 3000,
       extra: {
