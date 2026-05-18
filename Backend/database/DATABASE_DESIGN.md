@@ -7,159 +7,253 @@
 │                              USERS & ROLES                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌──────────┐         ┌──────────┐         ┌──────────┐                    │
-│  │  users   │◄────────│ students │         │ parents  │                    │
-│  │──────────│         │──────────│         │──────────│                    │
-│  │ id (PK)  │         │ id (PK)  │         │ id (PK)  │                    │
-│  │ email    │         │ user_id  │         │ user_id  │                    │
-│  │ phone    │         │ grade    │         └──────────┘                    │
-│  │ name     │         │ cefr_lvl │                                         │
-│  │ role     │         │ teacher_id│        ┌──────────┐                    │
-│  └──────────┘         └──────────┘         │ teachers │                    │
-│       │                     │              │──────────│                    │
-│       │                     │              │ id (PK)  │                    │
-│       │                     │              │ user_id  │                    │
-│       │                     │              │ type     │                    │
-│       └─────────────────────┴──────────────│ bio      │                    │
-│                                            └──────────┘                    │
-│                                                                             │
-│  ┌───────────────┐                                                         │
-│  │ account_links │  (Connects students to parents/teachers)                │
-│  │───────────────│                                                         │
-│  │ student_id    │                                                         │
-│  │ linked_user_id│                                                         │
-│  │ link_type     │                                                         │
-│  └───────────────┘                                                         │
+│  ┌──────────────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐      │
+│  │      users       │◄───│ students │    │ parents  │    │ teachers │      │
+│  │──────────────────│    │──────────│    │──────────│    │──────────│      │
+│  │ id (PK)          │    │ id (PK)  │    │ id (PK)  │    │ id (PK)  │      │
+│  │ email            │    │ user_id  │    │ user_id  │    │ user_id  │      │
+│  │ password_hash    │    │ grade    │    └──────────┘    │ type     │      │
+│  │ full_name        │    │ cefr_level│                    │ bio      │      │
+│  │ role             │    │ teacher_id│                    │ specialties│    │
+│  │ avatar_url       │    └──────────┘                    └──────────┘      │
+│  │ is_locked        │                                                       │
+│  └──────────────────┘                                                       │
+│       │                     │                                               │
+│       │                     │    ┌──────────────────┐                       │
+│       │                     │    │ account_links    │                       │
+│       │                     │    │──────────────────│                       │
+│       │                     │    │ student_id       │                       │
+│       │                     │    │ linked_user_id   │                       │
+│       │                     │    │ link_type        │                       │
+│       │                     │    └──────────────────┘                       │
+│       │                                                       │              │
+│       │              ┌──────────────────┐                       │              │
+│       ├──────────────│  login_sessions  │                       │              │
+│       │              │──────────────────│                       │              │
+│       │              │ user_id          │                       │              │
+│       │              │ logged_in_at     │                       │              │
+│       │              │ ip_address       │                       │              │
+│       │              └──────────────────┘                       │              │
+│       │                                                       │              │
+│       │              ┌──────────────────────┐                  │              │
+│       ├──────────────│ notifications        │                  │              │
+│       │              │──────────────────────│                  │              │
+│       │              │ user_id              │                  │              │
+│       │              │ type                 │                  │              │
+│       │              │ title, message       │                  │              │
+│       │              └──────────────────────┘                  │              │
+│       │                                                       │              │
+│       │              ┌──────────────────────┐                  │              │
+│       ├──────────────│ chat_conversations   │                  │              │
+│       │              │──────────────────────│                  │              │
+│       │              │ user_id              │                  │              │
+│       │              │ admin_id             │                  │              │
+│       │              │ status               │                  │              │
+│       │              └──────────────────────┘                  │              │
+│       │                                                       │              │
+│       └─────────────►┌──────────────────────┐                 │              │
+│                      │ chat_messages        │                 │              │
+│                      │──────────────────────│                 │              │
+│                      │ conversation_id      │                 │              │
+│                      │ sender_id            │                 │              │
+│                      │ message              │                 │              │
+│                      └──────────────────────┘                 │              │
+│                                                              │              │
+│                      ┌──────────────────────┐                │              │
+│                      │ teacher_google_tokens│◄───────────────┘              │
+│                      │──────────────────────│                              │
+│                      │ teacher_id           │                              │
+│                      │ access_token         │                              │
+│                      │ refresh_token        │                              │
+│                      │ expires_at           │                              │
+│                      └──────────────────────┘                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           COURSE & MODULES                                   │
+│                    PROGRAMS, COURSES & MODULES                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌──────────┐         ┌──────────┐         ┌─────────────┐                 │
-│  │ courses  │◄────────│ modules  │         │ enrollments │                 │
+│  │ programs │◄────────│ cohorts  │         │cohort_courses│                 │
 │  │──────────│         │──────────│         │─────────────│                 │
-│  │ id (PK)  │         │ id (PK)  │         │ student_id  │                 │
-│  │ name     │         │ course_id│         │ course_id   │                 │
-│  │ start    │         │ number   │         │ status      │                 │
-│  │ end      │         │ title    │         │ current_mod │                 │
-│  │ price    │         │ topic    │         └─────────────┘                 │
-│  │ status   │         │ outcomes │                                         │
-│  └──────────┘         └──────────┘                                         │
+│  │ id (PK)  │         │ id (PK)  │         │ id (PK)     │                 │
+│  │ name     │         │ program_id│        │ cohort_id   │                 │
+│  │ is_active│         │ start_date│        │ course_id   │                 │
+│  └──────────┘         │ status    │        │ teacher_id  │                 │
+│                       └──────────┘        │ level         │                 │
+│                                            │ max_students  │                 │
+│                       ┌──────────┐         └──────┬──────┘                 │
+│                       │ courses  │                 │                         │
+│                       │──────────│                 │                         │
+│                       │ id (PK)  │                 │                         │
+│                       │ name     │                 │                         │
+│                       │ image_url│                 │                         │
+│                       │ start/end│                 │                         │
+│                       │ price    │                 │                         │
+│                       │ class_day│                 │                         │
+│                       └────┬─────┘                 │                         │
+│                       ┌────┴─────┐                 │                         │
+│                       │ modules  │                 │                         │
+│                       │──────────│                 │                         │
+│                       │ id (PK)  │                 │                         │
+│                       │ course_id│                 │                         │
+│                       │ image_url│                 │                         │
+│                       │ content  │◄────────────────┘                         │
+│                       └──────────┘                                           │
 │                                                                             │
+│  ┌──────────────────────┐              ┌──────────┐                         │
+│  │ enrollments          │              │student_cohort│                      │
+│  │──────────────────────│              │_enrollments │                      │
+│  │ student_id           │              │─────────────│                      │
+│  │ course_id            │              │ student_id  │                      │
+│  │ status               │              │cohort_course│                      │
+│  │ current_module       │              │ paid        │                      │
+│  │ paid                 │              └─────────────┘                      │
+│  └──────────────────────┘                                                   │
+│                                                                             │
+│  ┌──────────────────────┐                                                   │
+│  │ weekly_focus         │                                                   │
+│  │──────────────────────│                                                   │
+│  │ module_id            │                                                   │
+│  │ teacher_id           │                                                   │
+│  │ week_topic           │                                                   │
+│  │ speaking_goals       │                                                   │
+│  └──────────────────────┘                                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         BOOKING & SCHEDULING                                 │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌─────────────────────┐              ┌──────────┐                         │
-│  │ teacher_availability│              │ bookings │                         │
-│  │─────────────────────│              │──────────│                         │
-│  │ teacher_id          │              │ id (PK)  │                         │
-│  │ day_of_week (6,7)   │◄─────────────│ teacher_id                         │
-│  │ slot_start_time     │              │ student_id                         │
-│  │ is_available        │              │ module_id │                         │
-│  └─────────────────────┘              │ date      │                         │
-│                                       │ status    │                         │
-│  Note: Slots are 60 mins,             └──────────┘                         │
-│  from 9:00am to 9:00pm                                                     │
-│  (Sat & Sun only)                                                          │
-│                                                                             │
+│  ┌─────────────────────┐              ┌────────────────────┐                │
+│  │teacher_availability │              │      bookings      │                │
+│  │─────────────────────│              │────────────────────│                │
+│  │ teacher_id          │              │ id (PK)            │                │
+│  │ day_of_week (6,7)   │◄─────────────│ teacher_id         │                │
+│  │ slot_start_time     │              │ student_id         │                │
+│  │ is_available        │              │ module_id          │                │
+│  └─────────────────────┘              │ booking_date       │                │
+│                                       │ meeting_status     │                │
+│  Note: Slots are 60 mins,             │ meeting_link       │                │
+│  from 9:00am to 9:00pm                │ google_event_id    │                │
+│  (Sat & Sun only)                     │ ended_at           │                │
+│                                       │ teacher_feedback   │                │
+│                                       │ student_rating     │                │
+│                                       └────────────────────┘                │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      LEARNING HISTORY & FEEDBACK                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌──────────────────┐                                                      │
-│  │ learning_history │                                                      │
-│  │──────────────────│                                                      │
-│  │ id (PK)          │                                                      │
-│  │ student_id       │                                                      │
-│  │ module_id        │                                                      │
-│  │ activity_type    │  ─► in_person_class | ai_practice | video_call       │
-│  │ start_time       │                                                      │
-│  │ end_time         │                                                      │
-│  │ booking_id       │  (nullable, for video_call)                          │
-│  └────────┬─────────┘                                                      │
-│           │                                                                │
-│           ├──────────────────┬──────────────────┐                          │
-│           ▼                  ▼                  ▼                          │
-│  ┌──────────────┐   ┌─────────────────┐   ┌───────────────┐                │
-│  │ ai_feedback  │   │teacher_feedback │   │class_feedback │                │
-│  │──────────────│   │─────────────────│   │───────────────│                │
-│  │ feedback_text│   │ feedback_text   │   │ feedback_text │                │
-│  │ pronunciation│   │ confidence_notes│   │ topics_covered│                │
-│  │ grammar      │   │ improvement     │   │ homework_notes│                │
-│  │ fluency      │   └─────────────────┘   └───────────────┘                │
-│  │ vocabulary   │                                                          │
-│  │ score        │   (Manual by teacher)   (Manual by in-person teacher)    │
-│  └──────────────┘                                                          │
-│  (Auto by OpenAI)                                                          │
-│                                                                             │
+│  ┌──────────────────┐                                                       │
+│  │ learning_history │                                                       │
+│  │──────────────────│                                                       │
+│  │ id (PK)          │                                                       │
+│  │ student_id       │                                                       │
+│  │ module_id        │                                                       │
+│  │ activity_type    │  ─► in_person_class | ai_practice | video_call        │
+│  │ start_time       │                                                       │
+│  │ end_time         │                                                       │
+│  │ booking_id       │  (nullable, for video_call)                           │
+│  │ status           │                                                       │
+│  └────────┬─────────┘                                                       │
+│           │                                                                 │
+│           ├──────────────────┬──────────────────┐                           │
+│           ▼                  ▼                  ▼                           │
+│  ┌──────────────────┐ ┌─────────────────┐  ┌───────────────┐               │
+│  │ ai_feedback      │ │teacher_feedback │  │class_feedback │               │
+│  │──────────────────│ │─────────────────│  │───────────────│               │
+│  │ feedback_text    │ │ feedback_text   │  │ feedback_text │               │
+│  │ speech_to_text   │ │ confidence_notes│  │ topics_covered│               │
+│  │ response_duration│ │ improvement     │  │ homework_notes│               │
+│  │ pause_detection  │ └─────────────────┘  └───────────────┘               │
+│  │ session_length   │                                                       │
+│  └──────────────────┘                                                       │
+│  (Auto by OpenAI)        (Manual by teacher)      (Manual by teacher)       │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         VIDEOS & PAYMENTS                                    │
+│                    VIDEOS, PAYMENTS & REGISTRATIONS                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  ┌────────────────┐              ┌──────────┐                              │
-│  │ student_videos │              │ payments │                              │
-│  │────────────────│              │──────────│                              │
-│  │ student_id     │              │ parent_id│  (Parent pays)               │
-│  │ course_id      │              │ student_id                              │
-│  │ video_type     │ ─► before|after         │ course_id │                  │
-│  │ file_url       │              │ amount    │                              │
-│  │ uploaded_at    │              │ status    │                              │
-│  └────────────────┘              └──────────┘                              │
-│                                                                             │
+│  ┌────────────────┐        ┌──────────────────┐  ┌─────────────────────┐   │
+│  │ student_videos │        │    payments      │  │inaugural_registrations│  │
+│  │────────────────│        │──────────────────│  │─────────────────────│   │
+│  │ student_id     │        │ parent_id        │  │ parent_name         │   │
+│  │ course_id      │        │ student_id       │  │ phone, email        │   │
+│  │ video_type     │        │ course_id        │  │ primary_goal        │   │
+│  │ file_url       │        │ amount           │  │ wants_to_signup     │   │
+│  │ file_name      │        │ status           │  │ interest_reason     │   │
+│  │ file_size      │        │ payment_method   │  │ rejection_reason    │   │
+│  │ duration       │        │ transaction_id   │  └─────────────────────┘   │
+│  │ uploaded_at    │        │ paid_at          │                             │
+│  └────────────────┘        └──────────────────┘                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 Tables Summary
+## 📋 Bảng Tổng Hợp
 
 ### Users & Authentication
-| Table | Description |
+| Bảng | Mô tả |
 |-------|-------------|
-| `users` | Base user table for all roles (student, parent, teacher) |
-| `students` | Student-specific data, links to assigned in-person teacher |
-| `parents` | Parent-specific data |
-| `teachers` | Teacher data with type (in_person, video_call, both) |
-| `account_links` | Links students to parents/teachers via phone number |
+| `users` | Bảng người dùng cơ bản cho tất cả roles (student, parent, teacher, mentor, admin) |
+| `students` | Dữ liệu riêng của học sinh, liên kết với giáo viên in-person |
+| `parents` | Dữ liệu riêng của phụ huynh |
+| `teachers` | Dữ liệu giáo viên với type (in_person, video_call, both) |
+| `account_links` | Liên kết học sinh với phụ huynh/giáo viên |
+| `login_sessions` | Theo dõi lịch sử đăng nhập (IP, user agent) |
 
-### Course & Modules
-| Table | Description |
+### Programs & Course Hierarchy
+| Bảng | Mô tả |
 |-------|-------------|
-| `courses` | Single course/cohort with dates, price, schedule |
-| `modules` | 8 modules per course, ordered sequentially |
-| `enrollments` | Student enrollment in course, tracks current module |
+| `programs` | Chương trình đào tạo (toplevel hierarchy) |
+| `cohorts` | Khóa học theo đợt, thuộc về program |
+| `cohort_courses` | Môn học trong cohort, có giáo viên phụ trách, level (basic/advanced) |
+| `courses` | Khóa học/cơ bản với ngày, giá, lịch học |
+| `modules` | 8 modules mỗi khóa, tuần tự, có nội dung chi tiết (Monday, AI Practice, Teacher Session) |
+| `enrollments` | Đăng ký khóa học cũ, theo dõi module hiện tại, trạng thái thanh toán |
+| `student_cohort_enrollments` | Đăng ký cohort course mới, theo dõi thanh toán |
+| `weekly_focus` | Focus hàng tuần cho mô hình 3L (teacher set per module) |
 
 ### Booking & Scheduling
-| Table | Description |
+| Bảng | Mô tả |
 |-------|-------------|
-| `teacher_availability` | Teacher's available slots (Sat/Sun, 9am-9pm) |
-| `bookings` | Video call bookings (auto-confirmed if slot available) |
+| `teacher_availability` | Slot trống của giáo viên (T7/CN, 9h-21h) |
+| `bookings` | Đặt lịch video call, có Google Meet integration, meeting status, feedback, rating |
 
 ### Learning History & Feedback
-| Table | Description |
+| Bảng | Mô tả |
 |-------|-------------|
-| `learning_history` | Tracks all learning activities per module |
-| `ai_feedback` | AI-generated feedback (via OpenAI API) |
-| `teacher_feedback` | Manual feedback from video call teacher |
-| `class_feedback` | Manual feedback from in-person class teacher |
+| `learning_history` | Theo dõi mọi hoạt động học tập theo module |
+| `ai_feedback` | Feedback tự động từ AI (OpenAI) + analytics (STT, pause detection, session length) |
+| `teacher_feedback` | Feedback thủ công từ giáo viên video call |
+| `class_feedback` | Feedback thủ công từ giáo viên in-person |
+
+### Chat & Notifications
+| Bảng | Mô tả |
+|-------|-------------|
+| `chat_conversations` | Cuộc trò chuyện hỗ trợ giữa user và admin |
+| `chat_messages` | Tin nhắn trong cuộc trò chuyện |
+| `notifications` | Thông báo hệ thống (connection, booking, general) |
+
+### Google Integration
+| Bảng | Mô tả |
+|-------|-------------|
+| `teacher_google_tokens` | OAuth token Google Calendar/Meet của giáo viên/mentor |
 
 ### Videos & Payments
-| Table | Description |
+| Bảng | Mô tả |
 |-------|-------------|
-| `student_videos` | Before/after course videos uploaded by students |
-| `payments` | Payment records (mock data, parent pays) |
+| `student_videos` | Video before/after khóa học |
+| `payments` | Ghi nhận thanh toán (SePay webhook + manual) |
+| `inaugural_registrations` | Đăng ký quan tâm chương trình khai trương |
 
 ---
 
-## 🔑 Key Relationships
+## 🔑 Mối Quan Hệ Chính
 
 ### 1. User Roles
 ```
@@ -167,22 +261,38 @@ users (1) ─────────► students (0..1)
 users (1) ─────────► parents (0..1)
 users (1) ─────────► teachers (0..1)
 ```
+Role enum: `student` | `parent` | `teacher` | `mentor` | `admin`
 
-### 2. Student ↔ Teacher Assignment
+### 2. Program Hierarchy
 ```
-students.assigned_inperson_teacher_id ──► teachers.id
-(Fixed for entire 8-module course)
+programs (1) ─────► cohorts (N) ─────► cohort_courses (N)
+                                    ─────► courses (1)
+                                              ─────► modules (8)
 ```
 
-### 3. Booking Flow
+### 3. Student Enrollment (2 hệ thống)
+```
+students ──► enrollments ◄── courses          (Hệ cũ)
+students ──► student_cohort_enrollments ◄── cohort_courses (Hệ mới)
+```
+
+### 4. Student ↔ Teacher/Parent Connection
+```
+students ──► account_links ◄── users (parent/teacher)
+```
+
+### 5. Booking Flow
 ```
 students ──► bookings ◄── teachers
-                │
-                ▼
-            modules
+            │
+            ▼
+        modules
+            │
+            ▼ (nullable)
+    learning_history
 ```
 
-### 4. Learning History Flow
+### 6. Learning History Flow
 ```
 learning_history ◄── students
        │
@@ -191,45 +301,79 @@ learning_history ◄── students
        └── class_feedback (for in_person_class)
 ```
 
+### 7. Weekly Focus (3L Model)
+```
+modules ──► weekly_focus ◄── teachers
+```
+
 ---
 
-## 📅 Weekly Schedule Logic
+## 📅 Lịch Học Hàng Tuần
 
-| Day | Activity | Data Tables |
+| Ngày | Hoạt động | Bảng Dữ liệu |
 |-----|----------|-------------|
-| Monday | In-person class | `learning_history` (auto-added from course schedule) |
-| Tue-Fri | AI Practice | `learning_history` + `ai_feedback` |
-| Sat/Sun | Video Call | `bookings` + `learning_history` + `teacher_feedback` |
+| Thứ 2 | Lớp in-person | `learning_history` + `class_feedback` |
+| Thứ 3-6 | AI Practice | `learning_history` + `ai_feedback` |
+| T7/CN | Video Call | `bookings` + `learning_history` + `teacher_feedback` |
 
-### Constraints:
-1. ✅ Must complete in-person class before AI practice
-2. ✅ Must have at least 1 AI practice per week
-3. ✅ Must book video call for Sat/Sun
-4. ✅ Modules are sequential (1 → 2 → ... → 8)
-
----
-
-## 🗃️ Mock Data Summary
-
-| Entity | Count | Notes |
-|--------|-------|-------|
-| Teachers | 5 | 1 in-person only, 3 video-call only, 1 both |
-| Students | 3 | Minh Anh (B1), Gia Bảo (A2), Thanh Hà (B1+) |
-| Parents | 3 | One per student |
-| Course | 1 | Starting 2026-03-02, 8 weeks |
-| Modules | 8 | All "Work" topic (placeholder) |
-| Learning History | 25 | Various activities across modules |
-| AI Feedback | 7 | Sample AI-generated feedback |
-| Teacher Feedback | 5 | Sample teacher feedback |
+### Ràng buộc:
+1. ✅ Phải hoàn thành lớp in-person trước khi AI practice
+2. ✅ Phải có ít nhất 1 AI practice mỗi tuần
+3. ✅ Phải book video call cho T7/CN
+4. ✅ Modules tuần tự (1 → 2 → ... → 8)
 
 ---
 
-## 🛠️ How to Initialize
+## 🗃️ Dữ Liệu Mẫu
 
+| Entity | Số lượng | Ghi chú |
+|--------|---------|---------|
+| Users | 11 | 1 admin, 5 teachers, 3 students, 2 parents |
+| Teachers | 5 | Sarah (both), James (video_call), Khai (in_person), Emma (video_call), Michael (video_call) |
+| Students | 3 | Minh Anh (L8, B1), Gia Bao (L6, A2), Thanh Ha (L10, B1+) |
+| Parents | 3 | Hung, Mai, Duc |
+| Account Links | 6 | 3 student-parent + 3 student-teacher |
+| Course | 1 | "Speaking Foundation Program - Cohort 1" (2M VND) |
+| Modules | 8 | Topic "Work", từ 2026-03-02 đến 2026-04-26 |
+| Enrollments | 3 | Tất cả active |
+| Teacher Availability | 39 | Slot cho 4 video-call teachers |
+| Bookings | 8 | Mix completed/confirmed |
+| Learning History | 24 | Minh Anh: 10, Thanh Ha: 14 |
+| AI Feedback | 7 | Minh Anh: 4, Thanh Ha: 3 |
+| Teacher Feedback | 5 | Minh Anh: 2, Thanh Ha: 3 |
+| Class Feedback | 2 | Của Minh Anh |
+| Student Videos | 3 | Minh Anh: 1 before, Thanh Ha: 1 before + 1 after |
+| Payments | 3 | Tất cả completed, 2,000,000 VND |
+
+---
+
+## 🛠️ Cách Khởi Tạo
+
+### PostgreSQL (Production)
+```bash
+cd Backend/database
+python3 init_postgres.py --reset
+```
+
+### SQLite (Development - cũ)
 ```bash
 cd Backend/database
 python3 init_db.py --reset
 ```
 
-This creates `lingriser.db` with schema and seed data.
-
+### Migrations
+Tất cả migrations nằm trong `Backend/database/migrations/`:
+- `001` - Payment columns trên enrollments
+- `002` - User management, login sessions, admin role
+- `003` - Chat system
+- `004` - Google Meet integration
+- `005` - Programs & cohorts hierarchy
+- `006` - Student cohort enrollments
+- `007a` - Meeting status & feedback trên bookings
+- `007b` - Teacher assignment cho cohort courses
+- `008` - Weekly focus (3L model)
+- `009` - AI practice analytics
+- `010` - Bỏ score-based evaluation
+- `011` - Module content fields (Monday, AI, Teacher)
+- `012` - Image URL cho courses & modules
+- `013` - Mentor role mới

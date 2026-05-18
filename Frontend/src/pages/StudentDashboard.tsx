@@ -255,7 +255,10 @@ const StudentDashboard = () => {
   const activityConfig = getActivityConfig(language);
   
   const [enrollments, setEnrollments] = useState<MyEnrollment[]>([]);
+  const [programs, setPrograms] = useState<ProgramResponse[]>([]);
   const [coursesExpanded, setCoursesExpanded] = useState(false);
+  const [programExpanded, setProgramExpanded] = useState<Record<number, boolean>>({});
+  const [cohortExpanded, setCohortExpanded] = useState<Record<number, boolean>>({});
   const [learningHistory, setLearningHistory] = useState<LearningHistoryItem[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -272,6 +275,17 @@ const StudentDashboard = () => {
       return next;
     });
   };
+
+  const toggleProgram = (programId: number) => {
+    setProgramExpanded(prev => ({ ...prev, [programId]: !prev[programId] }));
+  };
+
+  const toggleCohort = (cohortId: number) => {
+    setCohortExpanded(prev => ({ ...prev, [cohortId]: !prev[cohortId] }));
+  };
+
+  // Get cohort course IDs that the student is enrolled in
+  const enrolledCourseIds = new Set(enrollments.map(e => e.cohortCourseId));
 
   const fetchData = useCallback(async () => {
     if (!user || !accessToken) return;

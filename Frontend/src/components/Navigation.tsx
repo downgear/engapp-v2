@@ -52,10 +52,8 @@ export const Navigation = () => {
       { label: t("nav.home"), href: "/" },
     ];
 
-    // Only show "All Programs" for non-students (hide program hierarchy from students)
-    if (!isAuthenticated || (user?.role !== 'student')) {
-      items.push({ label: t("nav.allPrograms"), href: "/inaugural-program" });
-    }
+    // Show "All Programs" for everyone (including students)
+    items.push({ label: t("nav.allPrograms"), href: "/inaugural-program" });
 
     // Students get a simple "My Course" link instead of program hierarchy
     if (isAuthenticated && user?.role === 'student') {

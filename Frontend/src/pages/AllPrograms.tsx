@@ -23,10 +23,12 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { api, ProgramResponse, CohortResponse, CohortCourseResponse } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
 // Use API types
 type Program = ProgramResponse;
@@ -82,19 +84,14 @@ const formatDate = (dateString: string, language: string) => {
 
 const AllPrograms = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { language } = useLanguage();
   const { user, accessToken, isAuthenticated } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<number[]>([]);
   const [paidCourseIds, setPaidCourseIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // For students: skip the Program→Cohort→Course hierarchy, go straight to "My Course"
-  useEffect(() => {
-    if (isAuthenticated && user?.role === 'student') {
-      navigate('/curriculum', { replace: true });
-    }
-  }, [isAuthenticated, user, navigate]);
+  const [enrollingCourseId, setEnrollingCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,21 +130,46 @@ const AllPrograms = () => {
     return paidCourseIds.includes(courseId);
   };
 
-  const handleCourseAction = (course: Course) => {
+  const handleCourseAction = async (course: Course) => {
     const enrolled = isEnrolled(course.id);
-    const paid = isPaid(course.id);
     
-    // Navigate to curriculum with course info
-    navigate("/curriculum", { 
-      state: { 
-        courseId: course.id, 
-        cohortCourseId: course.id,
-        courseName: course.name,
-        courseDescription: course.description,
-        modules: course.modules,
-        enrolled: paid // If paid, consider fully enrolled
-      } 
-    });
+    // Already enrolled → go to curriculum
+    if (enrolled) {
+      navigate("/curriculum", { 
+        state: { 
+          courseId: course.id, 
+          cohortCourseId: course.id,
+          courseName: course.name,
+          courseDescription: course.description,
+          modules: course.modules,
+          enrolled: true,
+        } 
+      });
+      return;
+    }
+
+    // Not enrolled → try to enroll (student only)
+    if (!isAuthenticated || user?.role !== 'student' || !accessToken) return;
+
+    setEnrollingCourseId(course.id);
+    try {
+      await api.enrollInCohortCourse(accessToken, user.profileId, course.id);
+      setEnrolledCourseIds(prev => [...prev, course.id]);
+      toast({
+        title: language === "vi" ? "Thành công" : "Success",
+        description: language === "vi" 
+          ? `Bạn đã được đăng ký vào khóa "${course.name}"` 
+          : `Enrolled in "${course.name}"`,
+      });
+    } catch (error) {
+      toast({
+        title: language === "vi" ? "Lỗi" : "Error",
+        description: error instanceof Error ? error.message : (language === "vi" ? "Không thể đăng ký khóa học" : "Failed to enroll"),
+        variant: "destructive",
+      });
+    } finally {
+      setEnrollingCourseId(null);
+    }
   };
 
   if (isLoading) {
@@ -337,11 +359,17 @@ const AllPrograms = () => {
                                       className="w-full gap-2"
                                       variant={enrolled ? "default" : "outline"}
                                       onClick={() => handleCourseAction(course)}
+                                      disabled={enrollingCourseId === course.id}
                                     >
                                       {enrolled ? (
                                         <>
                                           {language === "vi" ? "Vào học" : "Continue Learning"}
                                           <ArrowRight className="h-4 w-4" />
+                                        </>
+                                      ) : enrollingCourseId === course.id ? (
+                                        <>
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                          {language === "vi" ? "Đang đăng ký..." : "Registering..."}
                                         </>
                                       ) : (
                                         <>
