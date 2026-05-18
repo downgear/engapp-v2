@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { setRefreshTokensFn } from '@/services/api';
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/api/auth';
-const LEGACY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1511/api/auth';
+const LEGACY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:1515/api';
 const ENGLISH_PREP_API_URL = import.meta.env.VITE_ENGLISH_PREP_API_URL || 'https://meowlish.servebeer.com/api';
 
 // Types — aligned with server gateway's hydrated identity
@@ -87,6 +88,7 @@ function saveTokens(accessToken: string, refreshToken: string): void {
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   setCookie(SHARED_ACCESS_COOKIE, accessToken, COOKIE_MAX_AGE);
   setCookie(SHARED_REFRESH_COOKIE, refreshToken, COOKIE_MAX_AGE);
+  setCookie('user_authenticated', 'true', COOKIE_MAX_AGE);
 }
 
 function loadAccessToken(): string | null {
@@ -152,6 +154,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const refreshingRef = useRef(false);
+
+  useEffect(() => {
+    setRefreshTokensFn(refreshTokens);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const clearAuth = useCallback(() => {
     clearAllTokens();
@@ -226,11 +232,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isLoading: false,
           });
         } else if (savedAccessToken && !savedUser) {
-          // Token exists (from cookie / other app) but no cached user — refresh profile
+          // Token exists (from cookie / other app) but no cached user — try identity first
           localStorage.setItem(ACCESS_TOKEN_KEY, savedAccessToken);
           const rt = loadRefreshToken();
           if (rt) localStorage.setItem(REFRESH_TOKEN_KEY, rt);
-          await refreshTokens();
+          try {
+            const decoded: Record<string, string> = JSON.parse(atob(savedAccessToken.split('.')[1]));
+            const email = decoded.email || decoded.mail || '';
+            const user = await fetchIdentity(savedAccessToken, email);
+            localStorage.setItem(USER_KEY, JSON.stringify(user));
+            setState({ user, accessToken: savedAccessToken, isAuthenticated: true, isLoading: false });
+          } catch {
+            await refreshTokens();
+          }
         } else if (loadRefreshToken()) {
           await refreshTokens();
         } else {

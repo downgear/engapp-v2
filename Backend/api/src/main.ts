@@ -11,12 +11,18 @@ async function bootstrap() {
         'http://localhost:8080', 
         'http://localhost:8081', 
         'http://localhost:5173', 
-        'http://localhost:3000',
+        'http://localhost:1515',
         'http://khoakomlem-internal.ddns.net:8080'
       ];
   
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (origin.includes('khoakomlem-internal.ddns.net')) return callback(null, true);
+      if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return callback(null, true);
+      callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
@@ -29,7 +35,7 @@ async function bootstrap() {
   
   app.setGlobalPrefix('api');
   
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 1515;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 Lingriser API is running on port ${port}`);
 }

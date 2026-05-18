@@ -5,7 +5,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import { join } from 'path';
 
 
-const PROTO_PATH = join(__dirname, '..', '..', '..', 'proto', 'auth.proto');
+const PROTO_PATH = join(process.cwd(), 'proto', 'auth.proto');
 
 @Injectable()
 export class AuthGrpcClient implements OnModuleInit {

@@ -2,6 +2,12 @@
  * API Service - Connects to Lingriser Backend
  */
 
+let refreshTokensFn: (() => Promise<boolean>) | null = null;
+
+export function setRefreshTokensFn(fn: () => Promise<boolean>): void {
+  refreshTokensFn = fn;
+}
+
 import type {
   Child,
   ProgressVideos,
@@ -17,9 +23,15 @@ import type {
 } from '@/types';
 
 // engapp-v2 backend (courses, bookings, students, etc.)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:1515/api';
 // server gateway (auth, notifications, Google Calendar)
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:3001/api/auth';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:1511/api/auth';
+
+const ACCESS_TOKEN_KEY = 'lingriser_access_token';
+
+function readNewToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY) ?? null;
+}
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options || {};
@@ -34,6 +46,28 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
           ...(optionHeaders as Record<string, string>),
         }),
   });
+
+  if (response.status === 401 && refreshTokensFn) {
+    const refreshed = await refreshTokensFn();
+    if (refreshed) {
+      const newToken = readNewToken();
+      const newHeaders = { ...(optionHeaders as Record<string, string>) };
+      if (newToken) {
+        newHeaders['Authorization'] = `Bearer ${newToken}`;
+      }
+      const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...restOptions,
+        headers: isFormData
+          ? newHeaders
+          : { 'Content-Type': 'application/json', ...newHeaders },
+      });
+      if (!retryResponse.ok) {
+        const error = await retryResponse.json().catch(() => ({ message: 'API Error' }));
+        throw new Error(error.message || `HTTP ${retryResponse.status}`);
+      }
+      return retryResponse.json();
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'API Error' }));
