@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
 import { User, Student, Parent, Teacher, UserRole, TeacherType, Course, Enrollment, EnrollmentStatus, CourseStatus, LoginSession } from '../../entities';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -45,6 +46,7 @@ export class AuthService {
     private loginSessionRepo: Repository<LoginSession>,
     private readonly emailService: EmailService,
     private readonly authGrpc: AuthGrpcClient,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -237,6 +239,63 @@ export class AuthService {
     const user = await this.userRepo.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    const profileId = await this.getProfileId(user);
+
+    return {
+      id: user.id,
+      identityId: user.identityId,
+      profileId,
+      role: user.role,
+      email: user.email,
+      fullName: user.fullName,
+    };
+  }
+
+  verifyToken(token: string): JwtPayload {
+    return this.jwtService.verify<JwtPayload>(token);
+  }
+
+  async ensureProfile(identityId: string, dto: { email: string; fullName?: string; role?: UserRole }) {
+    let user = await this.userRepo.findOne({ where: { identityId } });
+    if (!user) {
+      user = await this.userRepo.findOne({ where: { email: dto.email } });
+    }
+
+    if (!user) {
+      const role = dto.role || UserRole.STUDENT;
+      user = this.userRepo.create({
+        email: dto.email,
+        passwordHash: '',
+        fullName: dto.fullName || dto.email.split('@')[0],
+        role,
+        identityId,
+      });
+      await this.userRepo.save(user);
+
+      switch (role) {
+        case UserRole.STUDENT: {
+          const student = this.studentRepo.create({ userId: user.id, cefrLevel: 'A1' });
+          await this.studentRepo.save(student);
+          await this.autoEnrollStudent(student.id);
+          break;
+        }
+        case UserRole.PARENT: {
+          const parent = this.parentRepo.create({ userId: user.id });
+          await this.parentRepo.save(parent);
+          break;
+        }
+        case UserRole.TEACHER:
+        case UserRole.MENTOR: {
+          const teacher = this.teacherRepo.create({ userId: user.id, teacherType: TeacherType.VIDEO_CALL });
+          await this.teacherRepo.save(teacher);
+          break;
+        }
+      }
+    } else if (!user.identityId) {
+      user.identityId = identityId;
+      await this.userRepo.save(user);
     }
 
     const profileId = await this.getProfileId(user);

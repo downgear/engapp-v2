@@ -3,6 +3,7 @@
  */
 
 let refreshTokensFn: (() => Promise<boolean>) | null = null;
+let activeRefreshPromise: Promise<boolean> | null = null;
 
 export function setRefreshTokensFn(fn: () => Promise<boolean>): void {
   refreshTokensFn = fn;
@@ -48,7 +49,10 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   });
 
   if (response.status === 401 && refreshTokensFn) {
-    const refreshed = await refreshTokensFn();
+    if (!activeRefreshPromise) {
+      activeRefreshPromise = refreshTokensFn().finally(() => { activeRefreshPromise = null; });
+    }
+    const refreshed = await activeRefreshPromise;
     if (refreshed) {
       const newToken = readNewToken();
       const newHeaders = { ...(optionHeaders as Record<string, string>) };

@@ -8,7 +8,8 @@
       "Bash(git commit -m ' *)",
       "Bash(grep -rn \"process.env\" Backend/ --include=\"*.ts\" --include=\"*.js\" -not -path \"*/node_modules/*\")",
       "Bash(grep -rn \"process\\\\.env\" Backend/ -g '*.ts' -g '*.js')",
-      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(48\\).toString\\('base64url'\\)\\)\")"
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(48\\).toString\\('base64url'\\)\\)\")",
+      "Bash(npx tsc *)"
     ]
   }
 }

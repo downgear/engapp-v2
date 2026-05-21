@@ -41,6 +41,9 @@ export const ChatWidget = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const unreadPollRef = useRef<NodeJS.Timeout | null>(null);
+  const errorCountRef = useRef(0);
+  const accessTokenRef = useRef(accessToken);
+  accessTokenRef.current = accessToken;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -48,15 +51,21 @@ export const ChatWidget = () => {
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
-    if (!accessToken) return;
-    
+    const token = accessTokenRef.current;
+    if (!token || document.visibilityState === "hidden") return;
+
     try {
-      const result = await api.getUserUnreadCount(accessToken);
+      const result = await api.getUserUnreadCount(token);
       setUnreadCount(result.count);
+      errorCountRef.current = 0;
     } catch (err) {
-      console.error("Failed to fetch unread count:", err);
+      errorCountRef.current += 1;
+      if (errorCountRef.current >= 3 && unreadPollRef.current) {
+        clearInterval(unreadPollRef.current);
+        unreadPollRef.current = null;
+      }
     }
-  }, [accessToken]);
+  }, []);
 
   const initConversation = useCallback(async () => {
     if (!accessToken) return;
@@ -95,24 +104,33 @@ export const ChatWidget = () => {
 
   // Poll for unread count when chat is CLOSED
   useEffect(() => {
-    if (!isAuthenticated || !accessToken || user?.role === "admin") return;
+    if (!isAuthenticated || user?.role === "admin") return;
 
     // Initial fetch
     fetchUnreadCount();
 
-    // Poll every 10 seconds when chat is closed
+    // Poll every 60 seconds when chat is closed
     if (!isOpen) {
+      errorCountRef.current = 0;
       unreadPollRef.current = setInterval(() => {
         fetchUnreadCount();
-      }, 10000);
+      }, 60000);
     }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && !isOpen) {
+        fetchUnreadCount();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       if (unreadPollRef.current) {
         clearInterval(unreadPollRef.current);
       }
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [isOpen, isAuthenticated, accessToken, user?.role, fetchUnreadCount]);
+  }, [isOpen, isAuthenticated, user?.role, fetchUnreadCount]);
 
   // Reset unread count when opening chat (messages will be marked as read)
   useEffect(() => {

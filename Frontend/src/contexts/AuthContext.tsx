@@ -115,7 +115,9 @@ async function fetchIdentity(accessToken: string, email: string): Promise<User> 
 	if (!res.ok) throw new Error('Failed to fetch identity');
 	const body = await res.json();
 	const data = body.data ?? body;
-	const roles: UserRole[] = data.roles ?? [];
+	const rawRoles: UserRole[] = data.roles ?? [];
+	const role: UserRole = rawRoles[0] ?? 'student';
+	const roles = rawRoles.length > 0 ? rawRoles : [role];
 
 	// Look up legacy IDs from engapp-v2 backend by email
 	let profileId = 0;
@@ -126,6 +128,24 @@ async function fetchIdentity(accessToken: string, email: string): Promise<User> 
 			const legacy = await legacyRes.json();
 			profileId = legacy.profileId ?? 0;
 			legacyUserId = legacy.id ?? 0;
+		} else if (legacyRes.status === 404) {
+			const ensureRes = await fetch(`${LEGACY_API_URL}/auth/ensure-profile`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${accessToken}`,
+				},
+				body: JSON.stringify({
+					email,
+					fullName: data.fullName,
+					role: (roles[0] ?? 'student'),
+				}),
+			});
+			if (ensureRes.ok) {
+				const created = await ensureRes.json();
+				profileId = created.profileId ?? 0;
+				legacyUserId = created.id ?? 0;
+			}
 		}
 	} catch {
 		// engapp-v2 backend may be unavailable — non-blocking
@@ -139,7 +159,7 @@ async function fetchIdentity(accessToken: string, email: string): Promise<User> 
 		avatarUrl: data.avatarUrl,
 		phoneNumber: data.phoneNumber,
 		roles,
-		role: roles[0] ?? 'student',
+		role,
 		email,
 		profileId,
 		legacyUserId,
@@ -154,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 		isLoading: true,
 	});
 
-	const refreshingRef = useRef(false);
+	const refreshPromiseRef = useRef<Promise<boolean> | null>(null);
 
 	useEffect(() => {
 		setRefreshTokensFn(refreshTokens);
@@ -171,46 +191,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 	}, []);
 
 	const refreshTokens = useCallback(async (): Promise<boolean> => {
-		if (refreshingRef.current) return false;
-		refreshingRef.current = true;
+		if (refreshPromiseRef.current) return refreshPromiseRef.current;
 
-		try {
-			const refreshToken = loadRefreshToken();
-			if (!refreshToken) return false;
+		const promise = (async (): Promise<boolean> => {
+			try {
+				const refreshToken = loadRefreshToken();
+				if (!refreshToken) return false;
 
-			const res = await fetch(`${AUTH_API_URL}/refresh`, {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${refreshToken}` },
-			});
+				const res = await fetch(`${AUTH_API_URL}/refresh`, {
+					method: 'POST',
+					headers: { Authorization: `Bearer ${refreshToken}` },
+				});
 
-			if (!res.ok) {
+				if (!res.ok) {
+					clearAuth();
+					return false;
+				}
+
+				const body = await res.json();
+				const tokens = body.data ?? body;
+				saveTokens(tokens.accessToken, tokens.refreshToken);
+
+				const savedUser = localStorage.getItem(USER_KEY);
+				if (savedUser) {
+					// Reuse cached user — no need to re-fetch identity + profile-by-email
+					setState({
+						user: JSON.parse(savedUser) as User,
+						accessToken: tokens.accessToken,
+						isAuthenticated: true,
+						isLoading: false,
+					});
+				} else {
+					const decoded: Record<string, string> = JSON.parse(atob(tokens.accessToken.split('.')[1]));
+					const email = decoded.email || decoded.mail || '';
+					const user = await fetchIdentity(tokens.accessToken, email);
+					localStorage.setItem(USER_KEY, JSON.stringify(user));
+					setState({
+						user,
+						accessToken: tokens.accessToken,
+						isAuthenticated: true,
+						isLoading: false,
+					});
+				}
+
+				return true;
+			} catch {
 				clearAuth();
 				return false;
+			} finally {
+				refreshPromiseRef.current = null;
 			}
+		})();
 
-			const body = await res.json();
-			const tokens = body.data ?? body;
-			saveTokens(tokens.accessToken, tokens.refreshToken);
-
-			const savedUser = localStorage.getItem(USER_KEY);
-			const savedEmail = savedUser ? (JSON.parse(savedUser) as User).email : '';
-			const user = await fetchIdentity(tokens.accessToken, savedEmail);
-			localStorage.setItem(USER_KEY, JSON.stringify(user));
-
-			setState({
-				user,
-				accessToken: tokens.accessToken,
-				isAuthenticated: true,
-				isLoading: false,
-			});
-
-			return true;
-		} catch {
-			clearAuth();
-			return false;
-		} finally {
-			refreshingRef.current = false;
-		}
+		refreshPromiseRef.current = promise;
+		return promise;
 	}, [clearAuth]);
 
 	// Load saved auth state on mount

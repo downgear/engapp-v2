@@ -48,6 +48,18 @@ export class NotificationGrpcClient implements OnModuleInit {
     });
   }
 
+  private wrapString(val?: string): { value: string } | undefined {
+    return val != null ? { value: val } : undefined;
+  }
+
+  private wrapBool(val?: boolean): { value: boolean } | undefined {
+    return val != null ? { value: val } : undefined;
+  }
+
+  private wrapInt(val?: number): { value: number } | undefined {
+    return val != null ? { value: val } : undefined;
+  }
+
   createNotification(data: {
     recipient_id?: string;
     type?: string;
@@ -55,7 +67,13 @@ export class NotificationGrpcClient implements OnModuleInit {
     message?: string;
     data?: string;
   }) {
-    return this.call(this.notificationClient, 'createNotification', data);
+    return this.call(this.notificationClient, 'createNotification', {
+      recipient_id: this.wrapString(data.recipient_id),
+      type: this.wrapString(data.type),
+      title: this.wrapString(data.title),
+      message: this.wrapString(data.message),
+      data: this.wrapString(data.data),
+    });
   }
 
   listNotifications(data: {
@@ -69,27 +87,43 @@ export class NotificationGrpcClient implements OnModuleInit {
       notifications: any[];
       total_count: number;
       unread_count: number;
-    }>(this.notificationClient, 'listNotifications', data);
+    }>(this.notificationClient, 'listNotifications', {
+      recipient_id: this.wrapString(data.recipient_id),
+      type: this.wrapString(data.type),
+      is_read: this.wrapBool(data.is_read),
+      page: this.wrapInt(data.page),
+      limit: this.wrapInt(data.limit),
+    });
   }
 
   markAsRead(data: { id?: string }) {
-    return this.call(this.notificationClient, 'markAsRead', data);
+    return this.call(this.notificationClient, 'markAsRead', {
+      id: this.wrapString(data.id),
+    });
   }
 
   markAllAsRead(data: { recipient_id?: string }) {
-    return this.call(this.notificationClient, 'markAllAsRead', data);
+    return this.call(this.notificationClient, 'markAllAsRead', {
+      recipient_id: this.wrapString(data.recipient_id),
+    });
   }
 
   getNotification(data: { id?: string }) {
-    return this.call(this.notificationClient, 'getNotification', data);
+    return this.call(this.notificationClient, 'getNotification', {
+      id: this.wrapString(data.id),
+    });
   }
 
   deleteNotification(data: { id?: string }) {
-    return this.call(this.notificationClient, 'deleteNotification', data);
+    return this.call(this.notificationClient, 'deleteNotification', {
+      id: this.wrapString(data.id),
+    });
   }
 
   getPreferences(data: { identity_id?: string }) {
-    return this.call(this.preferencesClient, 'getPreferences', data);
+    return this.call(this.preferencesClient, 'getPreferences', {
+      identity_id: this.wrapString(data.identity_id),
+    });
   }
 
   updatePreferences(data: {
@@ -100,6 +134,13 @@ export class NotificationGrpcClient implements OnModuleInit {
     report_enabled?: boolean;
     system_enabled?: boolean;
   }) {
-    return this.call(this.preferencesClient, 'updatePreferences', data);
+    return this.call(this.preferencesClient, 'updatePreferences', {
+      identity_id: this.wrapString(data.identity_id),
+      email_enabled: this.wrapBool(data.email_enabled),
+      push_enabled: this.wrapBool(data.push_enabled),
+      achievement_enabled: this.wrapBool(data.achievement_enabled),
+      report_enabled: this.wrapBool(data.report_enabled),
+      system_enabled: this.wrapBool(data.system_enabled),
+    });
   }
 }
