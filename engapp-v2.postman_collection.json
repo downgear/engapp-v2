@@ -1,0 +1,3239 @@
+{
+  "info": {
+    "name": "Lingriser API (engapp-v2)",
+    "description": "Lingriser API - Base URL: http://localhost:1515/api",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "GET /",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": []
+            },
+            "description": "API status"
+          }
+        },
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Health check"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register new user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"student\",\n  \"phone\": \"\",\n  \"grade\": \"\",\n  \"cefrLevel\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with credentials",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "Get full profile of current user"
+          }
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get current JWT user info"
+          }
+        },
+        {
+          "name": "GET /auth/profile-by-email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile-by-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile-by-email"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "user@example.com",
+                  "description": "user@example.com"
+                }
+              ]
+            },
+            "description": "Get profile by email"
+          }
+        },
+        {
+          "name": "POST /auth/ensure-profile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/ensure-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "ensure-profile"
+              ]
+            },
+            "description": "Ensure/create profile from external auth (requires Bearer token in header)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"fullName\": \"John Doe\",\n  \"role\": \"student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Google Auth (Teachers)",
+      "item": [
+        {
+          "name": "POST /auth/google/exchange-code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/exchange-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "exchange-code"
+              ]
+            },
+            "description": "Exchange Google OAuth code for tokens",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"google_auth_code\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/google/status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "status"
+              ]
+            },
+            "description": "Check Google Calendar connection status"
+          }
+        },
+        {
+          "name": "GET /auth/google/disconnect",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/disconnect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "disconnect"
+              ]
+            },
+            "description": "Disconnect Google account"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/statistics/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/statistics/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "statistics",
+                "users"
+              ]
+            },
+            "description": "Get user statistics"
+          }
+        },
+        {
+          "name": "GET /admin/statistics/visits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/statistics/visits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "statistics",
+                "visits"
+              ],
+              "query": [
+                {
+                  "key": "hours",
+                  "value": "24",
+                  "description": "24"
+                }
+              ]
+            },
+            "description": "Get visit statistics"
+          }
+        },
+        {
+          "name": "GET /admin/statistics/practice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/statistics/practice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "statistics",
+                "practice"
+              ],
+              "query": [
+                {
+                  "key": "hours",
+                  "value": "24",
+                  "description": "24"
+                }
+              ]
+            },
+            "description": "Get AI practice statistics"
+          }
+        },
+        {
+          "name": "GET /admin/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List users"
+          }
+        },
+        {
+          "name": "GET /admin/users/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":id"
+              ]
+            },
+            "description": "Get user by ID"
+          }
+        },
+        {
+          "name": "PATCH /admin/users/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":id"
+              ]
+            },
+            "description": "Update user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Name\",\n  \"email\": \"\",\n  \"phone\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /admin/users/:id/lock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":id",
+                "lock"
+              ]
+            },
+            "description": "Toggle user lock status"
+          }
+        },
+        {
+          "name": "POST /admin/users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            },
+            "description": "Create user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"New User\",\n  \"role\": \"student\",\n  \"phone\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /admin/users/:id/role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/:id/role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                ":id",
+                "role"
+              ]
+            },
+            "description": "Update user role"
+          }
+        },
+        {
+          "name": "POST /admin/users/bulk-create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/bulk-create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "bulk-create"
+              ]
+            },
+            "description": "Bulk create users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    {\n      \"email\": \"user1@example.com\",\n      \"password\": \"password123\",\n      \"fullName\": \"User 1\",\n      \"role\": \"student\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "item": [
+        {
+          "name": "GET /students",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students"
+              ]
+            },
+            "description": "List all students"
+          }
+        },
+        {
+          "name": "GET /students/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id"
+              ]
+            },
+            "description": "Get student by ID"
+          }
+        },
+        {
+          "name": "GET /students/:id/enrollment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/enrollment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "enrollment"
+              ]
+            },
+            "description": "Get student enrollment"
+          }
+        },
+        {
+          "name": "GET /students/:id/learning-history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/learning-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "learning-history"
+              ],
+              "query": [
+                {
+                  "key": "moduleId",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Get learning history"
+          }
+        },
+        {
+          "name": "POST /students/:id/learning-history",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/learning-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "learning-history"
+              ]
+            },
+            "description": "Create learning history record",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moduleId\": 1,\n  \"activityType\": \"ai_practice\",\n  \"startTime\": \"2025-01-01T00:00:00.000Z\",\n  \"endTime\": \"2025-01-01T01:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /students/:id/progress-videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/progress-videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "progress-videos"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Get progress videos"
+          }
+        },
+        {
+          "name": "GET /students/by-parent/:parentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/by-parent/:parentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                "by-parent",
+                ":parentId"
+              ]
+            },
+            "description": "Find students by parent ID"
+          }
+        },
+        {
+          "name": "GET /students/:id/connections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "connections"
+              ]
+            },
+            "description": "Get student's connections"
+          }
+        },
+        {
+          "name": "GET /students/:id/ai-practice-stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/ai-practice-stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "ai-practice-stats"
+              ],
+              "query": [
+                {
+                  "key": "weeks",
+                  "value": "8",
+                  "description": "8"
+                }
+              ]
+            },
+            "description": "Get AI practice weekly stats"
+          }
+        },
+        {
+          "name": "POST /students/:id/upload-video",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/upload-video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "upload-video"
+              ]
+            },
+            "description": "Upload progress video (multipart)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "video",
+                  "type": "file",
+                  "value": "",
+                  "src": "/path/to/video.mp4"
+                },
+                {
+                  "key": "videoType",
+                  "type": "text",
+                  "value": "before",
+                  "src": null
+                },
+                {
+                  "key": "courseId",
+                  "type": "text",
+                  "value": "1",
+                  "src": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /students/:id/progress-video",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/students/:id/progress-video",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "students",
+                ":id",
+                "progress-video"
+              ],
+              "query": [
+                {
+                  "key": "videoType",
+                  "value": "before",
+                  "description": "before"
+                },
+                {
+                  "key": "courseId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Delete progress video"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teachers",
+      "item": [
+        {
+          "name": "GET /teachers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "List teachers"
+          }
+        },
+        {
+          "name": "GET /teachers/video-call",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/video-call",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                "video-call"
+              ]
+            },
+            "description": "List video call teachers"
+          }
+        },
+        {
+          "name": "GET /teachers/mentors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/mentors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                "mentors"
+              ]
+            },
+            "description": "List mentors"
+          }
+        },
+        {
+          "name": "GET /teachers/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                ":id"
+              ]
+            },
+            "description": "Get teacher by ID"
+          }
+        },
+        {
+          "name": "GET /teachers/:id/availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                ":id",
+                "availability"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-15",
+                  "description": "2025-01-15"
+                }
+              ]
+            },
+            "description": "Get availability"
+          }
+        },
+        {
+          "name": "GET /teachers/:id/teaching-courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id/teaching-courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "teachers",
+                ":id",
+                "teaching-courses"
+              ]
+            },
+            "description": "Get courses teacher is teaching"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Parents",
+      "item": [
+        {
+          "name": "GET /parents/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id"
+              ]
+            },
+            "description": "Get parent by ID"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children"
+              ]
+            },
+            "description": "Get parent's children"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children/:studentId/learning-history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children/:studentId/learning-history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children",
+                ":studentId",
+                "learning-history"
+              ],
+              "query": [
+                {
+                  "key": "moduleId",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Get child's learning history"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children/:studentId/enrollment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children/:studentId/enrollment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children",
+                ":studentId",
+                "enrollment"
+              ]
+            },
+            "description": "Get child's enrollment"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children/:studentId/enrollments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children/:studentId/enrollments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children",
+                ":studentId",
+                "enrollments"
+              ]
+            },
+            "description": "Get child's all enrollments"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children/:studentId/progress-videos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children/:studentId/progress-videos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children",
+                ":studentId",
+                "progress-videos"
+              ],
+              "query": [
+                {
+                  "key": "courseId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Get child's progress videos"
+          }
+        },
+        {
+          "name": "GET /parents/:id/payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "payments"
+              ]
+            },
+            "description": "Get parent's payments"
+          }
+        },
+        {
+          "name": "GET /parents/:id/children/:studentId/ai-practice-stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/:id/children/:studentId/ai-practice-stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parents",
+                ":id",
+                "children",
+                ":studentId",
+                "ai-practice-stats"
+              ],
+              "query": [
+                {
+                  "key": "weeks",
+                  "value": "8",
+                  "description": "8"
+                }
+              ]
+            },
+            "description": "Get child's AI practice stats"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "GET /courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses"
+              ]
+            },
+            "description": "List all courses"
+          }
+        },
+        {
+          "name": "GET /courses/current",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/current",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "current"
+              ]
+            },
+            "description": "Get current courses"
+          }
+        },
+        {
+          "name": "GET /courses/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                ":id"
+              ]
+            },
+            "description": "Get course by ID"
+          }
+        },
+        {
+          "name": "GET /courses/:id/modules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/:id/modules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                ":id",
+                "modules"
+              ]
+            },
+            "description": "Get modules for a course"
+          }
+        },
+        {
+          "name": "GET /courses/modules/:moduleId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/courses/modules/:moduleId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "courses",
+                "modules",
+                ":moduleId"
+              ]
+            },
+            "description": "Get specific module"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programs - Public",
+      "item": [
+        {
+          "name": "GET /programs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/programs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs"
+              ]
+            },
+            "description": "Get all programs"
+          }
+        },
+        {
+          "name": "GET /programs/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/programs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                ":id"
+              ]
+            },
+            "description": "Get program by ID"
+          }
+        },
+        {
+          "name": "GET /programs/cohorts/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohorts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohorts",
+                ":id"
+              ]
+            },
+            "description": "Get cohort by ID"
+          }
+        },
+        {
+          "name": "GET /programs/cohort-courses/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohort-courses/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohort-courses",
+                ":id"
+              ]
+            },
+            "description": "Get cohort course by ID"
+          }
+        },
+        {
+          "name": "GET /programs/weekly-focus/module/:moduleId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus/module/:moduleId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus",
+                "module",
+                ":moduleId"
+              ]
+            },
+            "description": "Get weekly focus by module"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programs - CRUD (JWT)",
+      "item": [
+        {
+          "name": "POST /programs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs"
+              ]
+            },
+            "description": "Create program",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Program\",\n  \"description\": \"Description\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                ":id"
+              ]
+            },
+            "description": "Update program",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated\",\n  \"description\": \"\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /programs/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                ":id"
+              ]
+            },
+            "description": "Delete program"
+          }
+        },
+        {
+          "name": "POST /programs/cohorts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohorts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohorts"
+              ]
+            },
+            "description": "Create cohort",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cohort A\",\n  \"startDate\": \"2025-02-01\",\n  \"programId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/cohorts/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohorts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohorts",
+                ":id"
+              ]
+            },
+            "description": "Update cohort",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Cohort\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /programs/cohorts/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohorts/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohorts",
+                ":id"
+              ]
+            },
+            "description": "Delete cohort"
+          }
+        },
+        {
+          "name": "POST /programs/cohort-courses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohort-courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohort-courses"
+              ]
+            },
+            "description": "Create cohort course",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cohortId\": 1,\n  \"courseId\": 1,\n  \"teacherId\": 1,\n  \"maxStudents\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/cohort-courses/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohort-courses/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohort-courses",
+                ":id"
+              ]
+            },
+            "description": "Update cohort course",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxStudents\": 25\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /programs/cohort-courses/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohort-courses/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohort-courses",
+                ":id"
+              ]
+            },
+            "description": "Delete cohort course"
+          }
+        },
+        {
+          "name": "POST /programs/courses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "courses"
+              ]
+            },
+            "description": "Create course",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"English 101\",\n  \"startDate\": \"2025-02-01\",\n  \"endDate\": \"2025-06-01\",\n  \"price\": 5000000,\n  \"status\": \"upcoming\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/courses/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/courses/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "courses",
+                ":id"
+              ]
+            },
+            "description": "Update course",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Course\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /programs/upload-image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/upload-image",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "upload-image"
+              ]
+            },
+            "description": "Upload image (multipart)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "value": "",
+                  "src": "/path/to/image.jpg"
+                },
+                {
+                  "key": "folder",
+                  "type": "text",
+                  "value": "lingriser/images",
+                  "src": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /programs/modules",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/modules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "modules"
+              ]
+            },
+            "description": "Create module",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 1,\n  \"moduleNumber\": 1,\n  \"title\": \"Module 1\",\n  \"topic\": \"Greetings\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/modules/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/modules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "modules",
+                ":id"
+              ]
+            },
+            "description": "Update module",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Module\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /programs/modules/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/modules/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "modules",
+                ":id"
+              ]
+            },
+            "description": "Delete module"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programs - Enrollments (JWT)",
+      "item": [
+        {
+          "name": "POST /programs/enroll",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enroll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enroll"
+              ]
+            },
+            "description": "Enroll student",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"cohortCourseId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /programs/enrollment/:studentId/:cohortCourseId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enrollment/:studentId/:cohortCourseId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enrollment",
+                ":studentId",
+                ":cohortCourseId"
+              ]
+            },
+            "description": "Get enrollment"
+          }
+        },
+        {
+          "name": "GET /programs/enrollments/:studentId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enrollments/:studentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enrollments",
+                ":studentId"
+              ]
+            },
+            "description": "Get all enrollments"
+          }
+        },
+        {
+          "name": "GET /programs/enrollments/:studentId/formatted",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enrollments/:studentId/formatted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enrollments",
+                ":studentId",
+                "formatted"
+              ]
+            },
+            "description": "Get formatted enrollments"
+          }
+        },
+        {
+          "name": "POST /programs/enrollment/pay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enrollment/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enrollment",
+                "pay"
+              ]
+            },
+            "description": "Mark enrollment as paid",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"cohortCourseId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /programs/enrollment/check/:studentId/:cohortCourseId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enrollment/check/:studentId/:cohortCourseId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enrollment",
+                "check",
+                ":studentId",
+                ":cohortCourseId"
+              ]
+            },
+            "description": "Check if enrollment is paid"
+          }
+        },
+        {
+          "name": "GET /programs/cohort-courses/:id/enrollments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/cohort-courses/:id/enrollments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "cohort-courses",
+                ":id",
+                "enrollments"
+              ]
+            },
+            "description": "Get all enrollments for cohort course"
+          }
+        },
+        {
+          "name": "POST /programs/enroll/by-user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enroll/by-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enroll",
+                "by-user"
+              ]
+            },
+            "description": "Enroll by userId",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"cohortCourseId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /programs/enroll/:studentId/:cohortCourseId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/enroll/:studentId/:cohortCourseId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "enroll",
+                ":studentId",
+                ":cohortCourseId"
+              ]
+            },
+            "description": "Unenroll student"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Programs - Weekly Focus (JWT)",
+      "item": [
+        {
+          "name": "POST /programs/weekly-focus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus"
+              ]
+            },
+            "description": "Create/update weekly focus",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"moduleId\": 1,\n  \"teacherId\": 1,\n  \"weekTopic\": \"Topic\",\n  \"speakingGoals\": [\n    \"Goal 1\"\n  ],\n  \"teacherNotes\": \"Notes\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /programs/weekly-focus/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus",
+                ":id"
+              ]
+            },
+            "description": "Update weekly focus",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weekTopic\": \"Updated Topic\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /programs/weekly-focus/teacher/:teacherId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus/teacher/:teacherId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus",
+                "teacher",
+                ":teacherId"
+              ]
+            },
+            "description": "Get weekly focus by teacher"
+          }
+        },
+        {
+          "name": "GET /programs/weekly-focus/mentor-brief",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus/mentor-brief",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus",
+                "mentor-brief"
+              ],
+              "query": [
+                {
+                  "key": "studentId",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "moduleId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Get mentor brief"
+          }
+        },
+        {
+          "name": "DELETE /programs/weekly-focus/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/programs/weekly-focus/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "programs",
+                "weekly-focus",
+                ":id"
+              ]
+            },
+            "description": "Delete weekly focus"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "POST /bookings",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ]
+            },
+            "description": "Create booking",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"teacherId\": 1,\n  \"bookingDate\": \"2025-01-15\",\n  \"slotStartTime\": \"09:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "studentId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Find bookings by student"
+          }
+        },
+        {
+          "name": "GET /bookings/by-teacher/:teacherId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/by-teacher/:teacherId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "by-teacher",
+                ":teacherId"
+              ]
+            },
+            "description": "Find bookings by teacher"
+          }
+        },
+        {
+          "name": "GET /bookings/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id"
+              ]
+            },
+            "description": "Get booking by ID"
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/complete",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "complete"
+              ]
+            },
+            "description": "Mark booking complete"
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/cancel",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "cancel"
+              ]
+            },
+            "description": "Cancel booking"
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/start-meeting",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/start-meeting",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "start-meeting"
+              ]
+            },
+            "description": "Start meeting",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/end-meeting",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/end-meeting",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "end-meeting"
+              ]
+            },
+            "description": "End meeting"
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/teacher-feedback",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/teacher-feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "teacher-feedback"
+              ]
+            },
+            "description": "Add teacher feedback",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": 1,\n  \"feedback\": \"Good progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/student-rating",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:id/student-rating",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                ":id",
+                "student-rating"
+              ]
+            },
+            "description": "Add student rating",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Great lesson\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /payments/create-pending",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/create-pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "create-pending"
+              ]
+            },
+            "description": "Create pending payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /payments/process",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/process",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "process"
+              ]
+            },
+            "description": "Process payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"moduleId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /payments/status/:studentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/status/:studentId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "status",
+                ":studentId"
+              ]
+            },
+            "description": "Check payment status"
+          }
+        },
+        {
+          "name": "POST /payments/sepay-webhook",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/sepay-webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "sepay-webhook"
+              ]
+            },
+            "description": "SePay bank transfer webhook",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"gateway\": \"VCB\",\n  \"transactionDate\": \"2025-01-15 10:30:00\",\n  \"transferType\": \"in\",\n  \"transferAmount\": 500000,\n  \"content\": \"Payment for course\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /payments/sepay-webhook",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/sepay-webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "sepay-webhook"
+              ]
+            },
+            "description": "Webhook health check"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Connections",
+      "item": [
+        {
+          "name": "POST /connections",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "connections"
+              ]
+            },
+            "description": "Create connection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 1,\n  \"email\": \"parent@example.com\",\n  \"linkType\": \"parent\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /connections/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/connections/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "connections",
+                ":id"
+              ]
+            },
+            "description": "Delete connection"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "GET /notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Get notifications"
+          }
+        },
+        {
+          "name": "GET /notifications/unread-count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "unread-count"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Get unread count"
+          }
+        },
+        {
+          "name": "PATCH /notifications/:id/read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ]
+            },
+            "description": "Mark notification as read"
+          }
+        },
+        {
+          "name": "PATCH /notifications/mark-all-read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/mark-all-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "mark-all-read"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "1",
+                  "description": "1"
+                }
+              ]
+            },
+            "description": "Mark all as read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "POST /chat/conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "conversations"
+              ]
+            },
+            "description": "Get or create conversation with admin"
+          }
+        },
+        {
+          "name": "GET /chat/conversations/my",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "conversations",
+                "my"
+              ]
+            },
+            "description": "Get my conversations"
+          }
+        },
+        {
+          "name": "GET /chat/user/unread-count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/user/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "user",
+                "unread-count"
+              ]
+            },
+            "description": "Get unread count"
+          }
+        },
+        {
+          "name": "GET /chat/conversations/:id/messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations/:id/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "conversations",
+                ":id",
+                "messages"
+              ]
+            },
+            "description": "Get conversation messages"
+          }
+        },
+        {
+          "name": "POST /chat/conversations/:id/messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/conversations/:id/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "conversations",
+                ":id",
+                "messages"
+              ]
+            },
+            "description": "Send message",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /chat/admin/conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/admin/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "admin",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Get all conversations (admin)"
+          }
+        },
+        {
+          "name": "GET /chat/admin/unread-count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/admin/unread-count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "admin",
+                "unread-count"
+              ]
+            },
+            "description": "Get admin unread count"
+          }
+        },
+        {
+          "name": "PATCH /chat/admin/conversations/:id/close",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/admin/conversations/:id/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "admin",
+                "conversations",
+                ":id",
+                "close"
+              ]
+            },
+            "description": "Close conversation (admin)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Practice",
+      "item": [
+        {
+          "name": "POST /ai-practice/chat",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-practice/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai-practice",
+                "chat"
+              ]
+            },
+            "description": "AI chat for speaking practice",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Hello\"\n    }\n  ],\n  \"level\": \"A2\",\n  \"topic\": \"Greetings\",\n  \"topicDescription\": \"\",\n  \"speakingGoals\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /ai-practice/feedback",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-practice/feedback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai-practice",
+                "feedback"
+              ]
+            },
+            "description": "Generate AI feedback",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transcript\": [\n    {\n      \"role\": \"user\",\n      \"text\": \"Hello\"\n    }\n  ],\n  \"topic\": \"Greetings\",\n  \"level\": \"A2\",\n  \"language\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /ai-practice/transcribe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-practice/transcribe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai-practice",
+                "transcribe"
+              ]
+            },
+            "description": "Transcribe audio (multipart)",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "value": "",
+                  "src": "/path/to/audio.wav"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /ai-practice/tts",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/ai-practice/tts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai-practice",
+                "tts"
+              ]
+            },
+            "description": "Text-to-speech",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hello, how are you?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inaugural Registrations",
+      "item": [
+        {
+          "name": "POST /inaugural-registrations",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inaugural-registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inaugural-registrations"
+              ]
+            },
+            "description": "Create registration",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parent_name\": \"Parent\",\n  \"phone\": \"0123456789\",\n  \"email\": \"parent@example.com\",\n  \"wants_to_signup\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /inaugural-registrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inaugural-registrations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inaugural-registrations"
+              ]
+            },
+            "description": "List all registrations"
+          }
+        },
+        {
+          "name": "GET /inaugural-registrations/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inaugural-registrations/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inaugural-registrations",
+                ":id"
+              ]
+            },
+            "description": "Get registration by ID"
+          }
+        }
+      ]
+    }
+  ]
+}

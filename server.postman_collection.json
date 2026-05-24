@@ -1,0 +1,3589 @@
+{
+  "info": {
+    "name": "Gateway API (server)",
+    "description": "Gateway API - Base URL: http://localhost:3000/api/v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register new user (public)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"user@example.com\",\n  \"username\": \"johndoe\",\n  \"password\": \"StrongP@ss1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login (public)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"user@example.com\",\n  \"password\": \"StrongP@ss1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Refresh token (public, requires Bearer refresh token)"
+          }
+        },
+        {
+          "name": "POST /auth/logout-all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout all sessions"
+          }
+        },
+        {
+          "name": "GET /auth/google",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google"
+              ]
+            },
+            "description": "Google OAuth2 login (public, redirects to Google)"
+          }
+        },
+        {
+          "name": "GET /auth/google/callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "callback"
+              ]
+            },
+            "description": "Google OAuth2 callback (public)"
+          }
+        },
+        {
+          "name": "GET /auth/google/tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/tokens",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "tokens"
+              ],
+              "query": [
+                {
+                  "key": "loginToken",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Get tokens from login token"
+          }
+        },
+        {
+          "name": "GET /auth/credentials/google",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/credentials/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "credentials",
+                "google"
+              ]
+            },
+            "description": "Add Google credential (redirects to Google)"
+          }
+        },
+        {
+          "name": "POST /auth/credentials/mail",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/credentials/mail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "credentials",
+                "mail"
+              ]
+            },
+            "description": "Add mail credential",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"user@example.com\",\n  \"password\": \"StrongP@ss1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /auth/credentials/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/credentials/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "credentials",
+                ":id"
+              ]
+            },
+            "description": "Remove credential"
+          }
+        },
+        {
+          "name": "GET /auth/identities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/identities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "identities"
+              ],
+              "query": [
+                {
+                  "key": "usernameOrCredIdentifierOrId",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Find identities (admin)"
+          }
+        },
+        {
+          "name": "GET /auth/identities-public",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/identities-public",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "identities-public"
+              ],
+              "query": [
+                {
+                  "key": "usernameOrCredIdentifier",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Find public identities"
+          }
+        },
+        {
+          "name": "GET /auth/identity-ids",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/identity-ids",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "identity-ids"
+              ],
+              "query": [
+                {
+                  "key": "usernameOrCredIdentifier",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Find identity IDs"
+          }
+        },
+        {
+          "name": "GET /auth/credentials",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "credentials"
+              ]
+            },
+            "description": "Get my credentials"
+          }
+        },
+        {
+          "name": "GET /auth/roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "roles"
+              ]
+            },
+            "description": "Get roles list (admin)"
+          }
+        },
+        {
+          "name": "GET /auth/perms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/perms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "perms"
+              ]
+            },
+            "description": "Get permissions list (admin)"
+          }
+        },
+        {
+          "name": "POST /auth/my/identity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/my/identity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "my",
+                "identity"
+              ]
+            },
+            "description": "Update my identity",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newusername\",\n  \"fullName\": \"John Doe\",\n  \"bio\": \"Hello\",\n  \"phoneNumber\": \"+84123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/my/identity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/my/identity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "my",
+                "identity"
+              ]
+            },
+            "description": "Get my identity"
+          }
+        },
+        {
+          "name": "POST /auth/credentials/mail/password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/credentials/mail/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "credentials",
+                "mail",
+                "password"
+              ]
+            },
+            "description": "Update mail password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"cred_id\",\n  \"password\": \"NewP@ss1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /auth/hydrate-many",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/hydrate-many",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "hydrate-many"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": [
+                    "id1",
+                    "id2"
+                  ],
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Hydrate many identities"
+          }
+        },
+        {
+          "name": "GET /auth/hydrate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/hydrate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "hydrate"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Hydrate one identity"
+          }
+        },
+        {
+          "name": "POST /auth/:id/lock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/:id/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                ":id",
+                "lock"
+              ]
+            },
+            "description": "Lock identity (perm: user:lock)"
+          }
+        },
+        {
+          "name": "DELETE /auth/:id/lock",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/:id/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                ":id",
+                "lock"
+              ]
+            },
+            "description": "Unlock identity (perm: user:unlock)"
+          }
+        },
+        {
+          "name": "GET /auth/identity/search/phone",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/identity/search/phone",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "identity",
+                "search",
+                "phone"
+              ],
+              "query": [
+                {
+                  "key": "phoneNumber",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Search identity by phone"
+          }
+        },
+        {
+          "name": "POST /auth/google/calendar/exchange-code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/calendar/exchange-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "calendar",
+                "exchange-code"
+              ]
+            },
+            "description": "Exchange Google Calendar code",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /auth/google/calendar/connect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/calendar/connect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "calendar",
+                "connect"
+              ]
+            },
+            "description": "Connect Google Calendar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accessToken\": \"\",\n  \"refreshToken\": \"\",\n  \"expiresAt\": 0,\n  \"scopes\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /auth/google/calendar/connect",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/calendar/connect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "calendar",
+                "connect"
+              ]
+            },
+            "description": "Disconnect Google Calendar"
+          }
+        },
+        {
+          "name": "GET /auth/google/calendar/token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/calendar/token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "calendar",
+                "token"
+              ]
+            },
+            "description": "Get Google Calendar token"
+          }
+        },
+        {
+          "name": "POST /auth/:id/roles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/:id/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                ":id",
+                "roles"
+              ]
+            },
+            "description": "Assign role (admin)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /auth/:id/roles",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/:id/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                ":id",
+                "roles"
+              ]
+            },
+            "description": "Remove role (admin)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exams - Management",
+      "item": [
+        {
+          "name": "POST /exams/management",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management"
+              ]
+            },
+            "description": "Create exam (mod/admin)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Exam\",\n  \"description\": \"Description\",\n  \"duration\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /exams/management/exams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/exams",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "exams"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Find exams (mod/admin)"
+          }
+        },
+        {
+          "name": "GET /exams/management/exams/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/exams/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "exams",
+                ":id"
+              ]
+            },
+            "description": "Get exam details"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                ":id"
+              ]
+            },
+            "description": "Update exam",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated\",\n  \"description\": \"\",\n  \"duration\": 90\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/management/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                ":id"
+              ]
+            },
+            "description": "Delete exam"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/:id/review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/:id/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                ":id",
+                "review"
+              ]
+            },
+            "description": "Review exam (perm: exam:approve)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /exams/management/:id/sections",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/:id/sections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                ":id",
+                "sections"
+              ]
+            },
+            "description": "Create section in exam",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /exams/management/sections/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id"
+              ]
+            },
+            "description": "Get section details"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/sections/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id"
+              ]
+            },
+            "description": "Update section",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contentType\": \"reading\",\n  \"directive\": \"Read the passage\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/management/sections/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id"
+              ]
+            },
+            "description": "Delete section"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/sections/:id/move",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id",
+                "move"
+              ]
+            },
+            "description": "Move section",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 1,\n  \"parentId\": \"\",\n  \"toRoot\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /exams/management/sections/:id/sections",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id/sections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id",
+                "sections"
+              ]
+            },
+            "description": "Create nested section",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /exams/management/sections/:id/questions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/sections/:id/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "sections",
+                ":id",
+                "questions"
+              ]
+            },
+            "description": "Create question in section",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /exams/management/questions/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "questions",
+                ":id"
+              ]
+            },
+            "description": "Get question details"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/questions/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "questions",
+                ":id"
+              ]
+            },
+            "description": "Update question",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"What is X?\",\n  \"points\": 10,\n  \"type\": \"multiple_choice\",\n  \"choices\": [\n    {\n      \"key\": \"A\",\n      \"content\": \"Answer A\",\n      \"isCorrect\": true\n    },\n    {\n      \"key\": \"B\",\n      \"content\": \"Answer B\",\n      \"isCorrect\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/management/questions/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/questions/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "questions",
+                ":id"
+              ]
+            },
+            "description": "Delete question"
+          }
+        },
+        {
+          "name": "PATCH /exams/management/questions/:id/move",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/management/questions/:id/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "management",
+                "questions",
+                ":id",
+                "move"
+              ]
+            },
+            "description": "Move question",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"index\": 0,\n  \"sectionId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exams - Practice",
+      "item": [
+        {
+          "name": "GET /exams/practice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Find exams (public)"
+          }
+        },
+        {
+          "name": "GET /exams/practice/info/:id/details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/info/:id/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "info",
+                ":id",
+                "details"
+              ]
+            },
+            "description": "Get exam details (public)"
+          }
+        },
+        {
+          "name": "GET /exams/practice/info/:id/stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/info/:id/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "info",
+                ":id",
+                "stats"
+              ]
+            },
+            "description": "Get exam stats (public)"
+          }
+        },
+        {
+          "name": "GET /exams/practice/questions/:id/details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/questions/:id/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "questions",
+                ":id",
+                "details"
+              ]
+            },
+            "description": "Get question detail (public)"
+          }
+        },
+        {
+          "name": "POST /exams/practice/new/:id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/new/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "new",
+                ":id"
+              ]
+            },
+            "description": "Start exam attempt",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"duration\": 60,\n    \"sectionIds\": []\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /exams/practice/attempt/:id/saved",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/saved",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "saved"
+              ]
+            },
+            "description": "Get attempt saved data"
+          }
+        },
+        {
+          "name": "GET /exams/practice/attempt/:id/review",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "review"
+              ]
+            },
+            "description": "Get attempt review"
+          }
+        },
+        {
+          "name": "POST /exams/practice/attempt/:id/submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "submit"
+              ]
+            },
+            "description": "Submit attempt"
+          }
+        },
+        {
+          "name": "POST /exams/practice/attempt/:id/answers/:questionId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/answers/:questionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "answers",
+                ":questionId"
+              ]
+            },
+            "description": "Answer question",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answer\": \"A\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/practice/attempt/:id/answers/:questionId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/answers/:questionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "answers",
+                ":questionId"
+              ]
+            },
+            "description": "Remove answer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answer\": \"A\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /exams/practice/attempt/:id/answers/:questionId/flag",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/answers/:questionId/flag",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "answers",
+                ":questionId",
+                "flag"
+              ]
+            },
+            "description": "Toggle flag"
+          }
+        },
+        {
+          "name": "PATCH /exams/practice/attempt/:id/answers/:questionId/note",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/attempt/:id/answers/:questionId/note",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "attempt",
+                ":id",
+                "answers",
+                ":questionId",
+                "note"
+              ]
+            },
+            "description": "Add note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Review later\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /exams/practice/my/calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/my/calendar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "my",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "range",
+                  "value": "{\"from\":\"2025-01-01\",\"to\":\"2025-01-31\"}",
+                  "description": "{\"from\":\"2025-01-01\",\"to\":\"2025-01-31\"}"
+                }
+              ]
+            },
+            "description": "Get my practice calendar"
+          }
+        },
+        {
+          "name": "GET /exams/practice/my/history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/my/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "my",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Get my attempt history"
+          }
+        },
+        {
+          "name": "GET /exams/practice/my/stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/practice/my/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "practice",
+                "my",
+                "stats"
+              ]
+            },
+            "description": "Get my stats"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exams - Tags",
+      "item": [
+        {
+          "name": "GET /exams/tags/tree",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags/tree",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags",
+                "tree"
+              ]
+            },
+            "description": "Get tag tree (public)"
+          }
+        },
+        {
+          "name": "GET /exams/tags/list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags/list",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags",
+                "list"
+              ]
+            },
+            "description": "Get tag list (public)"
+          }
+        },
+        {
+          "name": "POST /exams/tags",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags"
+              ]
+            },
+            "description": "Create tag (mod/admin)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grammar\",\n  \"parentId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/tags/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags",
+                ":id"
+              ]
+            },
+            "description": "Delete tag"
+          }
+        },
+        {
+          "name": "POST /exams/tags/:id/move",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags/:id/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags",
+                ":id",
+                "move"
+              ]
+            },
+            "description": "Move tag",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /exams/tags/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/tags/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "tags",
+                ":id"
+              ]
+            },
+            "description": "Rename tag",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Exams - Goals",
+      "item": [
+        {
+          "name": "GET /exams/goals/my",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/goals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "goals",
+                "my"
+              ]
+            },
+            "description": "Get my goal"
+          }
+        },
+        {
+          "name": "POST /exams/goals/my",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/goals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "goals",
+                "my"
+              ]
+            },
+            "description": "Set goal",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-06-01\",\n  \"target\": 7.5,\n  \"type\": \"IELTS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PATCH /exams/goals/my",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/goals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "goals",
+                "my"
+              ]
+            },
+            "description": "Update goal",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"2025-06-01\",\n  \"target\": 8,\n  \"type\": \"IELTS\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /exams/goals/my",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/exams/goals/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "exams",
+                "goals",
+                "my"
+              ]
+            },
+            "description": "Delete my goal"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "POST /files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files"
+              ]
+            },
+            "description": "Get presigned upload URL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileName\": \"image.jpg\",\n  \"fileSize\": 1024000,\n  \"contentType\": \"image/jpeg\",\n  \"isPublicFile\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Achievements",
+      "item": [
+        {
+          "name": "GET /achievements/badges",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/achievements/badges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "achievements",
+                "badges"
+              ]
+            },
+            "description": "Get all badges (public)"
+          }
+        },
+        {
+          "name": "GET /achievements/badges/my",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/achievements/badges/my",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "achievements",
+                "badges",
+                "my"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Get my badges"
+          }
+        },
+        {
+          "name": "GET /achievements/badges/my/progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/achievements/badges/my/progress",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "achievements",
+                "badges",
+                "my",
+                "progress"
+              ]
+            },
+            "description": "Get my badge progress"
+          }
+        },
+        {
+          "name": "GET /achievements/badges/:uid",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/achievements/badges/:uid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "achievements",
+                "badges",
+                ":uid"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "Get user's badges (public)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat - Rooms",
+      "item": [
+        {
+          "name": "GET /chat/rooms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List rooms"
+          }
+        },
+        {
+          "name": "POST /chat/rooms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms"
+              ]
+            },
+            "description": "Create room (mod/admin)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"General\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /chat/rooms/:roomId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/:roomId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms",
+                ":roomId"
+              ]
+            },
+            "description": "Delete room (mod/admin)"
+          }
+        },
+        {
+          "name": "PATCH /chat/rooms/:roomId/schedule",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/:roomId/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms",
+                ":roomId",
+                "schedule"
+              ]
+            },
+            "description": "Update room schedule",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"\",\n  \"time\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /chat/rooms/:roomId/ban",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/:roomId/ban",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms",
+                ":roomId",
+                "ban"
+              ]
+            },
+            "description": "Ban user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uid\": \"\",\n  \"reason\": \"Spam\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /chat/rooms/:roomId/ban/:uid",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/:roomId/ban/:uid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms",
+                ":roomId",
+                "ban",
+                ":uid"
+              ]
+            },
+            "description": "Unban user"
+          }
+        },
+        {
+          "name": "GET /chat/rooms/:roomId/logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chat/rooms/:roomId/logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chat",
+                "rooms",
+                ":roomId",
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "uid",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "cursor",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "50"
+                }
+              ]
+            },
+            "description": "Get chat log"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "POST /notifications",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            },
+            "description": "Create notification",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipientId\": \"\",\n  \"type\": \"info\",\n  \"title\": \"Welcome\",\n  \"message\": \"Hello!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "isRead",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List notifications"
+          }
+        },
+        {
+          "name": "GET /notifications/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id"
+              ]
+            },
+            "description": "Get notification"
+          }
+        },
+        {
+          "name": "DELETE /notifications/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id"
+              ]
+            },
+            "description": "Delete notification"
+          }
+        },
+        {
+          "name": "PATCH /notifications/:id/read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ]
+            },
+            "description": "Mark as read"
+          }
+        },
+        {
+          "name": "POST /notifications/read-all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Mark all as read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources - Blogs",
+      "item": [
+        {
+          "name": "GET /resources/blogs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/blogs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "blogs"
+              ],
+              "query": [
+                {
+                  "key": "tags",
+                  "value": [],
+                  "description": ""
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List blogs"
+          }
+        },
+        {
+          "name": "POST /resources/blogs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/blogs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "blogs"
+              ]
+            },
+            "description": "Create blog",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My Blog\",\n  \"content\": \"Content here...\",\n  \"tags\": [\n    \"english\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /resources/blogs/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/blogs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "blogs",
+                ":id"
+              ]
+            },
+            "description": "Get blog"
+          }
+        },
+        {
+          "name": "PATCH /resources/blogs/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/blogs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "blogs",
+                ":id"
+              ]
+            },
+            "description": "Update blog",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated\",\n  \"content\": \"New content\",\n  \"tags\": [\n    \"grammar\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /resources/blogs/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/blogs/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "blogs",
+                ":id"
+              ]
+            },
+            "description": "Delete blog"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources - Flash Cards",
+      "item": [
+        {
+          "name": "GET /resources/flash-cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-cards"
+              ],
+              "query": [
+                {
+                  "key": "tags",
+                  "value": [],
+                  "description": ""
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List flash cards"
+          }
+        },
+        {
+          "name": "POST /resources/flash-cards",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-cards"
+              ]
+            },
+            "description": "Create flash card",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"word\": \"Hello\",\n  \"definition\": \"Xin chao\",\n  \"examples\": [\n    \"Hello world\"\n  ],\n  \"tags\": [\n    \"greeting\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /resources/flash-cards/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-cards/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-cards",
+                ":id"
+              ]
+            },
+            "description": "Get flash card"
+          }
+        },
+        {
+          "name": "PATCH /resources/flash-cards/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-cards/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-cards",
+                ":id"
+              ]
+            },
+            "description": "Update flash card",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"word\": \"Hi\",\n  \"definition\": \"Chao\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /resources/flash-cards/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-cards/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-cards",
+                ":id"
+              ]
+            },
+            "description": "Delete flash card"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources - Flash Card Lists",
+      "item": [
+        {
+          "name": "GET /resources/flash-card-lists",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists"
+              ],
+              "query": [
+                {
+                  "key": "tags",
+                  "value": [],
+                  "description": ""
+                },
+                {
+                  "key": "authorId",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "isPublic",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List flash card lists"
+          }
+        },
+        {
+          "name": "POST /resources/flash-card-lists",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists"
+              ]
+            },
+            "description": "Create flash card list",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My List\",\n  \"description\": \"Useful words\",\n  \"tags\": [\n    \"vocab\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /resources/flash-card-lists/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":id"
+              ]
+            },
+            "description": "Get flash card list"
+          }
+        },
+        {
+          "name": "PATCH /resources/flash-card-lists/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":id"
+              ]
+            },
+            "description": "Update flash card list",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated\",\n  \"description\": \"\",\n  \"isPublic\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /resources/flash-card-lists/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":id"
+              ]
+            },
+            "description": "Delete flash card list"
+          }
+        },
+        {
+          "name": "POST /resources/flash-card-lists/:id/cards",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:id/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":id",
+                "cards"
+              ]
+            },
+            "description": "Add card to list",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flashCardId\": \"\",\n  \"position\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /resources/flash-card-lists/:id/cards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:id/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":id",
+                "cards"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List cards in list"
+          }
+        },
+        {
+          "name": "DELETE /resources/flash-card-lists/:listId/cards/:cardId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/flash-card-lists/:listId/cards/:cardId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "flash-card-lists",
+                ":listId",
+                "cards",
+                ":cardId"
+              ]
+            },
+            "description": "Remove card from list"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources - Reports",
+      "item": [
+        {
+          "name": "GET /resources/reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "reportedBy",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "targetType",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "targetId",
+                  "value": "",
+                  "description": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "20"
+                }
+              ]
+            },
+            "description": "List reports"
+          }
+        },
+        {
+          "name": "POST /resources/reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports"
+              ]
+            },
+            "description": "Create report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"spam\",\n  \"title\": \"Spam post\",\n  \"description\": \"This is spam\",\n  \"targetType\": \"blog\",\n  \"targetId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /resources/reports/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports",
+                ":id"
+              ]
+            },
+            "description": "Get report"
+          }
+        },
+        {
+          "name": "PATCH /resources/reports/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports",
+                ":id"
+              ]
+            },
+            "description": "Update report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"resolved\",\n  \"adminResponse\": \"Handled.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /resources/reports/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports",
+                ":id"
+              ]
+            },
+            "description": "Delete report"
+          }
+        },
+        {
+          "name": "POST /resources/reports/:id/files",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports/:id/files",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports",
+                ":id",
+                "files"
+              ]
+            },
+            "description": "Add file to report",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileId\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "DELETE /resources/reports/:reportId/files/:fileId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/resources/reports/:reportId/files/:fileId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "resources",
+                "reports",
+                ":reportId",
+                "files",
+                ":fileId"
+              ]
+            },
+            "description": "Remove file from report"
+          }
+        }
+      ]
+    }
+  ]
+}
